@@ -1,0 +1,105 @@
+import type { ActivityCategory } from '@/types/database';
+import {
+  Plane,
+  Home,
+  MapPin,
+  Utensils,
+  Calendar,
+  MoreHorizontal,
+  type LucideIcon,
+} from 'lucide-react';
+
+export type ActivityCategoryInfo = {
+  value: ActivityCategory;
+  label: string;
+  icon: LucideIcon;
+  color: string;
+  bgColor: string;
+};
+
+export const activityCategoryMap: Record<ActivityCategory, ActivityCategoryInfo> = {
+  transport: {
+    value: 'transport',
+    label: 'Transporte',
+    icon: Plane,
+    color: 'text-blue-600 dark:text-blue-400',
+    bgColor: 'bg-blue-100 dark:bg-blue-900/30',
+  },
+  accommodation: {
+    value: 'accommodation',
+    label: 'Hospedagem',
+    icon: Home,
+    color: 'text-purple-600 dark:text-purple-400',
+    bgColor: 'bg-purple-100 dark:bg-purple-900/30',
+  },
+  tour: {
+    value: 'tour',
+    label: 'Passeio',
+    icon: MapPin,
+    color: 'text-emerald-600 dark:text-emerald-400',
+    bgColor: 'bg-emerald-100 dark:bg-emerald-900/30',
+  },
+  meal: {
+    value: 'meal',
+    label: 'Refeição',
+    icon: Utensils,
+    color: 'text-orange-600 dark:text-orange-400',
+    bgColor: 'bg-orange-100 dark:bg-orange-900/30',
+  },
+  event: {
+    value: 'event',
+    label: 'Evento',
+    icon: Calendar,
+    color: 'text-pink-600 dark:text-pink-400',
+    bgColor: 'bg-pink-100 dark:bg-pink-900/30',
+  },
+  other: {
+    value: 'other',
+    label: 'Outro',
+    icon: MoreHorizontal,
+    color: 'text-gray-600 dark:text-gray-400',
+    bgColor: 'bg-gray-100 dark:bg-gray-900/30',
+  },
+};
+
+export const activityCategoryList: ActivityCategoryInfo[] = Object.values(activityCategoryMap);
+
+export function getCategoryInfo(category: ActivityCategory): ActivityCategoryInfo {
+  return activityCategoryMap[category] || activityCategoryMap.other;
+}
+
+export function getCategoryIcon(category: ActivityCategory): LucideIcon {
+  return getCategoryInfo(category).icon;
+}
+
+export function getCategoryLabel(category: ActivityCategory): string {
+  return getCategoryInfo(category).label;
+}
+
+/**
+ * Formats duration in minutes to a human-readable string
+ */
+export function formatDuration(minutes: number | null | undefined): string | null {
+  if (!minutes) return null;
+
+  if (minutes < 60) {
+    return `${minutes}min`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+
+  if (remainingMinutes === 0) {
+    return `${hours}h`;
+  }
+
+  return `${hours}h ${remainingMinutes}min`;
+}
+
+/**
+ * Formats a time string (HH:MM) for display
+ */
+export function formatTime(time: string | null | undefined): string | null {
+  if (!time) return null;
+  return time;
+}

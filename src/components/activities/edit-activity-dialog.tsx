@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, Plus, X, ExternalLink } from 'lucide-react';
+import { Loader2, Plus, X, ExternalLink, Paperclip } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,9 +31,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { updateActivitySchema, type UpdateActivityInput } from '@/lib/validation/activity-schemas';
 import { updateActivity } from '@/lib/supabase/activities';
+import { getActivityAttachments, type AttachmentWithUrl } from '@/lib/supabase/attachments';
 import { activityCategoryList } from '@/lib/utils/activity-categories';
+import { FileUpload, AttachmentsList } from '@/components/attachments';
 import type { Activity, ActivityLink, ActivityCategory } from '@/types/database';
 
 interface EditActivityDialogProps {

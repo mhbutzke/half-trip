@@ -599,6 +599,8 @@ Implement itinerary visualization organized by days.
 
 ### [ ] Step 3.3: Drag-and-Drop Reordering
 
+<!-- chat-id: b059054d-78a0-4b8f-91fe-c325b236fab7 -->
+
 Implement activity reordering with drag and drop.
 
 **Tasks:**
@@ -618,6 +620,8 @@ Implement activity reordering with drag and drop.
 
 ### [ ] Step 3.4: File Attachments
 
+<!-- chat-id: d768eca2-72cc-4e61-8acb-f4947b66e211 -->
+
 Implement file upload for activities.
 
 **Tasks:**
@@ -636,6 +640,8 @@ Implement file upload for activities.
 - File size limits are enforced
 
 ### [ ] Step 3.5: Trip Notes
+
+<!-- chat-id: 0e96d7a9-cb81-4357-a162-5c3c1c90dc00 -->
 
 Implement general notes for the trip.
 

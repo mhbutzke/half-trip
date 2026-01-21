@@ -125,6 +125,10 @@ export function EditActivityDialog({
     try {
       const result = await updateActivity(activity.id, {
         ...data,
+        start_time: data.start_time || null,
+        duration_minutes: data.duration_minutes || null,
+        location: data.location || null,
+        description: data.description || null,
         links: links,
       });
 

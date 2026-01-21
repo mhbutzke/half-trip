@@ -520,7 +520,7 @@ Implement permission checks throughout the app.
 
 ## Phase 3: Itinerary (Trip Planning)
 
-### [ ] Step 3.1: Activity CRUD Operations
+### [x] Step 3.1: Activity CRUD Operations
 
 <!-- chat-id: 53021ad2-cecd-49e0-a8f6-95bc54c37301 -->
 
@@ -541,7 +541,44 @@ Implement activity management.
 - Validation works correctly
 - Category icons display
 
+**Completed:** Activity CRUD operations fully implemented with:
+
+- `src/lib/supabase/activities.ts`: Server actions for createActivity, updateActivity, deleteActivity, getTripActivities, getActivityById, reorderActivities, getActivitiesCount. Includes:
+  - `ActivityWithCreator` type with user info
+  - Automatic `sort_order` calculation for new activities
+  - Permission checks (any trip member can create, only organizers or creator can edit/delete)
+- `src/lib/validation/activity-schemas.ts`: Zod schemas for createActivitySchema and updateActivitySchema with:
+  - Title validation (2-200 characters)
+  - Time validation (HH:MM format)
+  - Duration validation (positive integer, max 24 hours)
+  - Link validation (url + label)
+  - Category enum validation
+- `src/lib/utils/activity-categories.ts`: Activity category utilities with:
+  - `activityCategoryMap`: Icons and colors for each category
+  - `getCategoryInfo()`, `getCategoryIcon()`, `getCategoryLabel()` helpers
+  - `formatDuration()` and `formatTime()` utility functions
+- `src/components/activities/activity-categories.tsx`: React components for:
+  - `ActivityCategoryIcon`: Sized icon with optional label
+  - `ActivityCategoryBadge`: Inline badge with icon and label
+- `src/components/activities/add-activity-dialog.tsx`: AddActivityDialog with:
+  - Form fields for title, category, date, time, duration, location, description
+  - Category selector with icons
+  - Links management (add/remove multiple links)
+  - Proper form validation and error messages
+- `src/components/activities/edit-activity-dialog.tsx`: EditActivityDialog with:
+  - Same fields as add dialog
+  - Pre-populates with existing activity data
+  - Links editing
+- `src/components/activities/delete-activity-dialog.tsx`: DeleteActivityDialog with:
+  - Confirmation dialog using AlertDialog
+  - Warning about irreversible action
+  - Loading state during deletion
+- Fixed Zod enum validation for newer Zod version
+- Build and lint pass successfully
+
 ### [ ] Step 3.2: Day-by-Day View
+
+<!-- chat-id: 45c557eb-d17e-4cd1-82f9-7cb3f3ba86e4 -->
 
 Implement itinerary visualization organized by days.
 

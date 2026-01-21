@@ -43,10 +43,11 @@ export const createActivitySchema = z.object({
     .max(2000, 'Descrição deve ter no máximo 2000 caracteres')
     .optional()
     .nullable(),
-  category: z.enum(['transport', 'accommodation', 'tour', 'meal', 'event', 'other'] as const, {
-    required_error: 'Categoria é obrigatória',
-    invalid_type_error: 'Categoria inválida',
-  }),
+  category: z
+    .enum(['transport', 'accommodation', 'tour', 'meal', 'event', 'other'] as const, {
+      message: 'Categoria inválida',
+    })
+    .refine((val) => val !== undefined, { message: 'Categoria é obrigatória' }),
   links: z.array(activityLinkSchema).optional(),
 });
 

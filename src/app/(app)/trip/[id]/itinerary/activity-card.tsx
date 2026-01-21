@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Clock,
   MapPin,
@@ -10,6 +10,7 @@ import {
   ExternalLink,
   ChevronDown,
   ChevronUp,
+  Paperclip,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { getCategoryInfo, formatDuration, formatTime } from '@/lib/utils/activity-categories';
+import { getAttachmentsCount } from '@/lib/supabase/attachments';
 import type { ActivityWithCreator } from '@/lib/supabase/activities';
 import type { ActivityLink } from '@/types/database';
 
@@ -32,11 +34,17 @@ interface ActivityCardProps {
 
 export function ActivityCard({ activity, onEdit, onDelete }: ActivityCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [attachmentsCount, setAttachmentsCount] = useState(0);
   const categoryInfo = getCategoryInfo(activity.category);
   const CategoryIcon = categoryInfo.icon;
   const links = Array.isArray(activity.links) ? (activity.links as ActivityLink[]) : [];
 
   const hasDetails = activity.description || links.length > 0;
+
+  // Fetch attachments count
+  useEffect(() => {
+    getAttachmentsCount(activity.id).then(setAttachmentsCount);
+  }, [activity.id]);
 
   return (
     <Card className="group relative transition-shadow hover:shadow-md">
@@ -67,6 +75,15 @@ export function ActivityCard({ activity, onEdit, onDelete }: ActivityCardProps) 
                     <Badge variant="secondary" className="text-xs">
                       {formatDuration(activity.duration_minutes)}
                     </Badge>
+                  )}
+                  {attachmentsCount > 0 && (
+                    <span
+                      className="flex items-center gap-1"
+                      title={`${attachmentsCount} anexo(s)`}
+                    >
+                      <Paperclip className="h-3.5 w-3.5" />
+                      {attachmentsCount}
+                    </span>
                   )}
                 </div>
 
@@ -114,7 +131,7 @@ export function ActivityCard({ activity, onEdit, onDelete }: ActivityCardProps) 
                   <div className="mt-3 space-y-3 border-t pt-3">
                     {/* Description */}
                     {activity.description && (
-                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                      <p className="whitespace-pre-wrap text-sm text-muted-foreground">
                         {activity.description}
                       </p>
                     )}
@@ -122,7 +139,7 @@ export function ActivityCard({ activity, onEdit, onDelete }: ActivityCardProps) 
                     {/* Links */}
                     {links.length > 0 && (
                       <div className="space-y-1.5">
-                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                           Links
                         </span>
                         <div className="flex flex-wrap gap-2">
@@ -132,7 +149,7 @@ export function ActivityCard({ activity, onEdit, onDelete }: ActivityCardProps) 
                               href={link.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1.5 rounded-md border bg-muted/50 px-2.5 py-1 text-sm hover:bg-muted transition-colors"
+                              className="inline-flex items-center gap-1.5 rounded-md border bg-muted/50 px-2.5 py-1 text-sm transition-colors hover:bg-muted"
                             >
                               <ExternalLink className="h-3.5 w-3.5" />
                               {link.label}

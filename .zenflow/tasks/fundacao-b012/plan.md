@@ -576,7 +576,7 @@ Implement activity management.
 - Fixed Zod enum validation for newer Zod version
 - Build and lint pass successfully
 
-### [ ] Step 3.2: Day-by-Day View
+### [x] Step 3.2: Day-by-Day View
 
 <!-- chat-id: 45c557eb-d17e-4cd1-82f9-7cb3f3ba86e4 -->
 
@@ -596,6 +596,32 @@ Implement itinerary visualization organized by days.
 - Days are displayed chronologically
 - Activities appear under correct day
 - Empty days show add activity prompt
+
+**Completed:** Day-by-day itinerary view fully implemented with:
+
+- `src/app/(app)/trip/[id]/itinerary/page.tsx`: Main itinerary page with server-side data fetching for trip, activities, user role, and current user. Uses Suspense for loading state.
+- `src/app/(app)/trip/[id]/itinerary/itinerary-header.tsx`: Header component showing trip name, date range, and total days.
+- `src/app/(app)/trip/[id]/itinerary/itinerary-list.tsx`: Client component managing activities state with:
+  - Generates all days from trip start_date to end_date using date-fns
+  - Groups activities by date with proper sorting (sort_order, then start_time)
+  - Handles activities outside trip date range
+  - Controlled AddActivityDialog that opens with pre-selected date
+  - Edit and Delete activity dialogs
+- `src/app/(app)/trip/[id]/itinerary/day-section.tsx`: DaySection component showing:
+  - Day number, weekday name, and date with relative labels (Today, Tomorrow, etc.)
+  - Sticky header with "Adicionar" button
+  - List of activity cards for the day
+  - Empty state with friendly illustration and CTA button
+- `src/app/(app)/trip/[id]/itinerary/activity-card.tsx`: ActivityCard component displaying:
+  - Category icon with color-coded background
+  - Title, time, duration badge, and location
+  - Expandable section for description and links
+  - Dropdown menu for edit/delete actions
+- `src/app/(app)/trip/[id]/itinerary/delete-activity-dialog.tsx`: Confirmation dialog for activity deletion
+- `src/app/(app)/trip/[id]/itinerary/itinerary-skeleton.tsx`: Loading skeleton for itinerary page
+- `src/app/(app)/trip/[id]/itinerary/loading.tsx`: Route loading state
+- Updated `src/components/activities/add-activity-dialog.tsx` to support controlled mode without trigger
+- Build and lint pass successfully
 
 ### [x] Step 3.3: Drag-and-Drop Reordering
 
@@ -666,7 +692,7 @@ Implement file upload for activities.
 - Files are displayed and downloadable
 - File size limits are enforced
 
-### [ ] Step 3.5: Trip Notes
+### [x] Step 3.5: Trip Notes
 
 <!-- chat-id: 0e96d7a9-cb81-4357-a162-5c3c1c90dc00 -->
 
@@ -685,6 +711,42 @@ Implement general notes for the trip.
 - Notes can be added, edited, deleted
 - Notes show author and timestamp
 - Notes persist correctly
+
+**Completed:** Trip Notes fully implemented with:
+
+- `src/lib/supabase/notes.ts`: Server actions for createNote, updateNote, deleteNote, getTripNotes, getNoteById, getNotesCount. Includes:
+  - `NoteWithCreator` type with user info (id, name, avatar_url)
+  - Permission checks (any trip member can create, only organizers or note creator can edit/delete)
+  - Proper revalidation of trip and notes pages on mutations
+- `src/lib/validation/note-schemas.ts`: Zod schemas for createNoteSchema and updateNoteSchema with content validation (2-5000 chars)
+- `src/app/(app)/trip/[id]/notes/page.tsx`: Notes page with server-side data fetching, Suspense loading
+- `src/app/(app)/trip/[id]/notes/notes-header.tsx`: Header with back link and page title
+- `src/app/(app)/trip/[id]/notes/notes-list.tsx`: Client component managing notes state with:
+  - Empty state with call-to-action
+  - Notes count display
+  - State management for editing/deleting notes
+  - Permission-based edit/delete visibility
+- `src/app/(app)/trip/[id]/notes/notes-skeleton.tsx`: Loading skeleton for notes page
+- `src/components/notes/note-card.tsx`: NoteCard component with:
+  - Author avatar, name, and timestamp
+  - Relative time (formatDistanceToNow) with full date tooltip
+  - "(editado)" indicator when note was edited
+  - Dropdown menu with edit/delete actions (permission-controlled)
+  - Proper whitespace-pre-wrap for content display
+- `src/components/notes/add-note-dialog.tsx`: AddNoteDialog with:
+  - Textarea for note content
+  - Form validation with react-hook-form + zod
+  - Loading state during submission
+  - Toast notifications for success/error
+- `src/components/notes/edit-note-dialog.tsx`: EditNoteDialog with:
+  - Pre-populated content from existing note
+  - Same validation and UX as add dialog
+- `src/components/notes/delete-note-dialog.tsx`: DeleteNoteDialog with:
+  - Confirmation dialog using AlertDialog
+  - Truncated note preview in confirmation
+  - Warning about irreversible action
+- `src/components/notes/index.ts`: Barrel export for notes components
+- Build and lint pass successfully
 
 ---
 

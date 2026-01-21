@@ -10,7 +10,8 @@ type TableName =
   | 'trip_notes'
   | 'settlements';
 
-type RealtimePayload<T = Record<string, unknown>> = RealtimePostgresChangesPayload<T>;
+type RealtimePayload<T extends Record<string, unknown> = Record<string, unknown>> =
+  RealtimePostgresChangesPayload<T>;
 
 interface RealtimeSubscriptionOptions {
   table: TableName;
@@ -61,8 +62,12 @@ export function useRealtimeSubscription({
       }
 
       // Subscribe to postgres_changes events
-      channel
-        .on('postgres_changes', config, (payload) => {
+      // Type assertion needed for postgres_changes event type
+      channel.on(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        'postgres_changes' as any,
+        config,
+        (payload: RealtimePayload) => {
           // Call the appropriate callback based on event type
           if (payload.eventType === 'INSERT' && onInsert) {
             onInsert(payload);
@@ -76,14 +81,16 @@ export function useRealtimeSubscription({
           if (onChange) {
             onChange(payload);
           }
-        })
-        .subscribe((status) => {
-          if (status === 'SUBSCRIBED') {
-            console.log(`✅ Subscribed to ${table} realtime updates`);
-          } else if (status === 'CHANNEL_ERROR') {
-            console.error(`❌ Error subscribing to ${table} realtime updates`);
-          }
-        });
+        }
+      );
+
+      channel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log(`✅ Subscribed to ${table} realtime updates`);
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error(`❌ Error subscribing to ${table} realtime updates`);
+        }
+      });
     };
 
     setupSubscription();

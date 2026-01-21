@@ -25,6 +25,8 @@ import { getCategoryInfo, formatDuration, formatTime } from '@/lib/utils/activit
 import { getAttachmentsCount } from '@/lib/supabase/attachments';
 import type { ActivityWithCreator } from '@/lib/supabase/activities';
 import type { ActivityLink } from '@/types/database';
+import { useSyncStatus } from '@/hooks/use-sync-status';
+import { PendingIndicator } from '@/components/sync';
 
 interface ActivityCardProps {
   activity: ActivityWithCreator;
@@ -38,6 +40,7 @@ export function ActivityCard({ activity, onEdit, onDelete }: ActivityCardProps) 
   const categoryInfo = getCategoryInfo(activity.category);
   const CategoryIcon = categoryInfo.icon;
   const links = Array.isArray(activity.links) ? (activity.links as ActivityLink[]) : [];
+  const { isPending } = useSyncStatus('activities', activity.id);
 
   const hasDetails = activity.description || links.length > 0;
 
@@ -63,7 +66,7 @@ export function ActivityCard({ activity, onEdit, onDelete }: ActivityCardProps) 
               <div className="min-w-0 flex-1">
                 <h3 className="font-medium leading-tight">{activity.title}</h3>
 
-                {/* Time, Duration, and Attachments */}
+                {/* Time, Duration, Attachments, and Sync Status */}
                 <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
                   {activity.start_time && (
                     <span className="flex items-center gap-1">
@@ -85,6 +88,7 @@ export function ActivityCard({ activity, onEdit, onDelete }: ActivityCardProps) 
                       {attachmentsCount}
                     </span>
                   )}
+                  {isPending && <PendingIndicator isPending={isPending} size="sm" showLabel />}
                 </div>
 
                 {/* Location */}

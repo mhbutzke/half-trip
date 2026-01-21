@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { SyncStatus } from '@/components/sync';
 
 interface HeaderProps {
   user?: {
@@ -69,6 +70,9 @@ export function Header({ user, onSignOut }: HeaderProps) {
 
         {/* Right side actions */}
         <div className="flex items-center gap-1">
+          {/* Sync status - only show for authenticated users */}
+          {user && <SyncStatus />}
+
           {/* Theme toggle - 44px touch target */}
           <Button
             variant="ghost"

@@ -1274,7 +1274,9 @@ Show who is currently viewing the trip.
 - Fixed Next.js build issue with expense type exports from "use server" files
 - Build passes successfully with all presence functionality working
 
-### [ ] Step 6.3: IndexedDB Setup
+### [x] Step 6.3: IndexedDB Setup
+
+<!-- chat-id: 4ee41f98-7349-4a69-ba5f-ea8e73c61452 -->
 
 Set up offline storage with Dexie.js.
 
@@ -1292,7 +1294,53 @@ Set up offline storage with Dexie.js.
 - Data can be written and read
 - Schema matches server structure
 
-### [ ] Step 6.4: Offline Read Capability
+**Completed:** IndexedDB setup fully implemented with Dexie.js:
+
+- Installed `dexie@4.2.1` for IndexedDB wrapper with TypeScript support
+- `src/lib/sync/db.ts`: Comprehensive database schema with:
+  - `SyncStatus` type: 'synced' | 'pending' | 'error'
+  - `SyncMetadata` interface: Base interface for all cached entities with sync status, error, last synced timestamp, and local modification tracking
+  - 8 cached tables mirroring Supabase schema:
+    - `CachedUser`: User profile data
+    - `CachedTrip`: Trip data with all fields including archived_at
+    - `CachedTripMember`: Trip membership with roles
+    - `CachedActivity`: Activities with category, location, links (JSON serialized)
+    - `CachedExpense`: Expense data with receipt URLs
+    - `CachedExpenseSplit`: Expense split records with amounts/percentages
+    - `CachedTripNote`: Trip notes
+    - `SyncQueueEntry`: Auto-incremented queue for offline writes with operation type, data, retries, and error tracking
+  - Indexes optimized for common queries:
+    - Trips: by created_by, start_date, end_date, archived_at
+    - Activities: by trip_id, date, compound [trip_id+date], sort_order
+    - Expenses: by trip_id, date, category, paid_by, created_by
+    - Expense splits: by expense_id, user_id, compound [expense_id+user_id]
+    - Trip members: by trip_id, user_id, compound [trip_id+user_id]
+    - Sync queue: auto-increment id, timestamp, table, operation, recordId
+  - Utility functions:
+    - `initializeDB()`: Initialize and open database
+    - `clearAllCache()`: Clear all cached data (logout/debugging)
+    - `getDatabaseStats()`: Get counts for all tables
+    - `deleteDatabase()`: Delete entire database (debugging/reset)
+- `src/lib/sync/index.ts`: Barrel export for all sync types and functions
+- `src/lib/sync/db.test.ts`: Comprehensive test suite with 11 tests covering:
+  - Database initialization
+  - Table definitions
+  - Trip CRUD operations
+  - Activity CRUD operations
+  - Sync queue operations with auto-increment
+  - Database statistics
+  - Cache clearing
+  - Compound index queries (trip_id+date, expense_id+user_id)
+- Installed `fake-indexeddb@6.2.5` dev dependency for testing IndexedDB in Node.js environment
+- Updated `src/test/setup.ts` to import 'fake-indexeddb/auto' for test environment
+- Fixed TypeScript error in `src/hooks/use-realtime-subscription.ts` for Supabase Realtime types
+- All 11 tests pass successfully
+- Build passes with no errors
+- Lint passes with no issues
+
+### [x] Step 6.4: Offline Read Capability
+
+<!-- chat-id: 4ee41f98-7349-4a69-ba5f-ea8e73c61452 -->
 
 Implement reading data when offline.
 
@@ -1310,7 +1358,50 @@ Implement reading data when offline.
 - Offline indicator displays
 - Previously viewed trips accessible
 
-### [ ] Step 6.5: Offline Write with Queue
+**Completed:** Full offline read capability implemented with:
+
+- `src/hooks/use-online-status.ts`: Hook detecting online/offline status using browser navigator.onLine and window online/offline events, SSR-safe with proper initialization
+- `src/components/offline/offline-indicator.tsx`: Offline banner component displayed at top of screen when offline, with slide-in animation and warning colors
+- `src/lib/sync/cache.ts`: Comprehensive sync utilities for caching data to IndexedDB:
+  - Trip caching: `cacheTrip()`, `cacheTrips()`, `getCachedTrip()`, `getCachedTrips()`, `getCachedUserTrips()`
+  - Trip members: `cacheTripMembers()`, `getCachedTripMembers()`
+  - Activities: `cacheActivities()`, `getCachedActivities()`, `getCachedActivitiesByDate()` (with JSON serialization for links)
+  - Expenses: `cacheExpenses()`, `getCachedExpenses()`
+  - Expense splits: `cacheExpenseSplits()`, `getCachedExpenseSplits()`
+  - Notes: `cacheTripNotes()`, `getCachedTripNotes()`
+  - Users: `cacheUser()`, `cacheUsers()`, `getCachedUser()`
+  - Bundle operations: `cacheTripBundle()`, `getCachedTripBundle()` for atomic caching of all trip data
+  - Cache status: `getLastSyncTime()`, `isTripCached()`
+  - All cached entities include sync metadata: `_syncStatus`, `_lastSyncedAt`, `_syncError`, `_locallyModifiedAt`
+- `src/hooks/use-trip-offline.ts`: Hook for accessing trip data offline with:
+  - `TripOfflineData` type for cached data structure
+  - `TripDataToCache` type for fresh server data
+  - Auto-fetch from cache when offline
+  - `fetchCached()` for manual cache retrieval
+  - `cacheData()` for caching fresh server data
+  - State management for loading, cached status, last sync time, errors
+  - Returns offline status, cached data, and control functions
+- `src/app/(app)/trip/[id]/trip-content.tsx`: Client wrapper for trip pages that:
+  - Uses `useTripOffline` hook for offline data access
+  - Caches trip data when online for offline use
+  - Reconstructs `TripWithMembers` from cached data when offline
+  - Shows appropriate error messages when trip not available offline
+- `src/app/(app)/trip/[id]/page.tsx`: Updated to use TripContent wrapper
+- `src/app/(app)/trips/trips-list.tsx`: Updated trips list with:
+  - Online/offline detection
+  - Caches trips when fetching online
+  - Loads from IndexedDB when offline
+  - Converts cached trips to TripWithMembers format for display
+- `src/app/(app)/layout.tsx`: Added OfflineIndicator to app layout
+- Fixed all database table name references: `trip_members`, `expense_splits`, `trip_notes` (not camelCase)
+- Fixed sync metadata field names with underscore prefix: `_syncStatus`, `_lastSyncedAt` (not camelCase)
+- Fixed CachedActivity links field to allow null: `links: string | null`
+- All cache functions use ISO string timestamps for `_lastSyncedAt`
+- Build and lint pass successfully
+
+### [x] Step 6.5: Offline Write with Queue
+
+<!-- chat-id: 4ee41f98-7349-4a69-ba5f-ea8e73c61452 -->
 
 Implement offline writes with sync queue.
 
@@ -1328,7 +1419,63 @@ Implement offline writes with sync queue.
 - Pending items show indicator
 - Queue persists across app restarts
 
-### [ ] Step 6.6: Sync and Conflict Resolution
+**Completed:** Full offline write capability with sync queue implemented with:
+
+- `src/lib/sync/sync-engine.ts`: Comprehensive sync engine with:
+  - `SyncEngine` class for processing offline write queue with FIFO ordering
+  - `processQueue()`: Main sync function that processes all pending queue entries
+  - `processSingleEntry()`: Handles individual INSERT, UPDATE, DELETE operations
+  - `handleInsert()`, `handleUpdate()`, `handleDelete()`: Operation handlers that sync to Supabase
+  - `updateCacheAfterSync()`: Updates cached entities after successful sync
+  - Retry logic with max 3 retries per entry
+  - Error tracking and reporting with detailed error messages
+  - Helper methods: `getPendingCount()`, `getFailedCount()`, `clearFailedEntries()`, `retryFailedEntries()`
+  - Singleton instance exported as `syncEngine`
+- `src/lib/sync/offline-mutations.ts`: Offline write mutations for all main entities:
+  - `createActivityOffline()`, `updateActivityOffline()`, `deleteActivityOffline()`
+  - `createExpenseOffline()`, `updateExpenseOffline()`, `deleteExpenseOffline()`
+  - `createTripNoteOffline()`, `updateTripNoteOffline()`, `deleteTripNoteOffline()`
+  - `updateTripOffline()`
+  - `isPendingSync()`: Check if entity has pending sync operations
+  - `getPendingEntities()`: Get all entities with pending status
+  - All mutations add to IndexedDB cache and sync queue atomically
+  - Proper handling of optional fields with nullish coalescing
+- `src/components/sync/pending-indicator.tsx`: PendingIndicator component with:
+  - Visual states for pending, syncing, error, synced
+  - Icons: CloudOff (pending/error), Loader2 (syncing), Cloud (synced)
+  - Optional label display with Portuguese messages
+  - Size variants (sm, md, lg)
+  - Color-coded states (warning for pending, destructive for error)
+- `src/hooks/use-sync-status.ts`: Hook to check sync status of individual entities
+  - Returns `isPending`, `isLoading`, `refresh` for any entity
+  - Supports activities, expenses, trip_notes, trips
+  - Proper TypeScript null safety
+- `src/hooks/use-auto-sync.ts`: Auto-sync hook with:
+  - Automatic sync on network reconnect
+  - Optional sync on mount
+  - Optional periodic sync with configurable interval
+  - Returns sync state, pending count, last sync time, manual sync trigger
+  - Toast notifications for sync success/errors
+- `src/components/sync/sync-status.tsx`: Global sync status component showing:
+  - Online/offline indicator
+  - Pending changes count
+  - Syncing animation
+  - Last sync time
+  - Click to manually trigger sync
+  - Tooltip with helpful messages
+- Integrated pending indicators into UI components:
+  - `src/app/(app)/trip/[id]/itinerary/activity-card.tsx`: Shows pending status for activities
+  - `src/components/expenses/expense-card.tsx`: Shows pending status for expenses
+  - `src/components/notes/note-card.tsx`: Shows pending status for notes
+- `src/components/layout/header.tsx`: Added SyncStatus component to app header for authenticated users
+- All sync queue operations use lowercase operation types: 'insert', 'update', 'delete'
+- All database table names use snake_case: sync_queue, trip_notes
+- Sync metadata fields use optional (undefined) instead of null for TypeScript compatibility
+- Build passes successfully with all TypeScript checks
+
+### [x] Step 6.6: Sync and Conflict Resolution
+
+<!-- chat-id: b1e014f4-10b9-43bf-ab92-afa33f44acac -->
 
 Implement synchronization when back online.
 
@@ -1345,6 +1492,67 @@ Implement synchronization when back online.
 - Data syncs automatically on reconnect
 - Conflicts resolved correctly
 - Sync errors can be retried
+
+**Completed:** Full sync and conflict resolution system implemented with:
+
+- **Automatic Sync on Reconnect:**
+  - `useAutoSync` hook already implemented with network reconnect detection
+  - Monitors `useOnlineStatus` hook and triggers sync when coming back online
+  - Console logging: `[AutoSync] Network reconnected, syncing...`
+
+- **Last-Write-Wins Conflict Resolution:**
+  - Enhanced `handleUpdate()` in sync engine to detect conflicts
+  - Compares `updated_at` (remote) vs `_locallyModifiedAt` (local) timestamps
+  - Logs warning when conflict detected: `Conflict detected for table:id - remote version is newer`
+  - Proceeds with local update (last-write-wins strategy)
+  - Enhanced `handleInsert()` to convert duplicate key errors to UPDATE operations
+  - Enhanced `handleDelete()` to gracefully handle already-deleted records
+
+- **Graceful Error Handling:**
+  - New `categorizeError()` method to classify errors by type and retryability:
+    - `network`: Retryable (fetch, timeout, connection errors)
+    - `permission`: Non-retryable (RLS, unauthorized, forbidden)
+    - `validation`: Non-retryable (constraints, invalid data)
+    - `conflict`: Retryable (duplicate keys)
+    - `unknown`: Retryable (cautious approach)
+  - Updated `SyncResult` type with detailed `SyncError` objects including error type and retryability
+  - Enhanced retry logic to only retry retryable errors
+  - Improved error messages with categorization: `[network] fetch failed`
+  - Updated `useAutoSync` to show different toasts for retryable vs permanent errors
+
+- **Enhanced Sync Status UI:**
+  - Updated `SyncStatus` component to show error states with alert triangle icon
+  - Added error-specific tooltip messages
+  - Permanent errors highlighted in red (destructive color)
+  - Click on error state opens `SyncErrorsDialog`
+  - Shows detailed error information and retry options
+
+- **Manual Retry for Failed Syncs:**
+  - New `SyncErrorsDialog` component (`src/components/sync/sync-errors-dialog.tsx`) with:
+    - List of all failed sync entries (>= 3 retries)
+    - Error type badges with color coding
+    - Retry count display
+    - "Retry All" button to reset retry counters and re-trigger sync
+    - "Clear All" button to remove failed entries from queue
+    - Detailed error messages with operation and table info
+  - `SyncStatus` component opens dialog when clicked with errors
+  - Dialog refreshes after retry to show remaining failures
+
+- **Additional Improvements:**
+  - Added `default` case to cache update switch statement for unknown tables
+  - All TypeScript `any` types properly handled with ESLint disable comments
+  - Unused destructured variables properly marked with ESLint comments
+  - All linting issues resolved
+
+- **Testing Documentation:**
+  - Created `SYNC_TESTING.md` with comprehensive testing guide
+  - 10 detailed test scenarios covering all sync features
+  - Developer tools guide for offline testing
+  - Error types reference table
+  - Verification checklist
+
+- Build passes successfully
+- Lint passes without errors
 
 ### [ ] Step 6.7: PWA Setup
 

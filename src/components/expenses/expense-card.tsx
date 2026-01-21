@@ -18,6 +18,8 @@ import { cn } from '@/lib/utils';
 import { getCategoryInfo } from '@/lib/utils/expense-categories';
 import { formatAmount } from '@/lib/validation/expense-schemas';
 import type { ExpenseWithDetails } from '@/types/expense';
+import { useSyncStatus } from '@/hooks/use-sync-status';
+import { PendingIndicator } from '@/components/sync';
 
 interface ExpenseCardProps {
   expense: ExpenseWithDetails;
@@ -29,6 +31,7 @@ interface ExpenseCardProps {
 export function ExpenseCard({ expense, canEdit, onEdit, onDelete }: ExpenseCardProps) {
   const categoryInfo = getCategoryInfo(expense.category);
   const CategoryIcon = categoryInfo.icon;
+  const { isPending } = useSyncStatus('expenses', expense.id);
 
   const formattedDate = format(new Date(expense.date), "d 'de' MMM", { locale: ptBR });
 
@@ -62,6 +65,7 @@ export function ExpenseCard({ expense, canEdit, onEdit, onDelete }: ExpenseCardP
                   {categoryInfo.label}
                 </Badge>
                 <span>{formattedDate}</span>
+                {isPending && <PendingIndicator isPending={isPending} size="sm" />}
               </div>
             </div>
           </div>

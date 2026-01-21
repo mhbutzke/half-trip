@@ -23,9 +23,10 @@ interface HeaderProps {
     email: string;
     avatar?: string;
   } | null;
+  onSignOut?: () => void;
 }
 
-export function Header({ user }: HeaderProps) {
+export function Header({ user, onSignOut }: HeaderProps) {
   const pathname = usePathname();
   const { setTheme, theme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -108,7 +109,10 @@ export function Header({ user }: HeaderProps) {
                     <Link href="/settings">Configurações</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-destructive focus:text-destructive">
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive"
+                    onClick={onSignOut}
+                  >
                     Sair
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -168,7 +172,10 @@ export function Header({ user }: HeaderProps) {
                       <Button
                         variant="ghost"
                         className="w-full justify-start text-destructive hover:text-destructive"
-                        onClick={() => setMobileMenuOpen(false)}
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          onSignOut?.();
+                        }}
                       >
                         Sair
                       </Button>

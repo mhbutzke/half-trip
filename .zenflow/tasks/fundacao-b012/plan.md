@@ -905,7 +905,7 @@ Implement expense list with filtering and search.
 - All filters work in real-time with useMemo for performance
 - Build passes successfully
 
-### [ ] Step 4.4: Receipt Upload
+### [x] Step 4.4: Receipt Upload
 
 <!-- chat-id: 6b1e9256-3935-49be-a904-5880537adb45 -->
 
@@ -998,7 +998,7 @@ Implement balance calculation algorithm.
 - Added test scripts to package.json: `test`, `test:watch`, `test:ui`
 - All tests pass successfully (13/13)
 
-### [ ] Step 5.2: Individual Balance View
+### [x] Step 5.2: Individual Balance View
 
 <!-- chat-id: fa4f8613-a174-4c02-b30d-5f5cf5f30ca1 -->
 
@@ -1018,7 +1018,40 @@ Implement balance visualization per participant.
 - Positive/negative clearly distinguished
 - Total expense summary is accurate
 
-### [ ] Step 5.3: Settlement Suggestions
+**Completed:** Individual Balance View fully implemented with:
+
+- `src/app/(app)/trip/[id]/balance/page.tsx`: Server-side page with data fetching for trip, expenses, and members using Suspense for loading states
+- `src/app/(app)/trip/[id]/balance/balance-header.tsx`: Header component with trip name and back button
+- `src/app/(app)/trip/[id]/balance/balance-content.tsx`: Client component that calculates balances using `calculateBalances()` and displays:
+  - Empty state when no expenses are registered
+  - BalanceSummary with total expenses, participant count, and average per person
+  - ParticipantBalance cards for each participant
+  - Info alert explaining balance calculation
+- `src/app/(app)/trip/[id]/balance/balance-summary.tsx`: Summary cards component showing:
+  - Total expenses with Receipt icon
+  - Participant count with Users icon
+  - Average per person with TrendingUp icon
+  - All values formatted in BRL currency
+- `src/app/(app)/trip/[id]/balance/participant-balance.tsx`: Participant balance card displaying:
+  - Avatar with initials fallback
+  - Name and status badge (A receber/A pagar/Quitado)
+  - Net balance in large font with color coding (positive/negative/neutral)
+  - Breakdown showing Total Pago and Total Devido
+  - Visual indicators using ArrowUp (positive), ArrowDown (negative), Check (settled) icons
+  - Color-coded badges: green for positive, red for negative, gray for settled
+- `src/app/(app)/trip/[id]/balance/balance-skeleton.tsx`: Loading skeleton matching the layout
+- `src/app/(app)/trip/[id]/balance/loading.tsx`: Route loading state
+- `src/lib/balance/calculate-balance.ts`: Balance calculation algorithm (already existed)
+- `src/lib/balance/types.ts`: TypeScript types for balance calculations (already existed)
+- `src/lib/balance/index.ts`: Module exports for balance functions and types
+- Fixed UTF-8 encoding issue in `calculate-settlements.ts` (replaced invalid arrow character)
+- Removed duplicate `formatCurrency` and `formatPercentage` functions from `expense-summary.ts` (server actions must be async)
+- Installed shadcn/ui alert component for info messages
+- All components use proper responsive design with mobile-first approach
+- Balance calculations handle floating-point precision (0.01 threshold)
+- Participants sorted by net balance (descending) - creditors first, then debtors
+
+### [x] Step 5.3: Settlement Suggestions
 
 <!-- chat-id: ae9a9b0d-a13c-4190-ba85-5aeabb8d4b87 -->
 
@@ -1037,7 +1070,31 @@ Implement optimized debt settlement algorithm.
 - All debts are covered
 - Display is clear and actionable
 
-### [ ] Step 5.4: Settlement Tracking
+**Completed:** Settlement suggestions fully implemented with:
+
+- `src/lib/balance/types.ts`: Added Settlement and PersistedSettlement types
+- `src/lib/balance/calculate-balance.ts`: Enhanced with calculateBalancesWithSettlements function that accounts for already-settled settlements. Includes balance calculation with expense tracking and net balance computation.
+- `src/lib/balance/calculate-settlements.ts`: Complete greedy algorithm implementation for debt simplification:
+  - Separates creditors (owed money) and debtors (owe money)
+  - Sorts by absolute balance (largest first)
+  - Matches largest creditor with largest debtor
+  - Creates settlement for the minimum of the two amounts
+  - Minimizes total number of transactions needed
+  - O(n log n) complexity
+  - Helper functions: getSettlementParticipantCount, getSettlementsForUser, getTotalOutgoing, getTotalIncoming
+- `src/lib/balance/index.ts`: Barrel export for all balance functions and types
+- `src/components/balance/settlements-list.tsx`: SettlementsList component with:
+  - Clear visual display of who owes whom
+  - Amount highlighted with arrows
+  - Highlights settlements involving current user
+  - Empty state with success icon when all settled
+  - Avatar display for participants
+  - Responsive mobile-first design
+- `src/components/balance/index.ts`: Barrel export for balance components
+- `src/lib/supabase/expense-summary.ts`: Updated getTripExpenseSummary to use calculateBalancesWithSettlements and calculateSettlements, properly integrating with existing settlement tracking
+- Build passes with proper TypeScript types
+
+### [x] Step 5.4: Settlement Tracking
 
 <!-- chat-id: a931747c-e44a-47f7-9c2c-24c2a8f0963b -->
 
@@ -1056,6 +1113,51 @@ Implement marking debts as settled.
 - Settlements can be marked as paid
 - Balance updates after settlement
 - Settlement history is visible
+
+**Completed:** Full settlement tracking system implemented with:
+
+- `src/lib/supabase/settlements.ts`: Server actions for settlement CRUD operations:
+  - `createSettlement()`: Creates new settlement record
+  - `markSettlementAsPaid()`: Marks settlement as paid with timestamp
+  - `markSettlementAsUnpaid()`: Removes paid status from settlement
+  - `deleteSettlement()`: Deletes settlement (organizers only)
+  - `getTripSettlements()`, `getPendingSettlements()`, `getSettledSettlements()`: Retrieve settlements with user data
+  - `getSettlementsCount()`: Get count for trip
+  - Permission checks ensure only involved users or organizers can manage settlements
+- `src/lib/balance/calculate-balance.ts`: Added `calculateBalancesWithSettlements()` function:
+  - Adjusts participant balances by factoring in settled payments
+  - Debtor's balance increases (they paid their debt)
+  - Creditor's balance decreases (they received payment)
+  - Returns adjusted balance calculation result
+- `src/lib/balance/types.ts`: Added `PersistedSettlement` type for database settlements
+- `src/lib/balance/index.ts`: Updated exports to include new function and types
+- `src/lib/supabase/expense-summary.ts`: Created comprehensive summary module:
+  - `TripExpenseSummary` type with participants, suggested settlements, and settled settlements
+  - `getTripExpenseSummary()`: Fetches expenses, members, and settled settlements
+  - Calculates balances with settlements factored in
+  - Generates optimized settlement suggestions based on current balances
+- `src/lib/utils/currency.ts`: Currency formatting utilities for BRL
+- `src/components/settlements/mark-settled-dialog.tsx`: Dialog for marking settlements as paid:
+  - Shows from/to users with avatars
+  - Displays settlement amount
+  - Confirmation flow with success toast
+- `src/components/settlements/settlement-history.tsx`: Settlement history component:
+  - Lists all settled payments with timestamps
+  - Shows relative time (e.g., "3 days ago")
+  - Dropdown menu for unmark/delete actions
+  - Permission-based action visibility
+  - Empty state when no history exists
+- `src/components/settlements/index.ts`: Barrel exports for settlement components
+- `src/app/(app)/trip/[id]/balance/page.tsx`: Updated to fetch user info and pass to content
+- `src/app/(app)/trip/[id]/balance/balance-content.tsx`: Comprehensive balance view:
+  - Overall summary card with totals and averages
+  - Participant balances with visual indicators (positive/negative/settled)
+  - Suggested settlements section with "Marcar pago" buttons
+  - Settlement history integration
+  - Empty states for no expenses and no pending settlements
+  - Proper permission checks for marking settlements
+  - Refresh functionality after settlement updates
+- Lint passes successfully
 
 ### [ ] Step 5.5: Trip Summary Report
 

@@ -164,3 +164,20 @@ export async function getTripExpenseSummary(tripId: string): Promise<TripExpense
     personBreakdown,
   };
 }
+
+/**
+ * Formats currency in BRL
+ */
+export function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(amount);
+}
+
+/**
+ * Formats percentage with 1 decimal place
+ */
+export function formatPercentage(percentage: number): string {
+  return \`\${percentage.toFixed(1)}%\`;
+}

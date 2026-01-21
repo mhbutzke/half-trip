@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, StickyNote } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { StickyNote } from 'lucide-react';
+import { EmptyState } from '@/components/ui/empty-state';
 import { NoteCard } from '@/components/notes/note-card';
 import { AddNoteDialog } from '@/components/notes/add-note-dialog';
 import { EditNoteDialog } from '@/components/notes/edit-note-dialog';
@@ -22,6 +22,7 @@ export function NotesList({ tripId, initialNotes, userRole, currentUserId }: Not
   const [notes, setNotes] = useState<NoteWithCreator[]>(initialNotes);
   const [editingNote, setEditingNote] = useState<NoteWithCreator | null>(null);
   const [deletingNote, setDeletingNote] = useState<NoteWithCreator | null>(null);
+  const [addNoteDialogOpen, setAddNoteDialogOpen] = useState(false);
 
   // Enable real-time updates for this trip
   useTripRealtime({ tripId });
@@ -61,25 +62,15 @@ export function NotesList({ tripId, initialNotes, userRole, currentUserId }: Not
       </div>
 
       {notes.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-            <StickyNote className="h-6 w-6 text-muted-foreground" />
-          </div>
-          <h3 className="mt-4 font-semibold">Nenhuma nota</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Adicione informações importantes sobre a viagem
-          </p>
-          <AddNoteDialog
-            tripId={tripId}
-            onNoteCreated={handleNoteCreated}
-            trigger={
-              <Button className="mt-4">
-                <Plus className="mr-2 h-4 w-4" />
-                Adicionar primeira nota
-              </Button>
-            }
-          />
-        </div>
+        <EmptyState
+          icon={StickyNote}
+          title="Nenhuma nota"
+          description="Adicione informações importantes sobre a viagem, como horários de check-in, números de emergência ou dicas úteis"
+          action={{
+            label: 'Adicionar primeira nota',
+            onClick: () => setAddNoteDialogOpen(true),
+          }}
+        />
       ) : (
         <div className="space-y-4">
           {notes.map((note) => (
@@ -93,6 +84,13 @@ export function NotesList({ tripId, initialNotes, userRole, currentUserId }: Not
           ))}
         </div>
       )}
+
+      <AddNoteDialog
+        tripId={tripId}
+        onNoteCreated={handleNoteCreated}
+        open={addNoteDialogOpen}
+        onOpenChange={setAddNoteDialogOpen}
+      />
 
       <EditNoteDialog
         note={editingNote}

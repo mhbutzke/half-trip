@@ -38,12 +38,23 @@ import { createTrip } from '@/lib/supabase/trips';
 interface CreateTripDialogProps {
   trigger?: React.ReactNode;
   onSuccess?: () => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function CreateTripDialog({ trigger, onSuccess }: CreateTripDialogProps) {
-  const [open, setOpen] = useState(false);
+export function CreateTripDialog({
+  trigger,
+  onSuccess,
+  open: controlledOpen,
+  onOpenChange,
+}: CreateTripDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
+
+  // Use controlled open state if provided, otherwise use internal state
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = onOpenChange || setInternalOpen;
 
   const form = useForm<CreateTripInput>({
     resolver: zodResolver(createTripSchema),

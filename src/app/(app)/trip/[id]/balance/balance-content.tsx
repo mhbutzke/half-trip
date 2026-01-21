@@ -1,7 +1,7 @@
 'use client';
 
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
+import { EmptyState } from '@/components/ui/empty-state';
 import { TripSummary } from '@/components/summary';
 import { useTripRealtime } from '@/hooks/use-trip-realtime';
 import type { TripExpenseSummary } from '@/types/expense-summary';
@@ -16,6 +16,8 @@ interface BalanceContentProps {
 }
 
 export function BalanceContent({ summary, trip, currentUserId, isOrganizer }: BalanceContentProps) {
+  const router = useRouter();
+
   // Enable real-time updates for this trip
   useTripRealtime({ tripId: trip.id });
 
@@ -23,20 +25,16 @@ export function BalanceContent({ summary, trip, currentUserId, isOrganizer }: Ba
   if (summary.expenseCount === 0) {
     return (
       <main className="container flex-1 space-y-6 px-4 py-6 pb-20 md:pb-6">
-        <div className="flex min-h-[400px] flex-col items-center justify-center space-y-4 text-center">
-          <div className="rounded-full bg-muted p-6">
-            <Receipt className="h-12 w-12 text-muted-foreground" />
-          </div>
-          <div className="space-y-2">
-            <h3 className="text-lg font-semibold">Nenhuma despesa registrada</h3>
-            <p className="max-w-md text-sm text-muted-foreground">
-              Comece a registrar despesas para ver o resumo da viagem
-            </p>
-          </div>
-          <Button asChild>
-            <Link href={`/trip/${trip.id}/expenses`}>Adicionar Despesa</Link>
-          </Button>
-        </div>
+        <EmptyState
+          icon={Receipt}
+          title="Nenhuma despesa registrada"
+          description="Comece a registrar despesas para ver o balanço da viagem e as divisões entre participantes"
+          action={{
+            label: 'Ir para Despesas',
+            onClick: () => router.push(`/trip/${trip.id}/expenses`),
+          }}
+          className="min-h-[400px]"
+        />
       </main>
     );
   }

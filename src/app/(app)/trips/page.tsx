@@ -1,10 +1,13 @@
-import { Suspense } from 'react';
+'use client';
+
+import { Suspense, useState } from 'react';
 import { PageContainer } from '@/components/layout/page-container';
 import { Plane } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TripsList } from './trips-list';
 import { CreateTripDialog } from '@/components/trips/create-trip-dialog';
+import { EmptyState } from '@/components/ui/empty-state';
 
 function TripsLoading() {
   return (
@@ -33,22 +36,22 @@ function TripsLoading() {
   );
 }
 
-function EmptyState() {
+function TripsEmptyState() {
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+
   return (
-    <Card className="border-dashed">
-      <CardHeader className="text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-          <Plane className="h-8 w-8 text-primary" />
-        </div>
-        <CardTitle className="text-xl">Nenhuma viagem ainda</CardTitle>
-        <CardDescription>
-          Crie sua primeira viagem para começar a planejar com seu grupo
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex justify-center">
-        <CreateTripDialog />
-      </CardContent>
-    </Card>
+    <>
+      <EmptyState
+        icon={Plane}
+        title="Nenhuma viagem ainda"
+        description="Crie sua primeira viagem para começar a planejar com seu grupo e dividir despesas de forma justa"
+        action={{
+          label: 'Criar primeira viagem',
+          onClick: () => setCreateDialogOpen(true),
+        }}
+      />
+      <CreateTripDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
+    </>
   );
 }
 
@@ -62,7 +65,7 @@ export default function TripsPage() {
         </div>
 
         <Suspense fallback={<TripsLoading />}>
-          <TripsList emptyState={<EmptyState />} />
+          <TripsList emptyState={<TripsEmptyState />} />
         </Suspense>
       </div>
     </PageContainer>

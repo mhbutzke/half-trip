@@ -1772,7 +1772,9 @@ Implement loading states and skeletons.
 - Build passes successfully with no errors
 - Summary documentation created at `step-7.2-summary.md`
 
-### [ ] Step 7.3: Empty States
+### [x] Step 7.3: Empty States
+
+<!-- chat-id: 38baa211-e2d6-4e32-aa8f-a6ec1c0c862a -->
 
 Implement empty states for lists.
 
@@ -1789,6 +1791,28 @@ Implement empty states for lists.
 - Empty states display when lists empty
 - CTAs lead to add actions
 - Illustrations/icons are appropriate
+
+**Completed:** Comprehensive empty states implemented with:
+
+- `src/components/ui/empty-state.tsx`: Reusable EmptyState component with:
+  - Icon display with circular background
+  - Title and description text
+  - Optional call-to-action button
+  - Customizable styling
+- `src/app/(app)/trips/page.tsx`: Updated trips list with EmptyState component and controlled CreateTripDialog
+- `src/components/trips/create-trip-dialog.tsx`: Added controlled mode support (open/onOpenChange props)
+- `src/app/(app)/trip/[id]/notes/notes-list.tsx`: Updated notes list with EmptyState component
+- `src/components/notes/add-note-dialog.tsx`: Added controlled mode support (open/onOpenChange props)
+- `src/app/(app)/trip/[id]/balance/balance-content.tsx`: Updated balance page with EmptyState component using router navigation
+- `src/app/(app)/trip/[id]/itinerary/day-section.tsx`: Already had good empty state for activities (no changes needed)
+- `src/app/(app)/trip/[id]/participants/participants-list.tsx`: No empty state needed (always has at least one member)
+- All empty states follow consistent design patterns:
+  - Relevant icon in circular background
+  - Clear, friendly title
+  - Helpful description with next steps
+  - Actionable CTA button
+- Build and lint pass successfully with no errors
+- Summary documentation created at `step-7.3-summary.md`
 
 ### [ ] Step 7.4: In-App Notifications
 

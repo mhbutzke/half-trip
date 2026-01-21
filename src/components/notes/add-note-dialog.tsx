@@ -31,11 +31,23 @@ interface AddNoteDialogProps {
   tripId: string;
   trigger?: React.ReactNode;
   onNoteCreated?: (note: NoteWithCreator) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function AddNoteDialog({ tripId, trigger, onNoteCreated }: AddNoteDialogProps) {
-  const [open, setOpen] = useState(false);
+export function AddNoteDialog({
+  tripId,
+  trigger,
+  onNoteCreated,
+  open: controlledOpen,
+  onOpenChange,
+}: AddNoteDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Use controlled open state if provided, otherwise use internal state
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = onOpenChange || setInternalOpen;
 
   const form = useForm<CreateNoteInput>({
     resolver: zodResolver(createNoteSchema),

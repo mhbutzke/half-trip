@@ -223,8 +223,7 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
             <p className="text-xs text-muted-foreground">O email não pode ser alterado.</p>
           </div>
 
-          <Button type="submit" disabled={isUpdatingProfile || !form.formState.isDirty}>
-            {isUpdatingProfile && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          <Button type="submit" loading={isUpdatingProfile} disabled={!form.formState.isDirty}>
             Salvar alterações
           </Button>
         </form>

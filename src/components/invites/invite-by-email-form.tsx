@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, Mail, Send } from 'lucide-react';
+import { Mail, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { emailInviteSchema, type EmailInviteInput } from '@/lib/validation/invite-schemas';
 import { sendEmailInvite } from '@/lib/supabase/invites';
@@ -80,12 +80,8 @@ export function InviteByEmailForm({ tripId, onSuccess }: InviteByEmailFormProps)
                     disabled={isLoading}
                     {...field}
                   />
-                  <Button type="submit" disabled={isLoading} size="icon" className="shrink-0">
-                    {isLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Send className="h-4 w-4" />
-                    )}
+                  <Button type="submit" loading={isLoading} size="icon" className="shrink-0">
+                    {!isLoading && <Send className="h-4 w-4" />}
                     <span className="sr-only">Enviar convite</span>
                   </Button>
                 </div>

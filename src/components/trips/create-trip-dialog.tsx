@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -226,8 +226,7 @@ export function CreateTripDialog({ trigger, onSuccess }: CreateTripDialogProps) 
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Button type="submit" loading={isSubmitting}>
                 Criar viagem
               </Button>
             </DialogFooter>

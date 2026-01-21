@@ -1,6 +1,7 @@
 # Half Trip - Implementation Plan
 
 ## Configuration
+
 - **Artifacts Path**: `.zenflow/tasks/fundacao-b012`
 
 ---
@@ -8,16 +9,19 @@
 ## Workflow Steps
 
 ### [x] Step: Requirements
+
 <!-- chat-id: 18d79e54-3c82-487b-ac1f-8d35012231ed -->
 
 PRD created at `requirements.md`.
 
 ### [x] Step: Technical Specification
+
 <!-- chat-id: fb4808e6-55f2-47d7-aae2-3c271729a089 -->
 
 Technical specification created at `spec.md`.
 
 ### [x] Step: Planning
+
 <!-- chat-id: fabbebbf-b41c-42ad-8ddd-ffa027be8c4d -->
 
 Detailed implementation plan created with 34 implementation steps across 7 phases.
@@ -26,11 +30,14 @@ Detailed implementation plan created with 34 implementation steps across 7 phase
 
 ## Phase 1: Foundation (Core Infrastructure)
 
-### [ ] Step 1.1: Project Scaffolding
+### [x] Step 1.1: Project Scaffolding
+
+<!-- chat-id: cb4ca4c5-7a7b-4fe2-9ace-41856f210a37 -->
 
 Set up Next.js 14 project with App Router, TypeScript, and core tooling.
 
 **Tasks:**
+
 1. Create Next.js 14 project with TypeScript (`pnpm create next-app`)
 2. Configure Tailwind CSS
 3. Set up ESLint, Prettier, and husky with lint-staged
@@ -39,15 +46,19 @@ Set up Next.js 14 project with App Router, TypeScript, and core tooling.
 6. Set up `.gitignore` with standard Next.js ignores
 
 **Verification:**
+
 - `pnpm dev` starts without errors
 - `pnpm lint` passes
 - `pnpm build` succeeds
+
+**Completed:** Project scaffolded with Next.js 16 (latest), TypeScript, Tailwind CSS v4, ESLint, Prettier, husky, and lint-staged.
 
 ### [ ] Step 1.2: UI Component Library Setup
 
 Install and configure shadcn/ui with base components.
 
 **Tasks:**
+
 1. Initialize shadcn/ui (`pnpm dlx shadcn@latest init`)
 2. Install core components: Button, Card, Input, Label, Form, Dialog, Sheet, Select, Avatar, Badge, Tabs, Toast
 3. Create `src/styles/globals.css` with custom CSS variables for Half Trip theme
@@ -55,6 +66,7 @@ Install and configure shadcn/ui with base components.
 5. Create layout components: `Header`, `MobileNav`, `PageContainer`
 
 **Verification:**
+
 - Components render correctly in dev mode
 - Responsive layout works on mobile viewport
 
@@ -63,6 +75,7 @@ Install and configure shadcn/ui with base components.
 Configure Supabase backend and database schema.
 
 **Tasks:**
+
 1. Create `supabase/` directory structure
 2. Create initial migration file with all tables from spec:
    - `users`, `trips`, `trip_members`, `activities`, `activity_attachments`
@@ -72,6 +85,7 @@ Configure Supabase backend and database schema.
 5. Create `supabase/seed.sql` with sample data for development
 
 **Verification:**
+
 - Migrations apply without errors
 - RLS policies prevent unauthorized access
 
@@ -80,6 +94,7 @@ Configure Supabase backend and database schema.
 Set up Supabase client for frontend with SSR support.
 
 **Tasks:**
+
 1. Install `@supabase/ssr` and `@supabase/supabase-js`
 2. Create `src/lib/supabase/client.ts` (browser client)
 3. Create `src/lib/supabase/server.ts` (server client)
@@ -88,6 +103,7 @@ Set up Supabase client for frontend with SSR support.
 6. Create `src/types/database.ts` with generated types
 
 **Verification:**
+
 - TypeScript types match database schema
 - Client connects to Supabase in dev
 
@@ -96,6 +112,7 @@ Set up Supabase client for frontend with SSR support.
 Implement user registration, login, and password recovery.
 
 **Tasks:**
+
 1. Create auth layout group: `src/app/(auth)/layout.tsx`
 2. Create registration page: `src/app/(auth)/register/page.tsx`
 3. Create login page: `src/app/(auth)/login/page.tsx`
@@ -106,6 +123,7 @@ Implement user registration, login, and password recovery.
 8. Add middleware for protected routes
 
 **Verification:**
+
 - User can register with email/password
 - User can login and logout
 - Password reset flow works
@@ -116,6 +134,7 @@ Implement user registration, login, and password recovery.
 Implement user profile view and edit functionality.
 
 **Tasks:**
+
 1. Create authenticated layout: `src/app/(app)/layout.tsx`
 2. Create user settings page: `src/app/(app)/settings/page.tsx`
 3. Create `ProfileForm` component for editing name and avatar
@@ -123,6 +142,7 @@ Implement user profile view and edit functionality.
 5. Create `useUser` hook for accessing current user
 
 **Verification:**
+
 - User can view and edit profile
 - Avatar upload works
 - Changes persist after refresh
@@ -132,6 +152,7 @@ Implement user profile view and edit functionality.
 Implement basic trip management.
 
 **Tasks:**
+
 1. Create trip API layer: `src/lib/supabase/trips.ts`
 2. Create trips list page: `src/app/(app)/trips/page.tsx`
 3. Create trip detail page: `src/app/(app)/trip/[id]/page.tsx`
@@ -142,6 +163,7 @@ Implement basic trip management.
 8. Implement archive/delete trip functionality
 
 **Verification:**
+
 - User can create, view, edit, archive trips
 - Trip list shows user's trips
 - Navigation between list and detail works
@@ -151,6 +173,7 @@ Implement basic trip management.
 Finalize responsive layout for all Phase 1 pages.
 
 **Tasks:**
+
 1. Create mobile bottom navigation: `BottomNav` component
 2. Implement responsive header with hamburger menu
 3. Add touch-friendly tap targets (min 44px)
@@ -158,6 +181,7 @@ Finalize responsive layout for all Phase 1 pages.
 5. Add loading skeletons for async content
 
 **Verification:**
+
 - All pages work on 320px-428px viewport
 - Navigation is accessible on mobile
 - No horizontal scroll on mobile
@@ -171,6 +195,7 @@ Finalize responsive layout for all Phase 1 pages.
 Implement shareable invite link functionality.
 
 **Tasks:**
+
 1. Create invite API layer: `src/lib/supabase/invites.ts`
 2. Create `generateInviteCode` utility (short, unique codes)
 3. Create invite management UI in trip settings
@@ -178,6 +203,7 @@ Implement shareable invite link functionality.
 5. Create `CopyInviteLink` component with share functionality
 
 **Verification:**
+
 - Organizer can generate invite link
 - Link contains valid invite code
 - Copy to clipboard works
@@ -187,6 +213,7 @@ Implement shareable invite link functionality.
 Implement the flow for accepting invites.
 
 **Tasks:**
+
 1. Create invite page: `src/app/invite/[code]/page.tsx`
 2. Handle three scenarios:
    - User logged in: join trip directly
@@ -196,6 +223,7 @@ Implement the flow for accepting invites.
 4. Add user to trip as participant
 
 **Verification:**
+
 - Valid invite code allows joining trip
 - Expired invite shows appropriate message
 - User is added as participant with correct role
@@ -205,6 +233,7 @@ Implement the flow for accepting invites.
 Implement email-based invitations using Resend.
 
 **Tasks:**
+
 1. Install Resend SDK
 2. Create Supabase Edge Function: `supabase/functions/send-invite/index.ts`
 3. Create email template for invitations
@@ -212,6 +241,7 @@ Implement email-based invitations using Resend.
 5. Store email invites in `trip_invites` table
 
 **Verification:**
+
 - Email is sent to invited address
 - Email contains valid invite link
 - Invite is tracked in database
@@ -221,6 +251,7 @@ Implement email-based invitations using Resend.
 Implement participant list and management.
 
 **Tasks:**
+
 1. Create participants page: `src/app/(app)/trip/[id]/participants/page.tsx`
 2. Create `ParticipantsList` component with avatars and roles
 3. Create `ParticipantCard` component
@@ -229,6 +260,7 @@ Implement participant list and management.
 6. Create pending invites list
 
 **Verification:**
+
 - Participant list shows all members
 - Organizer can remove participants
 - User can leave trip
@@ -239,6 +271,7 @@ Implement participant list and management.
 Implement permission checks throughout the app.
 
 **Tasks:**
+
 1. Create `usePermissions` hook
 2. Create `can` helper function for permission checks
 3. Add permission guards to UI components
@@ -246,6 +279,7 @@ Implement permission checks throughout the app.
 5. Hide/disable actions based on role
 
 **Verification:**
+
 - Participants cannot edit trip details
 - Participants cannot remove other participants
 - Organizers have full access
@@ -259,6 +293,7 @@ Implement permission checks throughout the app.
 Implement activity management.
 
 **Tasks:**
+
 1. Create activity API layer: `src/lib/supabase/activities.ts`
 2. Create `src/lib/validation/activity-schemas.ts`
 3. Create `AddActivityDialog` component
@@ -267,6 +302,7 @@ Implement activity management.
 6. Create activity categories with icons
 
 **Verification:**
+
 - User can add, edit, delete activities
 - Validation works correctly
 - Category icons display
@@ -276,6 +312,7 @@ Implement activity management.
 Implement itinerary visualization organized by days.
 
 **Tasks:**
+
 1. Create itinerary page: `src/app/(app)/trip/[id]/itinerary/page.tsx`
 2. Create `DaySection` component
 3. Create `ActivityCard` component
@@ -284,6 +321,7 @@ Implement itinerary visualization organized by days.
 6. Show empty state for days without activities
 
 **Verification:**
+
 - Days are displayed chronologically
 - Activities appear under correct day
 - Empty days show add activity prompt
@@ -293,6 +331,7 @@ Implement itinerary visualization organized by days.
 Implement activity reordering with drag and drop.
 
 **Tasks:**
+
 1. Install drag-and-drop library (dnd-kit or similar)
 2. Add drag handles to `ActivityCard`
 3. Implement reorder within same day
@@ -301,6 +340,7 @@ Implement activity reordering with drag and drop.
 6. Add optimistic updates
 
 **Verification:**
+
 - Activities can be reordered via drag
 - Activities can be moved between days
 - Order persists after refresh
@@ -310,6 +350,7 @@ Implement activity reordering with drag and drop.
 Implement file upload for activities.
 
 **Tasks:**
+
 1. Configure Supabase Storage bucket for attachments
 2. Create `FileUpload` component
 3. Create `AttachmentsList` component
@@ -318,6 +359,7 @@ Implement file upload for activities.
 6. Implement file preview/download
 
 **Verification:**
+
 - Files can be uploaded to activities
 - Files are displayed and downloadable
 - File size limits are enforced
@@ -327,6 +369,7 @@ Implement file upload for activities.
 Implement general notes for the trip.
 
 **Tasks:**
+
 1. Create trip notes API layer: `src/lib/supabase/notes.ts`
 2. Create notes section in trip detail
 3. Create `AddNoteDialog` component
@@ -334,6 +377,7 @@ Implement general notes for the trip.
 5. Implement edit and delete notes
 
 **Verification:**
+
 - Notes can be added, edited, deleted
 - Notes show author and timestamp
 - Notes persist correctly
@@ -347,6 +391,7 @@ Implement general notes for the trip.
 Implement expense management.
 
 **Tasks:**
+
 1. Create expense API layer: `src/lib/supabase/expenses.ts`
 2. Create `src/lib/validation/expense-schemas.ts`
 3. Create expenses page: `src/app/(app)/trip/[id]/expenses/page.tsx`
@@ -355,6 +400,7 @@ Implement expense management.
 6. Implement delete expense with confirmation
 
 **Verification:**
+
 - User can add, edit, delete expenses
 - Validation works correctly
 - Expenses appear in list
@@ -364,6 +410,7 @@ Implement expense management.
 Implement different ways to split expenses.
 
 **Tasks:**
+
 1. Create `SplitSelector` component
 2. Implement equal split calculation
 3. Implement split by specific amounts
@@ -372,6 +419,7 @@ Implement different ways to split expenses.
 6. Create `expense_splits` records automatically
 
 **Verification:**
+
 - All split types calculate correctly
 - Splits sum to total expense amount
 - Participants can be excluded from split
@@ -381,6 +429,7 @@ Implement different ways to split expenses.
 Implement expense list with filtering and search.
 
 **Tasks:**
+
 1. Create `ExpenseList` component
 2. Create `ExpenseCard` component with category icon
 3. Implement category filter
@@ -389,6 +438,7 @@ Implement expense list with filtering and search.
 6. Implement search by description
 
 **Verification:**
+
 - Expenses display with correct info
 - Filters work correctly
 - Search finds matching expenses
@@ -398,6 +448,7 @@ Implement expense list with filtering and search.
 Implement receipt photo/file upload.
 
 **Tasks:**
+
 1. Configure Supabase Storage bucket for receipts
 2. Create `ReceiptUpload` component with camera capture (mobile)
 3. Add receipt preview in expense detail
@@ -405,6 +456,7 @@ Implement receipt photo/file upload.
 5. Support image compression for mobile uploads
 
 **Verification:**
+
 - Receipts can be uploaded from gallery
 - Camera capture works on mobile
 - Receipt preview displays correctly
@@ -418,12 +470,14 @@ Implement receipt photo/file upload.
 Implement balance calculation algorithm.
 
 **Tasks:**
+
 1. Create `src/lib/balance/calculate-balance.ts`
 2. Implement `calculateBalances` function
 3. Create `useBalance` hook with React Query
 4. Add balance calculation tests
 
 **Verification:**
+
 - Balances calculate correctly
 - Net balance = paid - owed
 - Total debts equal total credits
@@ -433,6 +487,7 @@ Implement balance calculation algorithm.
 Implement balance visualization per participant.
 
 **Tasks:**
+
 1. Create balance page: `src/app/(app)/trip/[id]/balance/page.tsx`
 2. Create `BalanceSummary` component
 3. Create `ParticipantBalance` component
@@ -440,6 +495,7 @@ Implement balance visualization per participant.
 5. Visual indicators for positive/negative balance
 
 **Verification:**
+
 - Each participant's balance displays
 - Positive/negative clearly distinguished
 - Total expense summary is accurate
@@ -449,12 +505,14 @@ Implement balance visualization per participant.
 Implement optimized debt settlement algorithm.
 
 **Tasks:**
+
 1. Create `calculateSettlements` function
 2. Implement debt simplification (minimize transactions)
 3. Create `SettlementsList` component
 4. Show "X owes Y amount" clearly
 
 **Verification:**
+
 - Settlements minimize number of transactions
 - All debts are covered
 - Display is clear and actionable
@@ -464,6 +522,7 @@ Implement optimized debt settlement algorithm.
 Implement marking debts as settled.
 
 **Tasks:**
+
 1. Create settlement tracking UI
 2. Create `MarkSettledDialog` component
 3. Store settlements in database
@@ -471,6 +530,7 @@ Implement marking debts as settled.
 5. Show settlement history
 
 **Verification:**
+
 - Settlements can be marked as paid
 - Balance updates after settlement
 - Settlement history is visible
@@ -480,6 +540,7 @@ Implement marking debts as settled.
 Implement comprehensive trip expense summary.
 
 **Tasks:**
+
 1. Create summary section on balance page
 2. Show total trip expenses
 3. Show expenses by category (with chart)
@@ -487,6 +548,7 @@ Implement comprehensive trip expense summary.
 5. Show per-person average
 
 **Verification:**
+
 - Summary totals are accurate
 - Category breakdown is correct
 - Charts render properly
@@ -500,6 +562,7 @@ Implement comprehensive trip expense summary.
 Implement real-time updates.
 
 **Tasks:**
+
 1. Create `src/hooks/use-trip-realtime.ts`
 2. Subscribe to activities changes
 3. Subscribe to expenses changes
@@ -507,6 +570,7 @@ Implement real-time updates.
 5. Invalidate React Query caches on changes
 
 **Verification:**
+
 - Changes appear instantly for all users
 - No page refresh needed
 - Subscriptions clean up properly
@@ -516,12 +580,14 @@ Implement real-time updates.
 Show who is currently viewing the trip.
 
 **Tasks:**
+
 1. Implement Supabase Presence tracking
 2. Create `OnlineIndicator` component
 3. Show online avatars in trip header
 4. Track presence per trip channel
 
 **Verification:**
+
 - Online users are displayed
 - Presence updates when users join/leave
 - Multiple tabs handled correctly
@@ -531,6 +597,7 @@ Show who is currently viewing the trip.
 Set up offline storage with Dexie.js.
 
 **Tasks:**
+
 1. Install Dexie.js
 2. Create `src/lib/sync/db.ts` with schema
 3. Mirror relevant tables: trips, activities, expenses, splits
@@ -538,6 +605,7 @@ Set up offline storage with Dexie.js.
 5. Create DB initialization on app load
 
 **Verification:**
+
 - IndexedDB schema created
 - Data can be written and read
 - Schema matches server structure
@@ -547,6 +615,7 @@ Set up offline storage with Dexie.js.
 Implement reading data when offline.
 
 **Tasks:**
+
 1. Create `useTripOffline` hook
 2. Cache trip data on fetch
 3. Serve from IndexedDB when offline
@@ -554,6 +623,7 @@ Implement reading data when offline.
 5. Create `useOnlineStatus` hook
 
 **Verification:**
+
 - App loads with cached data offline
 - Offline indicator displays
 - Previously viewed trips accessible
@@ -563,6 +633,7 @@ Implement reading data when offline.
 Implement offline writes with sync queue.
 
 **Tasks:**
+
 1. Create `src/lib/sync/sync-engine.ts`
 2. Implement write queue for offline changes
 3. Mark local changes as "pending"
@@ -570,6 +641,7 @@ Implement offline writes with sync queue.
 5. Implement queue processing when online
 
 **Verification:**
+
 - Changes save locally when offline
 - Pending items show indicator
 - Queue persists across app restarts
@@ -579,6 +651,7 @@ Implement offline writes with sync queue.
 Implement synchronization when back online.
 
 **Tasks:**
+
 1. Implement automatic sync on reconnect
 2. Implement last-write-wins conflict resolution
 3. Handle sync errors gracefully
@@ -586,6 +659,7 @@ Implement synchronization when back online.
 5. Allow manual retry for failed syncs
 
 **Verification:**
+
 - Data syncs automatically on reconnect
 - Conflicts resolved correctly
 - Sync errors can be retried
@@ -595,6 +669,7 @@ Implement synchronization when back online.
 Configure Progressive Web App capabilities.
 
 **Tasks:**
+
 1. Install and configure next-pwa
 2. Create `src/app/manifest.ts`
 3. Generate PWA icons (multiple sizes)
@@ -603,6 +678,7 @@ Configure Progressive Web App capabilities.
 6. Configure offline fallback page
 
 **Verification:**
+
 - App installable on mobile
 - Works offline after installation
 - Service worker caches assets
@@ -616,6 +692,7 @@ Configure Progressive Web App capabilities.
 Implement comprehensive error handling.
 
 **Tasks:**
+
 1. Create error boundary components
 2. Create user-friendly error messages
 3. Handle API errors gracefully
@@ -623,6 +700,7 @@ Implement comprehensive error handling.
 5. Create `src/app/error.tsx` and `not-found.tsx`
 
 **Verification:**
+
 - Errors don't crash the app
 - Users see helpful error messages
 - Errors are logged
@@ -632,6 +710,7 @@ Implement comprehensive error handling.
 Implement loading states and skeletons.
 
 **Tasks:**
+
 1. Create skeleton components for each card type
 2. Add loading states to all async operations
 3. Create `loading.tsx` for route transitions
@@ -639,6 +718,7 @@ Implement loading states and skeletons.
 5. Implement optimistic updates where appropriate
 
 **Verification:**
+
 - Loading states visible during fetches
 - Skeletons match content layout
 - No content flash on navigation
@@ -648,6 +728,7 @@ Implement loading states and skeletons.
 Implement empty states for lists.
 
 **Tasks:**
+
 1. Create `EmptyState` component
 2. Add empty state for trips list
 3. Add empty state for activities
@@ -655,6 +736,7 @@ Implement empty states for lists.
 5. Include call-to-action in empty states
 
 **Verification:**
+
 - Empty states display when lists empty
 - CTAs lead to add actions
 - Illustrations/icons are appropriate
@@ -664,6 +746,7 @@ Implement empty states for lists.
 Implement notification system.
 
 **Tasks:**
+
 1. Create notification store with Zustand
 2. Create `NotificationToast` component
 3. Trigger notifications on key events:
@@ -673,6 +756,7 @@ Implement notification system.
 4. Implement notification settings
 
 **Verification:**
+
 - Notifications display on events
 - Can be dismissed
 - Settings control notification types
@@ -682,6 +766,7 @@ Implement notification system.
 Optimize app performance.
 
 **Tasks:**
+
 1. Implement dynamic imports for heavy components
 2. Optimize images with next/image
 3. Review and optimize bundle size
@@ -689,6 +774,7 @@ Optimize app performance.
 5. Profile and fix re-renders
 
 **Verification:**
+
 - Lighthouse performance score > 90
 - First contentful paint < 1.5s
 - Time to interactive < 3s
@@ -698,6 +784,7 @@ Optimize app performance.
 Ensure accessibility compliance.
 
 **Tasks:**
+
 1. Audit with axe DevTools
 2. Fix color contrast issues
 3. Add proper ARIA labels
@@ -705,6 +792,7 @@ Ensure accessibility compliance.
 5. Test with screen reader
 
 **Verification:**
+
 - No critical accessibility violations
 - Keyboard navigation complete
 - Form labels associated correctly
@@ -714,6 +802,7 @@ Ensure accessibility compliance.
 Write unit tests for core logic.
 
 **Tasks:**
+
 1. Configure Vitest
 2. Test balance calculation
 3. Test settlement algorithm
@@ -722,6 +811,7 @@ Write unit tests for core logic.
 6. Test utility functions
 
 **Verification:**
+
 - `pnpm test` passes
 - Coverage > 80% for lib/
 - Critical paths tested
@@ -731,6 +821,7 @@ Write unit tests for core logic.
 Write end-to-end tests for critical flows.
 
 **Tasks:**
+
 1. Configure Playwright
 2. Test registration and login flow
 3. Test create trip flow
@@ -739,6 +830,7 @@ Write end-to-end tests for critical flows.
 6. Test balance view
 
 **Verification:**
+
 - `pnpm test:e2e` passes
 - Critical user journeys covered
 - Tests run in CI
@@ -748,6 +840,7 @@ Write end-to-end tests for critical flows.
 Deploy to production environment.
 
 **Tasks:**
+
 1. Set up Vercel project
 2. Configure environment variables
 3. Set up Supabase production project
@@ -756,6 +849,7 @@ Deploy to production environment.
 6. Verify deployment
 
 **Verification:**
+
 - App accessible at production URL
 - All features work in production
 - SSL certificate valid
@@ -765,12 +859,14 @@ Deploy to production environment.
 Set up basic monitoring.
 
 **Tasks:**
+
 1. Enable Vercel Analytics
 2. Set up Supabase monitoring
 3. Configure error alerting
 4. Document operational procedures
 
 **Verification:**
+
 - Analytics tracking page views
 - Error alerts configured
 - Runbook documented

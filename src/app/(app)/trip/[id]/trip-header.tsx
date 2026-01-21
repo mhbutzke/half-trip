@@ -34,8 +34,10 @@ import {
 import { EditTripDialog } from '@/components/trips/edit-trip-dialog';
 import { DeleteTripDialog } from '@/components/trips/delete-trip-dialog';
 import { InviteDialog } from '@/components/invites/invite-dialog';
+import { OnlineIndicator } from '@/components/presence/online-indicator';
 import { archiveTrip, unarchiveTrip, type TripWithMembers } from '@/lib/supabase/trips';
 import { can } from '@/lib/permissions';
+import { useTripPresence, type PresenceUser } from '@/hooks/use-trip-presence';
 import type { TripStyle, TripMemberRole } from '@/types/database';
 import Link from 'next/link';
 
@@ -43,6 +45,11 @@ interface TripHeaderProps {
   trip: TripWithMembers;
   userRole: TripMemberRole | null;
   currentUserId?: string;
+  currentUser?: {
+    id: string;
+    name: string;
+    avatar_url: string | null;
+  } | null;
 }
 
 const styleIcons: Record<TripStyle, typeof Mountain> = {
@@ -87,7 +94,7 @@ function getTripStatus(startDate: string, endDate: string) {
   return { label: 'Em andamento', variant: 'default' as const };
 }
 
-export function TripHeader({ trip, userRole, currentUserId }: TripHeaderProps) {
+export function TripHeader({ trip, userRole, currentUserId, currentUser }: TripHeaderProps) {
   const router = useRouter();
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -103,6 +110,17 @@ export function TripHeader({ trip, userRole, currentUserId }: TripHeaderProps) {
   const canArchiveTrip = can('ARCHIVE_TRIP', userRole);
   const canDeleteTrip = can('DELETE_TRIP', userRole);
   const canInvite = can('INVITE_MEMBERS', userRole);
+
+  // Track presence
+  const presenceUser: PresenceUser | null = currentUser
+    ? {
+        user_id: currentUser.id,
+        name: currentUser.name,
+        avatar_url: currentUser.avatar_url,
+      }
+    : null;
+
+  const { otherUsers } = useTripPresence(trip.id, presenceUser);
 
   const formatDate = (date: string) => {
     return format(new Date(date), "d 'de' MMMM 'de' yyyy", { locale: ptBR });
@@ -282,6 +300,14 @@ export function TripHeader({ trip, userRole, currentUserId }: TripHeaderProps) {
                 </span>
               </div>
             </div>
+
+            {/* Online presence indicators */}
+            {otherUsers.length > 0 && (
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                <OnlineIndicator onlineUsers={otherUsers} maxVisible={3} />
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, StickyNote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { NoteCard } from '@/components/notes/note-card';
 import { AddNoteDialog } from '@/components/notes/add-note-dialog';
 import { EditNoteDialog } from '@/components/notes/edit-note-dialog';
 import { DeleteNoteDialog } from '@/components/notes/delete-note-dialog';
+import { useTripRealtime } from '@/hooks/use-trip-realtime';
 import type { NoteWithCreator } from '@/lib/supabase/notes';
 import type { TripMemberRole } from '@/types/database';
 
@@ -21,6 +22,14 @@ export function NotesList({ tripId, initialNotes, userRole, currentUserId }: Not
   const [notes, setNotes] = useState<NoteWithCreator[]>(initialNotes);
   const [editingNote, setEditingNote] = useState<NoteWithCreator | null>(null);
   const [deletingNote, setDeletingNote] = useState<NoteWithCreator | null>(null);
+
+  // Enable real-time updates for this trip
+  useTripRealtime({ tripId });
+
+  // Sync notes when initialNotes changes (from real-time updates)
+  useEffect(() => {
+    setNotes(initialNotes);
+  }, [initialNotes]);
 
   const handleNoteCreated = (newNote: NoteWithCreator) => {
     setNotes((prev) => [newNote, ...prev]);

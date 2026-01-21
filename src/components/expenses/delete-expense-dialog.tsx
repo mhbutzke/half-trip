@@ -14,7 +14,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { deleteExpense } from '@/lib/supabase/expenses';
-import type { ExpenseWithDetails } from '@/lib/supabase/expenses';
+import type { ExpenseWithDetails } from '@/types/expense';
 
 interface DeleteExpenseDialogProps {
   expense: ExpenseWithDetails | null;

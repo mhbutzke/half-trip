@@ -1194,7 +1194,9 @@ Implement comprehensive trip expense summary.
 
 ## Phase 6: Real-time & Offline
 
-### [ ] Step 6.1: Supabase Realtime Integration
+### [x] Step 6.1: Supabase Realtime Integration
+
+<!-- chat-id: d60d7cf4-cf67-4fa8-b520-f54364ac9b2b -->
 
 Implement real-time updates.
 
@@ -1212,7 +1214,24 @@ Implement real-time updates.
 - No page refresh needed
 - Subscriptions clean up properly
 
-### [ ] Step 6.2: Presence Indicators
+**Completed:** Supabase Realtime integration fully implemented with:
+
+- `src/hooks/use-realtime-subscription.ts`: Generic hook for subscribing to Supabase Realtime postgres_changes events with automatic cleanup on unmount. Supports filtering, event types (INSERT, UPDATE, DELETE, \*), and custom callbacks for each event type.
+- `src/hooks/use-trip-realtime.ts`: Trip-specific hook that subscribes to all trip-related tables (trips, activities, expenses, trip_members, trip_notes, settlements) and automatically invalidates React Query caches when data changes.
+- Integrated real-time updates in:
+  - `src/app/(app)/trip/[id]/itinerary/itinerary-list.tsx`: Activities automatically update across all users
+  - `src/app/(app)/trip/[id]/balance/balance-content.tsx`: Balance and expenses update in real-time
+  - `src/app/(app)/trip/[id]/notes/notes-list.tsx`: Notes update instantly when created/edited/deleted
+  - `src/app/(app)/trip/[id]/participants/participants-list.tsx`: Participant list updates when members join/leave
+  - `src/app/(app)/trip/[id]/trip-overview.tsx`: Trip overview reflects changes immediately
+  - `src/app/(app)/trips/trips-list.tsx`: Trips list updates when trips are created/modified
+- All subscriptions include proper cleanup on component unmount
+- Console logging for debugging realtime events
+- Changes appear instantly across multiple tabs/users without page refresh
+
+### [x] Step 6.2: Presence Indicators
+
+<!-- chat-id: d60d7cf4-cf67-4fa8-b520-f54364ac9b2b -->
 
 Show who is currently viewing the trip.
 
@@ -1228,6 +1247,32 @@ Show who is currently viewing the trip.
 - Online users are displayed
 - Presence updates when users join/leave
 - Multiple tabs handled correctly
+
+**Completed:** Presence indicators fully implemented with:
+
+- `src/hooks/use-trip-presence.ts`: Hook for tracking presence using Supabase Realtime Presence:
+  - Connects to trip-specific channel (`trip:{tripId}:presence`)
+  - Tracks current user's presence with user ID, name, and avatar
+  - Listens to presence sync, join, and leave events
+  - Returns online users and filters out current user
+  - Automatically untracks presence on unmount
+- `src/components/presence/online-indicator.tsx`: OnlineIndicator component displaying:
+  - Online user avatars with green indicator dots
+  - Stacked avatar layout (max 5 visible)
+  - "+N" badge for additional online users
+  - Tooltips showing user names and "Online agora" status
+  - Proper touch-friendly design
+- `src/components/presence/index.ts`: Barrel export for presence components
+- `src/app/(app)/trip/[id]/trip-header.tsx`: Updated to integrate presence indicators:
+  - Accepts currentUser prop with full user data
+  - Initializes presence tracking with `useTripPresence` hook
+  - Displays OnlineIndicator component next to member count
+  - Shows pulsing green dot when others are online
+  - maxVisible set to 3 for compact display
+- `src/app/(app)/trip/[id]/page.tsx`: Updated to fetch and pass full user profile using `getUserProfile()`
+- `src/types/expense.ts`: Created separate types file for expense-related types to avoid "use server" export restrictions
+- Fixed Next.js build issue with expense type exports from "use server" files
+- Build passes successfully with all presence functionality working
 
 ### [ ] Step 6.3: IndexedDB Setup
 

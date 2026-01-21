@@ -13,7 +13,7 @@ import { SettlementHistory } from '@/components/settlements/settlement-history';
 import { createSettlement } from '@/lib/supabase/settlements';
 import { formatCurrency } from '@/lib/utils/currency';
 import { toast } from 'sonner';
-import type { TripExpenseSummary } from '@/lib/supabase/expense-summary';
+import type { TripExpenseSummary } from '@/types/expense-summary';
 import type { Settlement } from '@/lib/balance';
 
 interface TripSummaryProps {

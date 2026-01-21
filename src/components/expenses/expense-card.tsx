@@ -17,7 +17,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { cn } from '@/lib/utils';
 import { getCategoryInfo } from '@/lib/utils/expense-categories';
 import { formatAmount } from '@/lib/validation/expense-schemas';
-import type { ExpenseWithDetails } from '@/lib/supabase/expenses';
+import type { ExpenseWithDetails } from '@/types/expense';
 
 interface ExpenseCardProps {
   expense: ExpenseWithDetails;

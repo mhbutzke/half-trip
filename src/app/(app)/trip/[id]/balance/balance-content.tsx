@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { TripSummary } from '@/components/summary';
-import type { TripExpenseSummary } from '@/lib/supabase/expense-summary';
+import { useTripRealtime } from '@/hooks/use-trip-realtime';
+import type { TripExpenseSummary } from '@/types/expense-summary';
 import type { Trip } from '@/types/database';
 import { Receipt } from 'lucide-react';
 
@@ -15,6 +16,9 @@ interface BalanceContentProps {
 }
 
 export function BalanceContent({ summary, trip, currentUserId, isOrganizer }: BalanceContentProps) {
+  // Enable real-time updates for this trip
+  useTripRealtime({ tripId: trip.id });
+
   // Show empty state if no expenses
   if (summary.expenseCount === 0) {
     return (

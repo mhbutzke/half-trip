@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { ParticipantCard } from './participant-card';
 import { LeaveDialog } from './leave-dialog';
+import { useTripRealtime } from '@/hooks/use-trip-realtime';
 import type { TripMemberWithUser } from '@/lib/supabase/trips';
 import type { TripInviteWithInviter } from '@/lib/supabase/invites';
 
@@ -27,6 +28,9 @@ export function ParticipantsList({
   tripId,
 }: ParticipantsListProps) {
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
+
+  // Enable real-time updates for this trip
+  useTripRealtime({ tripId });
 
   // Separate organizers and participants
   const organizers = members.filter((m) => m.role === 'organizer');

@@ -6,6 +6,7 @@ import { Calendar, DollarSign, FileText, Users, ChevronRight, Plus } from 'lucid
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { InviteDialog } from '@/components/invites/invite-dialog';
+import { useTripRealtime } from '@/hooks/use-trip-realtime';
 import type { TripWithMembers } from '@/lib/supabase/trips';
 
 interface TripOverviewProps {
@@ -55,6 +56,9 @@ const sections = [
 
 export function TripOverview({ trip, userRole, currentUserId }: TripOverviewProps) {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
+
+  // Enable real-time updates for this trip
+  useTripRealtime({ tripId: trip.id });
 
   return (
     <>

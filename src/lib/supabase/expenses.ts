@@ -2,51 +2,12 @@
 
 import { createClient } from './server';
 import { revalidatePath } from 'next/cache';
-import type { Expense, ExpenseSplit, ExpenseCategory } from '@/types/database';
-
-export type ExpenseResult = {
-  error?: string;
-  success?: boolean;
-  expenseId?: string;
-};
-
-export type ExpenseWithDetails = Expense & {
-  paid_by_user: {
-    id: string;
-    name: string;
-    avatar_url: string | null;
-  };
-  created_by_user: {
-    id: string;
-    name: string;
-    avatar_url: string | null;
-  };
-  expense_splits: (ExpenseSplit & {
-    users: {
-      id: string;
-      name: string;
-      avatar_url: string | null;
-    };
-  })[];
-};
-
-export type CreateExpenseInput = {
-  trip_id: string;
-  description: string;
-  amount: number;
-  currency?: string;
-  date: string;
-  category: ExpenseCategory;
-  paid_by: string;
-  notes?: string | null;
-  splits: {
-    user_id: string;
-    amount: number;
-    percentage?: number | null;
-  }[];
-};
-
-export type UpdateExpenseInput = Partial<Omit<CreateExpenseInput, 'trip_id'>>;
+import type {
+  ExpenseResult,
+  ExpenseWithDetails,
+  CreateExpenseInput,
+  UpdateExpenseInput,
+} from '@/types/expense';
 
 /**
  * Creates a new expense for a trip with splits
@@ -506,15 +467,3 @@ export async function getTripExpensesTotal(tripId: string): Promise<number> {
 
   return expenses.reduce((sum, expense) => sum + expense.amount, 0);
 }
-
-/**
- * Expense categories with labels and icons info
- */
-export const expenseCategories: { value: ExpenseCategory; label: string }[] = [
-  { value: 'accommodation', label: 'Hospedagem' },
-  { value: 'food', label: 'Alimentação' },
-  { value: 'transport', label: 'Transporte' },
-  { value: 'tickets', label: 'Ingressos' },
-  { value: 'shopping', label: 'Compras' },
-  { value: 'other', label: 'Outros' },
-];

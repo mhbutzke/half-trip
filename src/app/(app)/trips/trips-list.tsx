@@ -8,6 +8,7 @@ import { TripCard } from '@/components/trips/trip-card';
 import { EditTripDialog } from '@/components/trips/edit-trip-dialog';
 import { DeleteTripDialog } from '@/components/trips/delete-trip-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useRealtimeSubscription } from '@/hooks/use-realtime-subscription';
 import {
   getUserTrips,
   getArchivedTrips,
@@ -44,6 +45,15 @@ export function TripsList({ emptyState }: TripsListProps) {
   useEffect(() => {
     loadTrips();
   }, [loadTrips]);
+
+  // Subscribe to trip changes
+  useRealtimeSubscription({
+    table: 'trips',
+    onChange: () => {
+      console.log('🔄 Trips changed, reloading list');
+      loadTrips();
+    },
+  });
 
   const handleEdit = (trip: TripWithMembers) => {
     setEditingTrip(trip);

@@ -38,9 +38,7 @@ export const createExpenseSchema = z.object({
     .min(1, 'Descrição é obrigatória')
     .min(2, 'Descrição deve ter pelo menos 2 caracteres')
     .max(200, 'Descrição deve ter no máximo 200 caracteres'),
-  amount: z
-    .number({ required_error: 'Valor é obrigatório' })
-    .positive('Valor deve ser maior que zero'),
+  amount: z.number({ message: 'Valor é obrigatório' }).positive('Valor deve ser maior que zero'),
   currency: z.string().length(3, 'Moeda deve ter 3 caracteres').default('BRL'),
   date: z.string().min(1, 'Data é obrigatória'),
   category: z

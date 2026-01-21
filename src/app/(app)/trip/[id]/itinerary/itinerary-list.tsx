@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   DndContext,
@@ -26,6 +26,7 @@ import { DeleteActivityDialog } from './delete-activity-dialog';
 import { AddActivityDialog } from '@/components/activities/add-activity-dialog';
 import { EditActivityDialog } from '@/components/activities/edit-activity-dialog';
 import { reorderActivities } from '@/lib/supabase/activities';
+import { useTripRealtime } from '@/hooks/use-trip-realtime';
 import type { ActivityWithCreator } from '@/lib/supabase/activities';
 import type { Activity } from '@/types/database';
 
@@ -53,6 +54,14 @@ export function ItineraryList({
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  // Enable real-time updates for this trip
+  useTripRealtime({ tripId });
+
+  // Sync activities when initialActivities changes (from real-time updates)
+  useEffect(() => {
+    setActivities(initialActivities);
+  }, [initialActivities]);
 
   // Generate all days in the trip range
   const tripDays = useMemo(() => {

@@ -155,7 +155,7 @@ Set up Supabase client for frontend with SSR support.
 - Public routes configured: /, /login, /register, /forgot-password, /invite/\*
 - Build and lint pass successfully
 
-### [ ] Step 1.5: Authentication Flow
+### [x] Step 1.5: Authentication Flow
 
 <!-- chat-id: 442b382c-eb4d-4458-af15-effa3dae90e4 -->
 
@@ -178,6 +178,22 @@ Implement user registration, login, and password recovery.
 - User can login and logout
 - Password reset flow works
 - Protected routes redirect unauthenticated users
+
+**Completed:** Full authentication flow implemented with:
+
+- `src/app/(auth)/layout.tsx`: Auth layout with header, centered content, and footer tagline
+- `src/app/(auth)/login/page.tsx`: Login form with email/password, error handling, redirect support, Suspense for useSearchParams
+- `src/app/(auth)/register/page.tsx`: Registration form with name, email, password, confirm password, success state with email confirmation message
+- `src/app/(auth)/forgot-password/page.tsx`: Password recovery request form with success state
+- `src/app/(auth)/reset-password/page.tsx`: New password form for after clicking email link
+- `src/app/auth/callback/route.ts`: Auth callback handler for email confirmation and password reset
+- `src/lib/validation/auth-schemas.ts`: Zod schemas for login, register, forgot-password, reset-password
+- `src/lib/supabase/auth.ts`: Server actions for signUp, signIn, signOut, forgotPassword, resetPassword, getUser
+- Updated middleware to handle auth routes and redirect authenticated users away from login/register
+- `src/app/(app)/layout.tsx`: Authenticated app layout with user data fetching and AppHeader
+- `src/components/layout/app-header.tsx`: Client component wrapper for Header with signOut functionality
+- `src/app/(app)/trips/page.tsx`: Placeholder trips page with empty state
+- Build and lint pass successfully
 
 ### [ ] Step 1.6: User Profile Management
 

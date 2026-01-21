@@ -278,3 +278,177 @@ export async function getPendingInviteCount(tripId: string): Promise<number> {
 
   return count || 0;
 }
+
+export type InviteDetailsResult = {
+  valid: boolean;
+  error?: string;
+  invite?: TripInvite;
+  trip?: {
+    id: string;
+    name: string;
+    destination: string;
+    start_date: string;
+    end_date: string;
+    cover_url: string | null;
+  };
+  invitedBy?: Pick<User, 'id' | 'name' | 'avatar_url'>;
+  isAlreadyMember?: boolean;
+};
+
+/**
+ * Gets full invite details for the invite page
+ */
+export async function getInviteDetails(code: string): Promise<InviteDetailsResult> {
+  const supabase = await createClient();
+
+  const { data: invite, error } = await supabase
+    .from('trip_invites')
+    .select(
+      `
+      *,
+      trips!trip_invites_trip_id_fkey (id, name, destination, start_date, end_date, cover_url),
+      users!trip_invites_invited_by_fkey (id, name, avatar_url)
+    `
+    )
+    .eq('code', code)
+    .single();
+
+  if (error || !invite) {
+    return { valid: false, error: 'Convite não encontrado' };
+  }
+
+  // Check if already accepted
+  if (invite.accepted_at) {
+    return { valid: false, error: 'Este convite já foi utilizado' };
+  }
+
+  // Check if expired
+  const now = new Date();
+  const expiresAt = new Date(invite.expires_at);
+
+  if (now > expiresAt) {
+    return { valid: false, error: 'Este convite expirou' };
+  }
+
+  const tripData = invite.trips as unknown as {
+    id: string;
+    name: string;
+    destination: string;
+    start_date: string;
+    end_date: string;
+    cover_url: string | null;
+  };
+  const inviterData = invite.users as unknown as Pick<User, 'id' | 'name' | 'avatar_url'>;
+
+  // Check if current user is already a member
+  let isAlreadyMember = false;
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
+
+  if (authUser) {
+    const { data: membership } = await supabase
+      .from('trip_members')
+      .select('id')
+      .eq('trip_id', invite.trip_id)
+      .eq('user_id', authUser.id)
+      .single();
+
+    isAlreadyMember = !!membership;
+  }
+
+  return {
+    valid: true,
+    invite,
+    trip: tripData,
+    invitedBy: inviterData,
+    isAlreadyMember,
+  };
+}
+
+export type AcceptInviteResult = {
+  error?: string;
+  success?: boolean;
+  tripId?: string;
+};
+
+/**
+ * Accepts an invite and adds the user to the trip as a participant
+ */
+export async function acceptInvite(code: string): Promise<AcceptInviteResult> {
+  const supabase = await createClient();
+
+  const {
+    data: { user: authUser },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !authUser) {
+    return { error: 'Você precisa estar logado para aceitar o convite' };
+  }
+
+  // Validate the invite
+  const { data: invite, error: inviteError } = await supabase
+    .from('trip_invites')
+    .select('*')
+    .eq('code', code)
+    .single();
+
+  if (inviteError || !invite) {
+    return { error: 'Convite não encontrado' };
+  }
+
+  if (invite.accepted_at) {
+    return { error: 'Este convite já foi utilizado' };
+  }
+
+  const now = new Date();
+  const expiresAt = new Date(invite.expires_at);
+
+  if (now > expiresAt) {
+    return { error: 'Este convite expirou' };
+  }
+
+  // Check if user is already a member
+  const { data: existingMember } = await supabase
+    .from('trip_members')
+    .select('id')
+    .eq('trip_id', invite.trip_id)
+    .eq('user_id', authUser.id)
+    .single();
+
+  if (existingMember) {
+    return { error: 'Você já é membro desta viagem', tripId: invite.trip_id };
+  }
+
+  // Add user to trip as participant
+  const { error: memberError } = await supabase.from('trip_members').insert({
+    trip_id: invite.trip_id,
+    user_id: authUser.id,
+    role: 'participant',
+    invited_by: invite.invited_by,
+  });
+
+  if (memberError) {
+    return { error: memberError.message };
+  }
+
+  // Mark invite as accepted
+  const { error: updateError } = await supabase
+    .from('trip_invites')
+    .update({
+      accepted_at: new Date().toISOString(),
+      accepted_by: authUser.id,
+    })
+    .eq('id', invite.id);
+
+  if (updateError) {
+    // Log error but don't fail - user was already added to trip
+    console.error('Failed to mark invite as accepted:', updateError);
+  }
+
+  revalidatePath(`/trip/${invite.trip_id}`);
+  revalidatePath('/trips');
+
+  return { success: true, tripId: invite.trip_id };
+}

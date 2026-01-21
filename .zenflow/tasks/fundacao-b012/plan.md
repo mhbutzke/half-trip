@@ -91,6 +91,8 @@ Updated home page with Half Trip landing page showcasing all components.
 
 ### [ ] Step 1.3: Supabase Project Setup
 
+<!-- chat-id: fd7a7c63-58ad-4155-b441-aa3ae428eff7 -->
+
 Configure Supabase backend and database schema.
 
 **Tasks:**

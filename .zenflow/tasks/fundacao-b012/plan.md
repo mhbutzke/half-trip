@@ -671,7 +671,7 @@ Implement activity reordering with drag and drop.
 - Existing `reorderActivities` server action in `src/lib/supabase/activities.ts` used for persistence
 - Build and lint pass successfully
 
-### [ ] Step 3.4: File Attachments
+### [x] Step 3.4: File Attachments
 
 <!-- chat-id: d768eca2-72cc-4e61-8acb-f4947b66e211 -->
 
@@ -691,6 +691,40 @@ Implement file upload for activities.
 - Files can be uploaded to activities
 - Files are displayed and downloadable
 - File size limits are enforced
+
+**Completed:** Full file attachments functionality implemented with:
+
+- `src/lib/supabase/attachments.ts`: Server actions for uploadAttachment, deleteAttachment, getActivityAttachments, getAttachmentUrl, getAttachmentsCount. Includes:
+  - File validation (JPEG, PNG, WebP, GIF, PDF supported)
+  - 20MB max file size limit
+  - Secure file path generation with tripId/activityId structure for RLS
+  - Signed URL generation for secure file access (1 hour expiry)
+  - Helper functions: formatFileSize, isImageType, isPdfType
+- `src/components/attachments/file-upload.tsx`: FileUpload component with:
+  - Drag-and-drop file upload zone
+  - File type and size validation with error messages
+  - Image preview thumbnails
+  - Multiple file upload support
+  - Loading states during upload
+  - Portuguese error messages
+- `src/components/attachments/attachments-list.tsx`: AttachmentsList component with:
+  - Image thumbnails with click-to-preview
+  - PDF icon for PDF files
+  - File name and size display
+  - Download functionality
+  - Delete with confirmation dialog
+  - Image preview in modal dialog
+  - Open PDFs in new tab
+- `src/components/attachments/index.ts`: Exports for components
+- `src/components/activities/edit-activity-dialog.tsx`: Updated with:
+  - Tabs interface for "Detalhes" and "Anexos"
+  - FileUpload integration in attachments tab
+  - AttachmentsList showing existing attachments
+  - Attachment count badge on tab
+  - Auto-refresh attachments on upload/delete
+- `src/app/(app)/trip/[id]/itinerary/activity-card.tsx`: Updated to show attachment count indicator with Paperclip icon
+- Storage bucket RLS policies already configured in migration 00004 (using tripId as first folder)
+- Build and lint pass successfully
 
 ### [x] Step 3.5: Trip Notes
 

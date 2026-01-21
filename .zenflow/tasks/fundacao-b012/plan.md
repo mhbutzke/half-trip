@@ -157,6 +157,8 @@ Set up Supabase client for frontend with SSR support.
 
 ### [ ] Step 1.5: Authentication Flow
 
+<!-- chat-id: 442b382c-eb4d-4458-af15-effa3dae90e4 -->
+
 Implement user registration, login, and password recovery.
 
 **Tasks:**

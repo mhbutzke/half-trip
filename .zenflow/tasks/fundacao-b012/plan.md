@@ -117,7 +117,7 @@ Configure Supabase backend and database schema.
 - `supabase/migrations/00003_rls_policies.sql`: Comprehensive RLS policies for all tables with helper functions `is_trip_member()` and `is_trip_organizer()`. Policies enforce role-based access control (organizers vs participants).
 - `supabase/seed.sql`: Development seed data with 3 test users, 2 trips, 5 activities, 4 expenses with splits, 3 notes, and 1 pending invite. Includes balance calculation summary for testing.
 
-### [ ] Step 1.4: Supabase Client Integration
+### [x] Step 1.4: Supabase Client Integration
 
 <!-- chat-id: e93b5fbf-1997-43b0-bd29-bd8f5c2793e9 -->
 
@@ -136,6 +136,24 @@ Set up Supabase client for frontend with SSR support.
 
 - TypeScript types match database schema
 - Client connects to Supabase in dev
+
+**Completed:** Supabase client integration fully set up with:
+
+- Installed `@supabase/ssr@0.8.0` and `@supabase/supabase-js@2.91.0`
+- `src/lib/supabase/client.ts`: Browser client using `createBrowserClient` with Database type
+- `src/lib/supabase/server.ts`: Server client using `createServerClient` with cookie handling for SSR
+- `src/lib/supabase/middleware.ts`: Session refresh middleware with auth protection for routes
+- `src/middleware.ts`: Next.js middleware that runs session refresh on all routes (except static assets)
+- `src/types/database.ts`: Comprehensive TypeScript types matching all 10 database tables:
+  - Full Row, Insert, Update types for all tables
+  - Relationship definitions for foreign keys
+  - Helper types (Tables, InsertTables, UpdateTables)
+  - Convenience type aliases (User, Trip, Activity, Expense, etc.)
+  - Enum types (TripStyle, TripMemberRole, ActivityCategory, ExpenseCategory)
+  - ActivityLink type for JSONB links field
+- Middleware protects routes and redirects unauthenticated users to /login with redirect param
+- Public routes configured: /, /login, /register, /forgot-password, /invite/\*
+- Build and lint pass successfully
 
 ### [ ] Step 1.5: Authentication Flow
 

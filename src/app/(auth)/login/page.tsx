@@ -1,0 +1,146 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
+
+import { loginSchema, type LoginInput } from '@/lib/validation/auth-schemas';
+import { signIn } from '@/lib/supabase/auth';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+
+export default function LoginPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '/trips';
+  const authError = searchParams.get('error');
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(
+    authError === 'auth_error' ? 'Ocorreu um erro na autenticação. Tente novamente.' : null
+  );
+
+  const form = useForm<LoginInput>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
+
+  async function onSubmit(data: LoginInput) {
+    setIsLoading(true);
+    setError(null);
+
+    const result = await signIn(data.email, data.password);
+
+    if (result.error) {
+      setError(result.error);
+      setIsLoading(false);
+      return;
+    }
+
+    router.push(redirectTo);
+    router.refresh();
+  }
+
+  return (
+    <Card>
+      <CardHeader className="text-center">
+        <CardTitle className="text-2xl">Entrar</CardTitle>
+        <CardDescription>Entre com sua conta para acessar suas viagens</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {error && (
+              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                {error}
+              </div>
+            )}
+
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="email"
+                      placeholder="seu@email.com"
+                      autoComplete="email"
+                      disabled={isLoading}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-center justify-between">
+                    <FormLabel>Senha</FormLabel>
+                    <Link
+                      href="/forgot-password"
+                      className="text-sm text-muted-foreground hover:text-primary"
+                    >
+                      Esqueceu a senha?
+                    </Link>
+                  </div>
+                  <FormControl>
+                    <Input
+                      type="password"
+                      placeholder="********"
+                      autoComplete="current-password"
+                      disabled={isLoading}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Entrar
+            </Button>
+          </form>
+        </Form>
+      </CardContent>
+      <CardFooter className="justify-center">
+        <p className="text-sm text-muted-foreground">
+          Ainda não tem conta?{' '}
+          <Link href="/register" className="font-medium text-primary hover:underline">
+            Criar conta
+          </Link>
+        </p>
+      </CardFooter>
+    </Card>
+  );
+}

@@ -153,19 +153,19 @@ export function TripHeader({ trip, userRole }: TripHeaderProps) {
         <div className="flex items-center justify-between">
           <Link
             href="/trips"
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="flex min-h-[44px] items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground active:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
-            Voltar para viagens
+            <span className="hidden sm:inline">Voltar para viagens</span>
+            <span className="sm:hidden">Voltar</span>
           </Link>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="outline" size="icon">
+                  <Button variant="outline" size="icon" aria-label="Compartilhar viagem">
                     <Share2 className="h-4 w-4" />
-                    <span className="sr-only">Compartilhar</span>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Em breve: Convidar participantes</TooltipContent>
@@ -175,9 +175,8 @@ export function TripHeader({ trip, userRole }: TripHeaderProps) {
             {isOrganizer && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="icon">
+                  <Button variant="outline" size="icon" aria-label="Opções da viagem">
                     <MoreHorizontal className="h-4 w-4" />
-                    <span className="sr-only">Opções</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">

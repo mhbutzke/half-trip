@@ -34,9 +34,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="min-h-svh flex flex-col">
+    <div className="flex min-h-svh flex-col">
       <AppHeader user={user} />
-      <main className="flex-1 pb-16 md:pb-0">{children}</main>
+      {/* Main content with bottom padding for mobile nav */}
+      <main className="flex-1 pb-20 md:pb-0">{children}</main>
+      {/* Mobile bottom navigation - auto-detects trip context */}
       <MobileNav />
     </div>
   );

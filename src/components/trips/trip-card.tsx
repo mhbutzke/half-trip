@@ -130,11 +130,11 @@ export function TripCard({
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  size="icon"
-                  className="relative z-10 h-8 w-8 shrink-0 opacity-0 group-hover:opacity-100 focus:opacity-100"
+                  size="icon-sm"
+                  className="relative z-10 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
+                  aria-label="Opções da viagem"
                 >
                   <MoreHorizontal className="h-4 w-4" />
-                  <span className="sr-only">Opções</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">

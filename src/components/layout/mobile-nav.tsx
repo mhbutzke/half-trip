@@ -2,8 +2,15 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Calendar, Home, Receipt, Settings, Users, Plane, Scale } from 'lucide-react';
+import { Calendar, Home, Receipt, Settings, Users, Plane, Scale, LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+type NavItem = {
+  name: string;
+  href: string;
+  icon: LucideIcon;
+  exact?: boolean;
+};
 
 /**
  * Mobile bottom navigation component
@@ -17,7 +24,7 @@ export function MobileNav() {
   const tripMatch = pathname.match(/^\/trip\/([^/]+)/);
   const tripId = tripMatch?.[1];
 
-  const tripNavigation = [
+  const tripNavigation: NavItem[] = [
     {
       name: 'Resumo',
       href: `/trip/${tripId}`,
@@ -46,7 +53,7 @@ export function MobileNav() {
     },
   ];
 
-  const mainNavigation = [
+  const mainNavigation: NavItem[] = [
     {
       name: 'Viagens',
       href: '/trips',

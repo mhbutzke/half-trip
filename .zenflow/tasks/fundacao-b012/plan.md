@@ -269,7 +269,7 @@ Implement basic trip management.
 - Installed date-fns for date formatting in Portuguese locale.
 - Build and lint pass successfully.
 
-### [ ] Step 1.8: Responsive Mobile-First Layout
+### [x] Step 1.8: Responsive Mobile-First Layout
 
 <!-- chat-id: f5ca9fe2-e733-4ea2-8f97-1a9adaee8453 -->
 
@@ -289,11 +289,28 @@ Finalize responsive layout for all Phase 1 pages.
 - Navigation is accessible on mobile
 - No horizontal scroll on mobile
 
+**Completed:** Responsive mobile-first layout fully implemented with:
+
+- `src/components/layout/mobile-nav.tsx`: Bottom navigation that auto-detects trip context from URL and shows trip-specific nav (Resumo, Roteiro, Despesas, Balanço, Grupo) or main nav (Viagens, Configurações). Touch-friendly 44px tap targets, iOS safe area support with `env(safe-area-inset-bottom)`, ARIA labels for accessibility.
+- `src/components/layout/header.tsx`: Responsive header with hamburger menu (Sheet component) for mobile, user dropdown for desktop. All buttons have min 44px tap targets. Icons added to navigation items.
+- `src/components/ui/button.tsx`: Updated button sizes for touch-friendly defaults (h-11 = 44px for default, h-12 = 48px for large). Added subtle press animation with `active:scale-[0.98]`.
+- `src/components/ui/input.tsx`: Updated input height to 44px (h-11) for touch-friendly form fields.
+- `src/app/globals.css`: Added mobile touch optimizations including iOS safe area utilities, touch-manipulation class, and overscroll-behavior-y: contain to prevent pull-to-refresh issues.
+- `src/app/(app)/layout.tsx`: App layout with header, mobile nav, and proper bottom padding (pb-20) for mobile bottom nav.
+- `src/app/(app)/trips/loading.tsx`: Loading skeleton for trips list page with updated heights.
+- `src/app/(app)/trip/[id]/loading.tsx`: Loading skeleton for trip detail page with updated heights.
+- `src/app/(app)/settings/loading.tsx`: Loading skeleton for settings page with updated heights.
+- `src/app/(app)/trip/[id]/trip-header.tsx`: Updated touch targets and responsive back link text.
+- `src/components/trips/trip-card.tsx`: Updated action button with proper ARIA labels.
+- Build and lint pass successfully.
+
 ---
 
 ## Phase 2: Collaboration (Multi-user Features)
 
 ### [ ] Step 2.1: Invite Link Generation
+
+<!-- chat-id: bcd8c6c6-b010-4871-9635-1880ec6b04c0 -->
 
 Implement shareable invite link functionality.
 

@@ -178,3 +178,39 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Mobile touch optimizations */
+@layer utilities {
+  /* iOS safe areas for devices with notch/home indicator */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .mb-safe {
+    margin-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Improved touch feedback */
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+
+  /* Disable text selection on interactive elements */
+  .select-none-touch {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  /* Smooth scrolling for scroll containers */
+  .scroll-smooth-touch {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+}
+
+/* Prevent pull-to-refresh on mobile when not at top */
+@media (max-width: 768px) {
+  html {
+    overscroll-behavior-y: contain;
+  }
+}

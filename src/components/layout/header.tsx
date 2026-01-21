@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LogOut, Menu, Moon, Plane, Settings, Sun, User } from 'lucide-react';
+import { LogOut, Menu, Moon, Plane, Settings, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';

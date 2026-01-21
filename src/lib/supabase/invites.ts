@@ -2,7 +2,11 @@
 
 import { createClient } from './server';
 import { revalidatePath } from 'next/cache';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import type { TripInvite, User } from '@/types/database';
+import { getResendClient } from '@/lib/email/resend';
+import { InviteEmail } from '@/lib/email/invite-email';
 
 // Default invite expiration: 7 days
 const DEFAULT_INVITE_EXPIRATION_DAYS = 7;
@@ -451,4 +455,236 @@ export async function acceptInvite(code: string): Promise<AcceptInviteResult> {
   revalidatePath('/trips');
 
   return { success: true, tripId: invite.trip_id };
+}
+
+export type EmailInviteResult = {
+  error?: string;
+  success?: boolean;
+  invite?: TripInvite;
+};
+
+/**
+ * Sends an email invitation to join a trip
+ */
+export async function sendEmailInvite(tripId: string, email: string): Promise<EmailInviteResult> {
+  const supabase = await createClient();
+
+  const {
+    data: { user: authUser },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !authUser) {
+    return { error: 'Nao autorizado' };
+  }
+
+  // Check if user is a member of the trip
+  const { data: member } = await supabase
+    .from('trip_members')
+    .select('role')
+    .eq('trip_id', tripId)
+    .eq('user_id', authUser.id)
+    .single();
+
+  if (!member) {
+    return { error: 'Voce nao e membro desta viagem' };
+  }
+
+  // Get trip details
+  const { data: trip, error: tripError } = await supabase
+    .from('trips')
+    .select('id, name, destination, start_date, end_date')
+    .eq('id', tripId)
+    .single();
+
+  if (tripError || !trip) {
+    return { error: 'Viagem nao encontrada' };
+  }
+
+  // Get inviter details
+  const { data: inviter, error: inviterError } = await supabase
+    .from('users')
+    .select('name')
+    .eq('id', authUser.id)
+    .single();
+
+  if (inviterError || !inviter) {
+    return { error: 'Erro ao obter dados do usuario' };
+  }
+
+  // Check if there's already a pending invite for this email in this trip
+  const now = new Date().toISOString();
+  const { data: existingInvite } = await supabase
+    .from('trip_invites')
+    .select('id, code')
+    .eq('trip_id', tripId)
+    .eq('email', email.toLowerCase())
+    .is('accepted_at', null)
+    .gt('expires_at', now)
+    .single();
+
+  let inviteCode: string;
+  let invite: TripInvite;
+
+  if (existingInvite) {
+    // Resend the existing invite
+    inviteCode = existingInvite.code;
+    const { data: fullInvite } = await supabase
+      .from('trip_invites')
+      .select('*')
+      .eq('id', existingInvite.id)
+      .single();
+    invite = fullInvite as TripInvite;
+  } else {
+    // Generate new invite code
+    let code = generateInviteCode();
+    let attempts = 0;
+    const maxAttempts = 5;
+
+    // Ensure code is unique
+    while (attempts < maxAttempts) {
+      const { data: existing } = await supabase
+        .from('trip_invites')
+        .select('id')
+        .eq('code', code)
+        .single();
+
+      if (!existing) break;
+      code = generateInviteCode();
+      attempts++;
+    }
+
+    if (attempts >= maxAttempts) {
+      return { error: 'Erro ao gerar codigo de convite. Tente novamente.' };
+    }
+
+    inviteCode = code;
+
+    // Calculate expiration date
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + DEFAULT_INVITE_EXPIRATION_DAYS);
+
+    // Create the invite
+    const { data: newInvite, error: insertError } = await supabase
+      .from('trip_invites')
+      .insert({
+        trip_id: tripId,
+        code: inviteCode,
+        email: email.toLowerCase(),
+        invited_by: authUser.id,
+        expires_at: expiresAt.toISOString(),
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      return { error: insertError.message };
+    }
+
+    invite = newInvite;
+  }
+
+  // Send the email using Resend
+  const resend = getResendClient();
+
+  if (!resend) {
+    // If Resend is not configured, still create the invite but warn about email
+    console.warn('Email invite created but email could not be sent (Resend not configured)');
+    revalidatePath(`/trip/${tripId}`);
+    return {
+      success: true,
+      invite,
+      error: 'Convite criado, mas o email nao pode ser enviado. Copie o link manualmente.',
+    };
+  }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const inviteUrl = `${appUrl}/invite/${inviteCode}`;
+
+  const formatDate = (dateString: string) => {
+    return format(new Date(dateString), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+  };
+
+  try {
+    const { error: emailError } = await resend.emails.send({
+      from: 'Half Trip <convites@halftrip.com>',
+      to: email.toLowerCase(),
+      subject: `Convite para viagem: ${trip.name}`,
+      react: InviteEmail({
+        inviteUrl,
+        tripName: trip.name,
+        tripDestination: trip.destination,
+        tripStartDate: formatDate(trip.start_date),
+        tripEndDate: formatDate(trip.end_date),
+        inviterName: inviter.name,
+        recipientEmail: email.toLowerCase(),
+      }),
+    });
+
+    if (emailError) {
+      console.error('Failed to send invite email:', emailError);
+      return {
+        success: true,
+        invite,
+        error: 'Convite criado, mas houve um erro ao enviar o email.',
+      };
+    }
+  } catch (err) {
+    console.error('Failed to send invite email:', err);
+    return {
+      success: true,
+      invite,
+      error: 'Convite criado, mas houve um erro ao enviar o email.',
+    };
+  }
+
+  revalidatePath(`/trip/${tripId}`);
+
+  return { success: true, invite };
+}
+
+/**
+ * Gets email invites for a trip (separate from link invites)
+ */
+export async function getEmailInvites(tripId: string): Promise<TripInviteWithInviter[]> {
+  const supabase = await createClient();
+
+  const {
+    data: { user: authUser },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !authUser) {
+    return [];
+  }
+
+  // Check if user is a member
+  const { data: member } = await supabase
+    .from('trip_members')
+    .select('id')
+    .eq('trip_id', tripId)
+    .eq('user_id', authUser.id)
+    .single();
+
+  if (!member) {
+    return [];
+  }
+
+  const now = new Date().toISOString();
+
+  const { data: invites } = await supabase
+    .from('trip_invites')
+    .select(
+      `
+      *,
+      users!trip_invites_invited_by_fkey (id, name, avatar_url)
+    `
+    )
+    .eq('trip_id', tripId)
+    .not('email', 'is', null)
+    .is('accepted_at', null)
+    .gt('expires_at', now)
+    .order('created_at', { ascending: false });
+
+  return (invites as TripInviteWithInviter[]) || [];
 }

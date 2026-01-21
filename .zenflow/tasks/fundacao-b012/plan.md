@@ -392,7 +392,9 @@ Implement the flow for accepting invites.
 - Invalid/expired invites show appropriate error messages
 - Build and lint pass successfully
 
-### [ ] Step 2.3: Email Invitations
+### [x] Step 2.3: Email Invitations
+
+<!-- chat-id: c1f263a3-be57-4688-91b7-8f4b742a8c2a -->
 
 Implement email-based invitations using Resend.
 
@@ -409,6 +411,28 @@ Implement email-based invitations using Resend.
 - Email is sent to invited address
 - Email contains valid invite link
 - Invite is tracked in database
+
+**Completed:** Full email invitation flow implemented with:
+
+- Installed `resend@6.8.0` and `@react-email/components@1.0.6` for email sending and templating
+- `src/lib/email/resend.ts`: Lazy-initialized Resend client that gracefully handles missing API key
+- `src/lib/email/invite-email.tsx`: Beautiful React Email template with Half Trip branding:
+  - Preview text with inviter name and trip name
+  - Trip card showing destination and dates
+  - Clear CTA button to accept invite
+  - Teal/cyan brand colors matching the app theme
+  - Email-safe inline styles (no CSS variables)
+- `src/lib/supabase/invites.ts`: Added `sendEmailInvite()` and `getEmailInvites()` functions:
+  - `sendEmailInvite()`: Creates invite with email, sends via Resend, handles resending existing invites
+  - `getEmailInvites()`: Retrieves pending email invites (separate from link invites)
+  - Graceful degradation when RESEND_API_KEY is not configured
+- `src/components/invites/invite-by-email-form.tsx`: Form component with email input and send button
+- `src/components/invites/invite-dialog.tsx`: Updated with tabs for "Link" and "Email" invite methods:
+  - Link tab: Create and manage shareable invite links
+  - Email tab: Send email invites and view pending email invites
+  - Separate lists for link invites and email invites
+- Email invites are stored in `trip_invites` table with the `email` column populated
+- Build and lint pass successfully
 
 ### [ ] Step 2.4: Participant Management
 

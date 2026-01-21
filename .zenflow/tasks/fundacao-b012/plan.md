@@ -308,7 +308,7 @@ Finalize responsive layout for all Phase 1 pages.
 
 ## Phase 2: Collaboration (Multi-user Features)
 
-### [ ] Step 2.1: Invite Link Generation
+### [x] Step 2.1: Invite Link Generation
 
 <!-- chat-id: bcd8c6c6-b010-4871-9635-1880ec6b04c0 -->
 
@@ -327,6 +327,30 @@ Implement shareable invite link functionality.
 - Organizer can generate invite link
 - Link contains valid invite code
 - Copy to clipboard works
+
+**Completed:** Full invite link generation implemented with:
+
+- `src/lib/supabase/invites.ts`: Server actions for createInviteLink, getTripInvites, revokeInvite, validateInviteCode, getPendingInviteCount. Includes:
+  - `generateInviteCode()`: Generates 8-character alphanumeric codes using crypto.getRandomValues for secure randomness
+  - Code uniqueness verification with retry logic
+  - Default 7-day expiration for invites
+  - Permission checks (any trip member can create invites, organizers/creators can revoke)
+- `src/lib/validation/invite-schemas.ts`: Zod schemas for inviteCodeSchema, createInviteLinkSchema, emailInviteSchema
+- `src/components/invites/copy-invite-link.tsx`: CopyInviteLink component with:
+  - Full URL construction from invite path
+  - Copy to clipboard with visual feedback
+  - Native share dialog support via navigator.share (mobile)
+  - Fallback to copy when share API unavailable
+- `src/components/invites/invite-dialog.tsx`: InviteDialog component with:
+  - Create new invite link button with loading state
+  - Display of generated invite URL with copy/share functionality
+  - List of active (pending) invites with expiration countdown
+  - Revoke invite functionality for organizers/invite creators
+  - Avatar and info display for invite creators
+- Updated `src/app/(app)/trip/[id]/trip-header.tsx`: Share button now opens InviteDialog
+- Updated `src/app/(app)/trip/[id]/trip-overview.tsx`: Participants card "Convidar participante" button opens InviteDialog
+- Updated `src/app/(app)/trip/[id]/page.tsx`: Now passes currentUserId to header and overview components
+- Build and lint pass successfully
 
 ### [ ] Step 2.2: Invite Acceptance Flow
 

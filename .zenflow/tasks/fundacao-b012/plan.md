@@ -480,6 +480,8 @@ Implement participant list and management.
 
 ### [ ] Step 2.5: Role-Based Permissions
 
+<!-- chat-id: 2055e232-7836-4052-8c2c-cf29278ed94f -->
+
 Implement permission checks throughout the app.
 
 **Tasks:**

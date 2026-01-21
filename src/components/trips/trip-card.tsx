@@ -29,11 +29,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import type { TripWithMembers } from '@/lib/supabase/trips';
-import type { TripStyle } from '@/types/database';
+import { can } from '@/lib/permissions';
+import type { TripMemberRole, TripStyle } from '@/types/database';
 
 interface TripCardProps {
   trip: TripWithMembers;
-  userRole?: 'organizer' | 'participant' | null;
+  userRole?: TripMemberRole | null;
   onEdit?: (trip: TripWithMembers) => void;
   onArchive?: (tripId: string) => void;
   onUnarchive?: (tripId: string) => void;
@@ -93,7 +94,12 @@ export function TripCard({
   const StyleIcon = trip.style ? styleIcons[trip.style] : MapPin;
   const status = getTripStatus(trip.start_date, trip.end_date);
   const isArchived = !!trip.archived_at;
-  const isOrganizer = userRole === 'organizer';
+
+  // Permission checks using centralized helper
+  const canEditTrip = can('EDIT_TRIP', userRole ?? null);
+  const canArchiveTrip = can('ARCHIVE_TRIP', userRole ?? null);
+  const canDeleteTrip = can('DELETE_TRIP', userRole ?? null);
+  const showActionsMenu = canEditTrip || canArchiveTrip || canDeleteTrip;
 
   const formatDate = (date: string) => {
     return format(new Date(date), "d 'de' MMM", { locale: ptBR });
@@ -125,7 +131,7 @@ export function TripCard({
             <h3 className="font-semibold text-lg truncate">{trip.name}</h3>
           </div>
 
-          {isOrganizer && (
+          {showActionsMenu && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -138,47 +144,54 @@ export function TripCard({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.preventDefault();
-                    onEdit?.(trip);
-                  }}
-                >
-                  <Pencil className="mr-2 h-4 w-4" />
-                  Editar
-                </DropdownMenuItem>
-                {isArchived ? (
+                {canEditTrip && (
                   <DropdownMenuItem
                     onClick={(e) => {
                       e.preventDefault();
-                      onUnarchive?.(trip.id);
+                      onEdit?.(trip);
                     }}
                   >
-                    <ArchiveRestore className="mr-2 h-4 w-4" />
-                    Desarquivar
-                  </DropdownMenuItem>
-                ) : (
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.preventDefault();
-                      onArchive?.(trip.id);
-                    }}
-                  >
-                    <Archive className="mr-2 h-4 w-4" />
-                    Arquivar
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Editar
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.preventDefault();
-                    onDelete?.(trip.id);
-                  }}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Excluir
-                </DropdownMenuItem>
+                {canArchiveTrip &&
+                  (isArchived ? (
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.preventDefault();
+                        onUnarchive?.(trip.id);
+                      }}
+                    >
+                      <ArchiveRestore className="mr-2 h-4 w-4" />
+                      Desarquivar
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.preventDefault();
+                        onArchive?.(trip.id);
+                      }}
+                    >
+                      <Archive className="mr-2 h-4 w-4" />
+                      Arquivar
+                    </DropdownMenuItem>
+                  ))}
+                {canDeleteTrip && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.preventDefault();
+                        onDelete?.(trip.id);
+                      }}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Excluir
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           )}

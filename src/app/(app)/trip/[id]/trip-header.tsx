@@ -35,12 +35,13 @@ import { EditTripDialog } from '@/components/trips/edit-trip-dialog';
 import { DeleteTripDialog } from '@/components/trips/delete-trip-dialog';
 import { InviteDialog } from '@/components/invites/invite-dialog';
 import { archiveTrip, unarchiveTrip, type TripWithMembers } from '@/lib/supabase/trips';
-import type { TripStyle } from '@/types/database';
+import { can } from '@/lib/permissions';
+import type { TripStyle, TripMemberRole } from '@/types/database';
 import Link from 'next/link';
 
 interface TripHeaderProps {
   trip: TripWithMembers;
-  userRole: 'organizer' | 'participant' | null;
+  userRole: TripMemberRole | null;
   currentUserId?: string;
 }
 
@@ -96,7 +97,12 @@ export function TripHeader({ trip, userRole, currentUserId }: TripHeaderProps) {
   const StyleIcon = trip.style ? styleIcons[trip.style] : MapPin;
   const status = getTripStatus(trip.start_date, trip.end_date);
   const isArchived = !!trip.archived_at;
-  const isOrganizer = userRole === 'organizer';
+
+  // Permission checks using the centralized helper
+  const canEditTrip = can('EDIT_TRIP', userRole);
+  const canArchiveTrip = can('ARCHIVE_TRIP', userRole);
+  const canDeleteTrip = can('DELETE_TRIP', userRole);
+  const canInvite = can('INVITE_MEMBERS', userRole);
 
   const formatDate = (date: string) => {
     return format(new Date(date), "d 'de' MMMM 'de' yyyy", { locale: ptBR });
@@ -163,16 +169,18 @@ export function TripHeader({ trip, userRole, currentUserId }: TripHeaderProps) {
           </Link>
 
           <div className="flex items-center gap-1 sm:gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              aria-label="Convidar participantes"
-              onClick={() => setIsInviteOpen(true)}
-            >
-              <Share2 className="h-4 w-4" />
-            </Button>
+            {canInvite && (
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label="Convidar participantes"
+                onClick={() => setIsInviteOpen(true)}
+              >
+                <Share2 className="h-4 w-4" />
+              </Button>
+            )}
 
-            {isOrganizer && (
+            {(canEditTrip || canArchiveTrip || canDeleteTrip) && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="icon" aria-label="Opções da viagem">
@@ -180,29 +188,36 @@ export function TripHeader({ trip, userRole, currentUserId }: TripHeaderProps) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setIsEditOpen(true)}>
-                    <Pencil className="mr-2 h-4 w-4" />
-                    Editar
-                  </DropdownMenuItem>
-                  {isArchived ? (
-                    <DropdownMenuItem onClick={handleUnarchive} disabled={isArchiving}>
-                      <ArchiveRestore className="mr-2 h-4 w-4" />
-                      Desarquivar
-                    </DropdownMenuItem>
-                  ) : (
-                    <DropdownMenuItem onClick={handleArchive} disabled={isArchiving}>
-                      <Archive className="mr-2 h-4 w-4" />
-                      Arquivar
+                  {canEditTrip && (
+                    <DropdownMenuItem onClick={() => setIsEditOpen(true)}>
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Editar
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => setIsDeleteOpen(true)}
-                    className="text-destructive focus:text-destructive"
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Excluir
-                  </DropdownMenuItem>
+                  {canArchiveTrip &&
+                    (isArchived ? (
+                      <DropdownMenuItem onClick={handleUnarchive} disabled={isArchiving}>
+                        <ArchiveRestore className="mr-2 h-4 w-4" />
+                        Desarquivar
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem onClick={handleArchive} disabled={isArchiving}>
+                        <Archive className="mr-2 h-4 w-4" />
+                        Arquivar
+                      </DropdownMenuItem>
+                    ))}
+                  {canDeleteTrip && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => setIsDeleteOpen(true)}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Excluir
+                      </DropdownMenuItem>
+                    </>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             )}

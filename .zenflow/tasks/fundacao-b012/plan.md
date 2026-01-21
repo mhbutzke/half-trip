@@ -478,7 +478,7 @@ Implement participant list and management.
 - Installed shadcn alert-dialog component for confirmations
 - Build and lint pass successfully
 
-### [ ] Step 2.5: Role-Based Permissions
+### [x] Step 2.5: Role-Based Permissions
 
 <!-- chat-id: 2055e232-7836-4052-8c2c-cf29278ed94f -->
 
@@ -497,6 +497,24 @@ Implement permission checks throughout the app.
 - Participants cannot edit trip details
 - Participants cannot remove other participants
 - Organizers have full access
+
+**Completed:** Role-based permissions fully implemented with:
+
+- `src/lib/permissions/trip-permissions.ts`: Centralized permission system with:
+  - `PermissionAction` type defining all possible actions
+  - `can(action, userRole)` function for simple permission checks
+  - `canOnOwn(action, userRole, isOwner)` for content ownership checks
+  - `canRevokeInvite(userRole, isInviteCreator)` for invite revocation
+  - `canManageMember(userRole, targetRole, isCurrentUser)` for member management
+  - `isOrganizer()`, `isParticipant()`, `isMember()` role helpers
+  - Comprehensive permission matrix documented in comments
+- `src/hooks/use-permissions.ts`: React hook wrapping permission functions
+- `src/app/(app)/trip/[id]/trip-header.tsx`: Updated to use `can()` for trip actions
+- `src/components/trips/trip-card.tsx`: Uses permissions for card actions
+- `src/app/(app)/trip/[id]/participants/participant-card.tsx`: Uses `usePermissions` hook
+- `supabase/migrations/00005_update_invite_policies.sql`: Fixed RLS policy to allow any member to create invites (not just organizers), and allow invite creator to revoke their own invites
+- UI components conditionally render actions based on permissions
+- Build passes successfully
 
 ---
 

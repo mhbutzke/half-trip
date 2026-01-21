@@ -29,6 +29,7 @@ import {
   promoteToOrganizer,
   type TripMemberWithUser,
 } from '@/lib/supabase/trips';
+import { usePermissions } from '@/hooks/use-permissions';
 
 interface ParticipantCardProps {
   member: TripMemberWithUser;
@@ -51,9 +52,10 @@ export function ParticipantCard({
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
   const [promoteDialogOpen, setPromoteDialogOpen] = useState(false);
 
+  const permissions = usePermissions({ userRole, currentUserId });
   const isCurrentUser = member.user_id === currentUserId;
-  const isOrganizer = member.role === 'organizer';
-  const canManage = userRole === 'organizer' && !isCurrentUser;
+  const isMemberOrganizer = member.role === 'organizer';
+  const canManage = permissions.canManageMember(member.role, member.user_id);
 
   const handleRemove = async () => {
     setIsRemoving(true);
@@ -110,7 +112,7 @@ export function ParticipantCard({
                 {member.users.name}
                 {isCurrentUser && <span className="ml-1 text-muted-foreground">(você)</span>}
               </p>
-              {isOrganizer && (
+              {isMemberOrganizer && (
                 <Badge variant="secondary" className="gap-1">
                   <Crown className="h-3 w-3" />
                   Organizador
@@ -132,7 +134,7 @@ export function ParticipantCard({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               {/* Organizer actions for other members */}
-              {canManage && !isOrganizer && (
+              {canManage && !isMemberOrganizer && (
                 <>
                   <DropdownMenuItem onClick={() => setPromoteDialogOpen(true)}>
                     <Shield className="mr-2 h-4 w-4" />

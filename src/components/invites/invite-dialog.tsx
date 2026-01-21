@@ -26,6 +26,7 @@ import {
   revokeInvite,
   type TripInviteWithInviter,
 } from '@/lib/supabase/invites';
+import { usePermissions } from '@/hooks/use-permissions';
 
 interface InviteDialogProps {
   tripId: string;
@@ -50,6 +51,8 @@ export function InviteDialog({
   const [isCreating, setIsCreating] = useState(false);
   const [newInviteUrl, setNewInviteUrl] = useState<string | null>(null);
   const [revokingId, setRevokingId] = useState<string | null>(null);
+
+  const permissions = usePermissions({ userRole, currentUserId });
 
   const loadInvites = useCallback(async () => {
     setIsLoading(true);
@@ -108,8 +111,8 @@ export function InviteDialog({
     }
   };
 
-  const canRevoke = (invite: TripInviteWithInviter) => {
-    return userRole === 'organizer' || invite.invited_by === currentUserId;
+  const canRevokeInvite = (invite: TripInviteWithInviter) => {
+    return permissions.canRevokeInvite(invite.invited_by);
   };
 
   const handleEmailSuccess = () => {
@@ -138,7 +141,7 @@ export function InviteDialog({
           </p>
         </div>
       </div>
-      {canRevoke(invite) && (
+      {canRevokeInvite(invite) && (
         <Button
           variant="ghost"
           size="icon"

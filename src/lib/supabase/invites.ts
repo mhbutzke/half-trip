@@ -688,3 +688,48 @@ export async function getEmailInvites(tripId: string): Promise<TripInviteWithInv
 
   return (invites as TripInviteWithInviter[]) || [];
 }
+
+/**
+ * Gets all pending invites for a trip (both link and email invites)
+ */
+export async function getAllPendingInvites(tripId: string): Promise<TripInviteWithInviter[]> {
+  const supabase = await createClient();
+
+  const {
+    data: { user: authUser },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !authUser) {
+    return [];
+  }
+
+  // Check if user is a member
+  const { data: member } = await supabase
+    .from('trip_members')
+    .select('id')
+    .eq('trip_id', tripId)
+    .eq('user_id', authUser.id)
+    .single();
+
+  if (!member) {
+    return [];
+  }
+
+  const now = new Date().toISOString();
+
+  const { data: invites } = await supabase
+    .from('trip_invites')
+    .select(
+      `
+      *,
+      users!trip_invites_invited_by_fkey (id, name, avatar_url)
+    `
+    )
+    .eq('trip_id', tripId)
+    .is('accepted_at', null)
+    .gt('expires_at', now)
+    .order('created_at', { ascending: false });
+
+  return (invites as TripInviteWithInviter[]) || [];
+}

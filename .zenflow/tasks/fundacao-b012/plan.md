@@ -434,7 +434,9 @@ Implement email-based invitations using Resend.
 - Email invites are stored in `trip_invites` table with the `email` column populated
 - Build and lint pass successfully
 
-### [ ] Step 2.4: Participant Management
+### [x] Step 2.4: Participant Management
+
+<!-- chat-id: f590db6b-883f-420c-a682-5226f5471981 -->
 
 Implement participant list and management.
 
@@ -453,6 +455,28 @@ Implement participant list and management.
 - Organizer can remove participants
 - User can leave trip
 - Pending invites are displayed
+
+**Completed:** Full participant management implemented with:
+
+- `src/lib/supabase/trips.ts`: Added server actions:
+  - `getTripMembers()`: Get all members with user details
+  - `removeParticipant()`: Remove participant (organizers only, cannot remove self or other organizers)
+  - `leaveTrip()`: Leave trip (prevents sole organizer from leaving)
+  - `promoteToOrganizer()`: Promote participant to organizer role
+  - `TripMemberWithUser` type for members with user data
+- `src/app/(app)/trip/[id]/participants/page.tsx`: Server-side page with Suspense
+- `src/app/(app)/trip/[id]/participants/participants-header.tsx`: Header with back link and invite button
+- `src/app/(app)/trip/[id]/participants/participants-list.tsx`: Main list component showing:
+  - Members card with organizers and participants sections
+  - Pending invites card (link invites and email invites combined)
+- `src/app/(app)/trip/[id]/participants/participant-card.tsx`: Member card with:
+  - Avatar, name, email, and role badge
+  - Dropdown menu with actions (promote, remove, leave)
+  - Confirmation dialogs for destructive actions
+- `src/app/(app)/trip/[id]/participants/leave-dialog.tsx`: Leave trip confirmation dialog
+- `src/app/(app)/trip/[id]/participants/participants-skeleton.tsx`: Loading skeleton
+- Installed shadcn alert-dialog component for confirmations
+- Build and lint pass successfully
 
 ### [ ] Step 2.5: Role-Based Permissions
 

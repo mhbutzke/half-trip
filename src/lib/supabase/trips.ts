@@ -407,3 +407,236 @@ export async function getUserRoleInTrip(
 
   return member?.role || null;
 }
+
+export type TripMemberWithUser = TripMember & {
+  users: User;
+  invited_by_user?: Pick<User, 'id' | 'name'> | null;
+};
+
+/**
+ * Gets all members of a trip with their user details
+ */
+export async function getTripMembers(tripId: string): Promise<TripMemberWithUser[]> {
+  const supabase = await createClient();
+
+  const {
+    data: { user: authUser },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !authUser) {
+    return [];
+  }
+
+  // Check if user is a member
+  const { data: membership } = await supabase
+    .from('trip_members')
+    .select('id')
+    .eq('trip_id', tripId)
+    .eq('user_id', authUser.id)
+    .single();
+
+  if (!membership) {
+    return [];
+  }
+
+  const { data: members } = await supabase
+    .from('trip_members')
+    .select(
+      `
+      *,
+      users!trip_members_user_id_fkey (*),
+      invited_by_user:users!trip_members_invited_by_fkey (id, name)
+    `
+    )
+    .eq('trip_id', tripId)
+    .order('joined_at', { ascending: true });
+
+  return (members as TripMemberWithUser[]) || [];
+}
+
+/**
+ * Removes a participant from a trip (organizers only)
+ */
+export async function removeParticipant(tripId: string, userId: string): Promise<TripResult> {
+  const supabase = await createClient();
+
+  const {
+    data: { user: authUser },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !authUser) {
+    return { error: 'Não autorizado' };
+  }
+
+  // Check if current user is an organizer
+  const { data: currentMember } = await supabase
+    .from('trip_members')
+    .select('role')
+    .eq('trip_id', tripId)
+    .eq('user_id', authUser.id)
+    .single();
+
+  if (!currentMember || currentMember.role !== 'organizer') {
+    return { error: 'Apenas organizadores podem remover participantes' };
+  }
+
+  // Check if target user is a member
+  const { data: targetMember } = await supabase
+    .from('trip_members')
+    .select('role')
+    .eq('trip_id', tripId)
+    .eq('user_id', userId)
+    .single();
+
+  if (!targetMember) {
+    return { error: 'Usuário não é membro desta viagem' };
+  }
+
+  // Cannot remove self if organizer (must transfer ownership or delete trip)
+  if (userId === authUser.id) {
+    return {
+      error: 'Você não pode remover a si mesmo. Use "Sair da viagem" ou transfira a organização.',
+    };
+  }
+
+  // Cannot remove other organizers (would need to implement demotion first)
+  if (targetMember.role === 'organizer') {
+    return { error: 'Não é possível remover outro organizador' };
+  }
+
+  const { error } = await supabase
+    .from('trip_members')
+    .delete()
+    .eq('trip_id', tripId)
+    .eq('user_id', userId);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath(`/trip/${tripId}`);
+  revalidatePath(`/trip/${tripId}/participants`);
+
+  return { success: true };
+}
+
+/**
+ * Leave a trip (any member except sole organizer)
+ */
+export async function leaveTrip(tripId: string): Promise<TripResult> {
+  const supabase = await createClient();
+
+  const {
+    data: { user: authUser },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !authUser) {
+    return { error: 'Não autorizado' };
+  }
+
+  // Get current user's membership
+  const { data: membership } = await supabase
+    .from('trip_members')
+    .select('role')
+    .eq('trip_id', tripId)
+    .eq('user_id', authUser.id)
+    .single();
+
+  if (!membership) {
+    return { error: 'Você não é membro desta viagem' };
+  }
+
+  // If organizer, check if there are other organizers
+  if (membership.role === 'organizer') {
+    const { data: organizers } = await supabase
+      .from('trip_members')
+      .select('user_id')
+      .eq('trip_id', tripId)
+      .eq('role', 'organizer');
+
+    if (!organizers || organizers.length <= 1) {
+      return {
+        error:
+          'Você é o único organizador. Transfira a organização para outro participante antes de sair, ou exclua a viagem.',
+      };
+    }
+  }
+
+  const { error } = await supabase
+    .from('trip_members')
+    .delete()
+    .eq('trip_id', tripId)
+    .eq('user_id', authUser.id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath('/trips');
+  revalidatePath(`/trip/${tripId}`);
+  revalidatePath(`/trip/${tripId}/participants`);
+
+  return { success: true };
+}
+
+/**
+ * Promote a participant to organizer
+ */
+export async function promoteToOrganizer(tripId: string, userId: string): Promise<TripResult> {
+  const supabase = await createClient();
+
+  const {
+    data: { user: authUser },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !authUser) {
+    return { error: 'Não autorizado' };
+  }
+
+  // Check if current user is an organizer
+  const { data: currentMember } = await supabase
+    .from('trip_members')
+    .select('role')
+    .eq('trip_id', tripId)
+    .eq('user_id', authUser.id)
+    .single();
+
+  if (!currentMember || currentMember.role !== 'organizer') {
+    return { error: 'Apenas organizadores podem promover participantes' };
+  }
+
+  // Check if target user is a member
+  const { data: targetMember } = await supabase
+    .from('trip_members')
+    .select('role')
+    .eq('trip_id', tripId)
+    .eq('user_id', userId)
+    .single();
+
+  if (!targetMember) {
+    return { error: 'Usuário não é membro desta viagem' };
+  }
+
+  if (targetMember.role === 'organizer') {
+    return { error: 'Usuário já é organizador' };
+  }
+
+  const { error } = await supabase
+    .from('trip_members')
+    .update({ role: 'organizer' })
+    .eq('trip_id', tripId)
+    .eq('user_id', userId);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath(`/trip/${tripId}`);
+  revalidatePath(`/trip/${tripId}/participants`);
+
+  return { success: true };
+}

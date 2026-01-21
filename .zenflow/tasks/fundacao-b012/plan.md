@@ -229,7 +229,9 @@ Implement user profile view and edit functionality.
 - `supabase/migrations/00004_storage_buckets.sql`: Storage bucket configuration for avatars (public), trip-covers, attachments, and receipts with appropriate RLS policies
 - Build and lint pass successfully
 
-### [ ] Step 1.7: Trip CRUD Operations
+### [x] Step 1.7: Trip CRUD Operations
+
+<!-- chat-id: cd17512d-b9d5-4acb-8fa8-0c9127a2949c -->
 
 Implement basic trip management.
 
@@ -249,6 +251,23 @@ Implement basic trip management.
 - User can create, view, edit, archive trips
 - Trip list shows user's trips
 - Navigation between list and detail works
+
+**Completed:** Trip CRUD operations fully implemented with:
+
+- `src/lib/supabase/trips.ts`: Server actions for createTrip, updateTrip, archiveTrip, unarchiveTrip, deleteTrip, getUserTrips, getArchivedTrips, getTripById, getUserRoleInTrip. Includes TripWithMembers type with member data and count.
+- `src/lib/validation/trip-schemas.ts`: Zod schemas for createTripSchema and updateTripSchema with date validation (end date >= start date). Includes tripStyles array for UI.
+- `src/components/trips/trip-card.tsx`: TripCard component showing trip status (planned, in progress, completed), destination, dates, duration, style with icons, member avatars, and action menu (edit, archive, delete) for organizers.
+- `src/components/trips/create-trip-dialog.tsx`: CreateTripDialog with form for name, destination, dates, style selection, description. Navigates to new trip on success.
+- `src/components/trips/edit-trip-dialog.tsx`: EditTripDialog for updating trip details.
+- `src/components/trips/delete-trip-dialog.tsx`: DeleteTripDialog with confirmation and warning about cascading deletes.
+- `src/app/(app)/trips/page.tsx`: Trips list page with loading skeleton, empty state, and Suspense.
+- `src/app/(app)/trips/trips-list.tsx`: Client component managing trips state with tabs for active/archived trips.
+- `src/app/(app)/trip/[id]/page.tsx`: Trip detail page with server-side data fetching.
+- `src/app/(app)/trip/[id]/trip-header.tsx`: Trip header with full details, status badge, member avatars, and organizer actions.
+- `src/app/(app)/trip/[id]/trip-overview.tsx`: Overview cards for itinerary, expenses, participants, and notes sections.
+- `src/app/(app)/trip/[id]/not-found.tsx`: Not found page for invalid/unauthorized trip access.
+- Installed date-fns for date formatting in Portuguese locale.
+- Build and lint pass successfully.
 
 ### [ ] Step 1.8: Responsive Mobile-First Layout
 

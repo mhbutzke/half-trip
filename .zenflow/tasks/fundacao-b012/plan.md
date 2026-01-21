@@ -354,6 +354,8 @@ Implement shareable invite link functionality.
 
 ### [ ] Step 2.2: Invite Acceptance Flow
 
+<!-- chat-id: 0dff603e-11c5-4254-a2c6-89ef69b683f7 -->
+
 Implement the flow for accepting invites.
 
 **Tasks:**

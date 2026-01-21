@@ -352,7 +352,7 @@ Implement shareable invite link functionality.
 - Updated `src/app/(app)/trip/[id]/page.tsx`: Now passes currentUserId to header and overview components
 - Build and lint pass successfully
 
-### [ ] Step 2.2: Invite Acceptance Flow
+### [x] Step 2.2: Invite Acceptance Flow
 
 <!-- chat-id: 0dff603e-11c5-4254-a2c6-89ef69b683f7 -->
 
@@ -373,6 +373,24 @@ Implement the flow for accepting invites.
 - Valid invite code allows joining trip
 - Expired invite shows appropriate message
 - User is added as participant with correct role
+
+**Completed:** Full invite acceptance flow implemented with:
+
+- `src/app/invite/[code]/page.tsx`: Server-side invite page with authentication check and invite validation
+- `src/app/invite/[code]/invite-content.tsx`: Client component handling all three scenarios:
+  - Logged-in user: Shows trip details and "Participar da viagem" button that adds them as participant
+  - Not logged-in: Shows trip details with "Entrar" and "Criar conta" buttons that preserve redirect
+  - Already member: Shows friendly message with link to view the trip
+- `src/app/invite/[code]/invite-skeleton.tsx`: Loading skeleton for invite page
+- `src/lib/supabase/invites.ts`: Added `getInviteDetails()` and `acceptInvite()` functions:
+  - `getInviteDetails()`: Returns full invite info including trip details, inviter info, and membership status
+  - `acceptInvite()`: Validates invite, adds user to trip_members as participant, marks invite as accepted
+- `src/lib/supabase/auth.ts`: Updated `signUp()` to accept optional redirect parameter for email callback
+- `src/app/auth/callback/route.ts`: Updated to handle redirect param after email confirmation
+- `src/app/(auth)/login/page.tsx`: Updated to preserve redirect param when linking to register
+- `src/app/(auth)/register/page.tsx`: Updated to preserve redirect param when linking to login, added Suspense wrapper
+- Invalid/expired invites show appropriate error messages
+- Build and lint pass successfully
 
 ### [ ] Step 2.3: Email Invitations
 

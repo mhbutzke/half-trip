@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, Moon, Sun, X } from 'lucide-react';
+import { LogOut, Menu, Moon, Plane, Settings, Sun, User } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -33,8 +33,8 @@ export function Header({ user, onSignOut }: HeaderProps) {
 
   const navigation = user
     ? [
-        { name: 'Viagens', href: '/trips' },
-        { name: 'Configurações', href: '/settings' },
+        { name: 'Viagens', href: '/trips', icon: Plane },
+        { name: 'Configurações', href: '/settings', icon: Settings },
       ]
     : [];
 
@@ -44,18 +44,19 @@ export function Header({ user, onSignOut }: HeaderProps) {
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
-        <Link href={user ? '/trips' : '/'} className="flex items-center gap-2">
+        <Link href={user ? '/trips' : '/'} className="flex min-h-[44px] items-center gap-2">
           <span className="text-xl font-bold text-primary">Half Trip</span>
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="hidden items-center gap-1 md:flex" role="navigation">
           {navigation.map((item) => (
             <Link
               key={item.name}
               href={item.href}
+              aria-current={isActive(item.href) ? 'page' : undefined}
               className={cn(
-                'rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                'flex min-h-[44px] items-center rounded-md px-3 text-sm font-medium transition-colors',
                 isActive(item.href)
                   ? 'bg-accent text-accent-foreground'
                   : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
@@ -67,27 +68,31 @@ export function Header({ user, onSignOut }: HeaderProps) {
         </nav>
 
         {/* Right side actions */}
-        <div className="flex items-center gap-2">
-          {/* Theme toggle */}
+        <div className="flex items-center gap-1">
+          {/* Theme toggle - 44px touch target */}
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="h-9 w-9"
+            className="h-11 w-11"
+            aria-label={theme === 'dark' ? 'Ativar modo claro' : 'Ativar modo escuro'}
           >
-            <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-            <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-            <span className="sr-only">Alternar tema</span>
+            <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+            <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
           </Button>
 
           {user ? (
             <>
-              {/* User menu (desktop) */}
+              {/* User menu (desktop) - 44px touch target */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild className="hidden md:flex">
-                  <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                  <Button
+                    variant="ghost"
+                    className="relative h-11 w-11 rounded-full p-0"
+                    aria-label="Menu do usuário"
+                  >
                     <Avatar className="h-9 w-9">
-                      <AvatarImage src={user.avatar} alt={user.name} />
+                      <AvatarImage src={user.avatar} alt="" />
                       <AvatarFallback>
                         {user.name
                           .split(' ')
@@ -106,34 +111,42 @@ export function Header({ user, onSignOut }: HeaderProps) {
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/settings">Configurações</Link>
+                    <Link href="/settings" className="flex items-center">
+                      <Settings className="mr-2 h-4 w-4" />
+                      Configurações
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="text-destructive focus:text-destructive"
                     onClick={onSignOut}
                   >
+                    <LogOut className="mr-2 h-4 w-4" />
                     Sair
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {/* Mobile menu button */}
+              {/* Mobile menu button - 44px touch target */}
               <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetTrigger asChild className="md:hidden">
-                  <Button variant="ghost" size="icon" className="h-9 w-9">
-                    {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-                    <span className="sr-only">Abrir menu</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-11 w-11"
+                    aria-label={mobileMenuOpen ? 'Fechar menu' : 'Abrir menu'}
+                  >
+                    <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-[280px] sm:w-[350px]">
+                <SheetContent side="right" className="w-[300px] sm:w-[350px]">
                   <SheetTitle className="sr-only">Menu de navegação</SheetTitle>
-                  <div className="flex flex-col gap-4 pt-4">
+                  <div className="flex h-full flex-col gap-6 pt-6">
                     {/* User info */}
-                    <div className="flex items-center gap-3 rounded-lg bg-muted p-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={user.avatar} alt={user.name} />
-                        <AvatarFallback>
+                    <div className="flex items-center gap-3 rounded-lg bg-muted p-4">
+                      <Avatar className="h-12 w-12">
+                        <AvatarImage src={user.avatar} alt="" />
+                        <AvatarFallback className="text-lg">
                           {user.name
                             .split(' ')
                             .map((n) => n[0])
@@ -142,41 +155,52 @@ export function Header({ user, onSignOut }: HeaderProps) {
                             .slice(0, 2)}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="flex flex-col">
-                        <p className="text-sm font-medium">{user.name}</p>
-                        <p className="text-xs text-muted-foreground">{user.email}</p>
+                      <div className="flex min-w-0 flex-col">
+                        <p className="truncate font-medium">{user.name}</p>
+                        <p className="truncate text-sm text-muted-foreground">{user.email}</p>
                       </div>
                     </div>
 
-                    {/* Navigation */}
-                    <nav className="flex flex-col gap-1">
-                      {navigation.map((item) => (
-                        <Link
-                          key={item.name}
-                          href={item.href}
-                          onClick={() => setMobileMenuOpen(false)}
-                          className={cn(
-                            'rounded-md px-3 py-2 text-sm font-medium transition-colors',
-                            isActive(item.href)
-                              ? 'bg-accent text-accent-foreground'
-                              : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                          )}
-                        >
-                          {item.name}
-                        </Link>
-                      ))}
+                    {/* Navigation - touch-friendly links */}
+                    <nav className="flex flex-col gap-1" role="navigation">
+                      {navigation.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                          <Link
+                            key={item.name}
+                            href={item.href}
+                            onClick={() => setMobileMenuOpen(false)}
+                            aria-current={isActive(item.href) ? 'page' : undefined}
+                            className={cn(
+                              // Minimum 44px tap target
+                              'flex min-h-[48px] items-center gap-3 rounded-lg px-4 text-base font-medium transition-colors',
+                              isActive(item.href)
+                                ? 'bg-accent text-accent-foreground'
+                                : 'text-muted-foreground active:bg-accent active:text-accent-foreground'
+                            )}
+                          >
+                            <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                            {item.name}
+                          </Link>
+                        );
+                      })}
                     </nav>
 
-                    {/* Logout */}
-                    <div className="mt-auto border-t pt-4">
+                    {/* Spacer */}
+                    <div className="flex-1" />
+
+                    {/* Logout - touch-friendly button */}
+                    <div className="border-t pt-4">
                       <Button
                         variant="ghost"
-                        className="w-full justify-start text-destructive hover:text-destructive"
+                        // Minimum 44px tap target
+                        className="h-12 w-full justify-start gap-3 text-base text-destructive hover:text-destructive"
                         onClick={() => {
                           setMobileMenuOpen(false);
                           onSignOut?.();
                         }}
                       >
+                        <LogOut className="h-5 w-5 shrink-0" aria-hidden="true" />
                         Sair
                       </Button>
                     </div>
@@ -187,10 +211,10 @@ export function Header({ user, onSignOut }: HeaderProps) {
           ) : (
             /* Auth buttons for logged out users */
             <div className="flex items-center gap-2">
-              <Button variant="ghost" asChild className="hidden sm:inline-flex">
+              <Button variant="ghost" asChild className="hidden min-h-[44px] sm:inline-flex">
                 <Link href="/login">Entrar</Link>
               </Button>
-              <Button asChild>
+              <Button asChild className="min-h-[44px]">
                 <Link href="/register">Criar conta</Link>
               </Button>
             </div>

@@ -597,7 +597,7 @@ Implement itinerary visualization organized by days.
 - Activities appear under correct day
 - Empty days show add activity prompt
 
-### [ ] Step 3.3: Drag-and-Drop Reordering
+### [x] Step 3.3: Drag-and-Drop Reordering
 
 <!-- chat-id: b059054d-78a0-4b8f-91fe-c325b236fab7 -->
 
@@ -617,6 +617,33 @@ Implement activity reordering with drag and drop.
 - Activities can be reordered via drag
 - Activities can be moved between days
 - Order persists after refresh
+
+**Completed:** Drag-and-drop reordering fully implemented with:
+
+- Installed `@dnd-kit/core@6.3.1`, `@dnd-kit/sortable@10.0.0`, and `@dnd-kit/utilities@3.2.2`
+- `src/app/(app)/trip/[id]/itinerary/draggable-activity-card.tsx`: DraggableActivityCard component wrapping ActivityCard with:
+  - `useSortable` hook for drag-and-drop functionality
+  - Drag handle with GripVertical icon, hidden by default, appears on hover
+  - Touch-friendly with `touch-manipulation` class
+  - Separate isDragOverlay prop for the drag preview
+  - Proper ARIA labels for accessibility
+- `src/app/(app)/trip/[id]/itinerary/day-section.tsx`: Updated to be a droppable container with:
+  - `useDroppable` hook to accept dropped activities
+  - `SortableContext` with vertical list sorting strategy
+  - Visual feedback (bg-primary/5) when dragging over a day
+  - Left padding to make room for drag handles
+- `src/app/(app)/trip/[id]/itinerary/itinerary-list.tsx`: Full DndContext implementation with:
+  - PointerSensor with 8px activation distance
+  - KeyboardSensor for accessibility
+  - closestCorners collision detection
+  - onDragStart: Tracks active dragging activity for overlay
+  - onDragOver: Handles moving activities between days (optimistic update)
+  - onDragEnd: Handles reordering within same day, persists to database
+  - DragOverlay for smooth drag preview
+  - Optimistic updates with rollback on error
+  - Toast notifications for success/error feedback
+- Existing `reorderActivities` server action in `src/lib/supabase/activities.ts` used for persistence
+- Build and lint pass successfully
 
 ### [ ] Step 3.4: File Attachments
 

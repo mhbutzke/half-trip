@@ -23,13 +23,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import {
-  type AttachmentWithUrl,
-  deleteAttachment,
-  formatFileSize,
-  isImageType,
-  isPdfType,
-} from '@/lib/supabase/attachments';
+import { type AttachmentWithUrl, deleteAttachment } from '@/lib/supabase/attachments';
+import { formatFileSize, isImageType, isPdfType } from '@/lib/utils/attachment-helpers';
 
 interface AttachmentsListProps {
   attachments: AttachmentWithUrl[];

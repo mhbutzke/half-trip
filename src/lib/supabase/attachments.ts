@@ -3,6 +3,7 @@
 import { createClient } from './server';
 import { revalidatePath } from 'next/cache';
 import type { ActivityAttachment } from '@/types/database';
+import { MAX_ATTACHMENT_SIZE, isValidAttachmentType } from '@/lib/utils/attachment-helpers';
 
 export type AttachmentResult = {
   error?: string;
@@ -15,37 +16,8 @@ export type AttachmentWithUrl = ActivityAttachment & {
   signedUrl?: string;
 };
 
-// Supported file types for activity attachments
-export const ALLOWED_ATTACHMENT_TYPES = [
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'image/gif',
-  'application/pdf',
-];
-
-export const MAX_ATTACHMENT_SIZE = 20 * 1024 * 1024; // 20MB
-
-/**
- * Validates if a file type is allowed for attachments
- */
-export function isValidAttachmentType(mimeType: string): boolean {
-  return ALLOWED_ATTACHMENT_TYPES.includes(mimeType);
-}
-
-/**
- * Gets the file extension from a MIME type
- */
-function getExtensionFromMimeType(mimeType: string): string {
-  const extensions: Record<string, string> = {
-    'image/jpeg': 'jpg',
-    'image/png': 'png',
-    'image/webp': 'webp',
-    'image/gif': 'gif',
-    'application/pdf': 'pdf',
-  };
-  return extensions[mimeType] || 'bin';
-}
+// Note: Utility functions like formatFileSize, isImageType, isPdfType should be
+// imported directly from '@/lib/utils/attachment-helpers' in client components
 
 /**
  * Generates a unique file path for storage
@@ -274,7 +246,8 @@ export async function getActivityAttachments(activityId: string): Promise<Attach
         .createSignedUrl(attachment.file_url, 60 * 60); // 1 hour expiry
 
       // Remove the activities join from the result
-      const { activities: _, ...attachmentWithoutActivities } = attachment;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { activities: _activities, ...attachmentWithoutActivities } = attachment;
 
       return {
         ...attachmentWithoutActivities,
@@ -357,32 +330,4 @@ export async function getAttachmentsCount(activityId: string): Promise<number> {
     .eq('activity_id', activityId);
 
   return count || 0;
-}
-
-/**
- * Format file size for display
- */
-export function formatFileSize(bytes: number | null): string {
-  if (bytes === null || bytes === 0) return '0 B';
-
-  const units = ['B', 'KB', 'MB', 'GB'];
-  const k = 1024;
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${units[i]}`;
-}
-
-/**
- * Check if a file type is an image
- */
-export function isImageType(mimeType: string | null): boolean {
-  if (!mimeType) return false;
-  return mimeType.startsWith('image/');
-}
-
-/**
- * Check if a file type is a PDF
- */
-export function isPdfType(mimeType: string | null): boolean {
-  return mimeType === 'application/pdf';
 }

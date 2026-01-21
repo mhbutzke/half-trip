@@ -1,14 +1,31 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import {
+  DndContext,
+  DragOverlay,
+  closestCorners,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragStartEvent,
+  type DragEndEvent,
+  type DragOverEvent,
+  type UniqueIdentifier,
+} from '@dnd-kit/core';
+import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { format, parseISO, eachDayOfInterval } from 'date-fns';
 import { MapPin, Plus } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { DaySection } from './day-section';
+import { DraggableActivityCard } from './draggable-activity-card';
 import { DeleteActivityDialog } from './delete-activity-dialog';
 import { AddActivityDialog } from '@/components/activities/add-activity-dialog';
 import { EditActivityDialog } from '@/components/activities/edit-activity-dialog';
+import { reorderActivities } from '@/lib/supabase/activities';
 import type { ActivityWithCreator } from '@/lib/supabase/activities';
 import type { Activity } from '@/types/database';
 
@@ -28,7 +45,8 @@ export function ItineraryList({
   initialActivities,
 }: ItineraryListProps) {
   const router = useRouter();
-  const [activities] = useState<ActivityWithCreator[]>(initialActivities);
+  const [activities, setActivities] = useState<ActivityWithCreator[]>(initialActivities);
+  const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [deletingActivity, setDeletingActivity] = useState<ActivityWithCreator | null>(null);
@@ -94,6 +112,177 @@ export function ItineraryList({
 
     return Array.from(dates).sort();
   }, [tripDays, activities]);
+
+  // Find the active activity for the drag overlay
+  const activeActivity = useMemo(() => {
+    if (!activeId) return null;
+    return activities.find((a) => a.id === activeId) || null;
+  }, [activeId, activities]);
+
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // 8px movement before drag starts
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    setActiveId(event.active.id);
+  }, []);
+
+  const handleDragOver = useCallback(
+    (event: DragOverEvent) => {
+      const { active, over } = event;
+
+      if (!over) return;
+
+      const activeId = active.id as string;
+      const overId = over.id as string;
+
+      // Find the activity being dragged
+      const activeActivity = activities.find((a) => a.id === activeId);
+      if (!activeActivity) return;
+
+      // Check if we're over a day container (date string like 'yyyy-MM-dd')
+      const isOverDay = allDates.includes(overId);
+
+      if (isOverDay) {
+        const overDate = overId;
+
+        // If the activity is already on this day, no need to move it
+        if (activeActivity.date === overDate) return;
+
+        // Move activity to the new day (optimistic update)
+        setActivities((prev) => {
+          return prev.map((activity) => {
+            if (activity.id === activeId) {
+              return { ...activity, date: overDate };
+            }
+            return activity;
+          });
+        });
+        return;
+      }
+
+      // Check if we're over another activity
+      const overActivity = activities.find((a) => a.id === overId);
+      if (!overActivity) return;
+
+      // If the activities are on different days, move to that day
+      if (activeActivity.date !== overActivity.date) {
+        setActivities((prev) => {
+          return prev.map((activity) => {
+            if (activity.id === activeId) {
+              return { ...activity, date: overActivity.date };
+            }
+            return activity;
+          });
+        });
+      }
+    },
+    [activities, allDates]
+  );
+
+  const handleDragEnd = useCallback(
+    async (event: DragEndEvent) => {
+      const { active, over } = event;
+
+      setActiveId(null);
+
+      if (!over) return;
+
+      const activeId = active.id as string;
+      const overId = over.id as string;
+
+      // Find the dragged activity (it may have been moved to a new day during drag)
+      const draggedActivity = activities.find((a) => a.id === activeId);
+      if (!draggedActivity) return;
+
+      const currentDate = draggedActivity.date;
+
+      // Get activities for the current day
+      const dayActivities = activitiesByDate[currentDate] || [];
+      const oldIndex = dayActivities.findIndex((a) => a.id === activeId);
+
+      // Check if we dropped over another activity on the same day
+      const overActivity = dayActivities.find((a) => a.id === overId);
+
+      let newActivities = [...activities];
+
+      if (overActivity && oldIndex !== -1) {
+        const newIndex = dayActivities.findIndex((a) => a.id === overId);
+
+        if (oldIndex !== newIndex) {
+          // Reorder within the same day
+          const reorderedDay = arrayMove(dayActivities, oldIndex, newIndex);
+
+          // Update sort_order for all activities in the day
+          const reorderedWithSortOrder = reorderedDay.map((activity, index) => ({
+            ...activity,
+            sort_order: index,
+          }));
+
+          // Replace the activities for this day
+          newActivities = activities.filter((a) => a.date !== currentDate);
+          newActivities = [...newActivities, ...reorderedWithSortOrder];
+
+          // Sort by date, then sort_order
+          newActivities.sort((a, b) => {
+            if (a.date !== b.date) return a.date.localeCompare(b.date);
+            return a.sort_order - b.sort_order;
+          });
+
+          setActivities(newActivities);
+        }
+      } else if (allDates.includes(overId)) {
+        // Dropped on a day container - need to update sort orders
+        const targetDate = overId;
+        const targetDayActivities = activitiesByDate[targetDate] || [];
+
+        // Recalculate sort orders for the target day
+        const updatedTargetDay = targetDayActivities.map((activity, index) => ({
+          ...activity,
+          sort_order: index,
+        }));
+
+        newActivities = activities.filter((a) => a.date !== targetDate);
+        newActivities = [...newActivities, ...updatedTargetDay];
+
+        newActivities.sort((a, b) => {
+          if (a.date !== b.date) return a.date.localeCompare(b.date);
+          return a.sort_order - b.sort_order;
+        });
+
+        setActivities(newActivities);
+      }
+
+      // Prepare updates for the server
+      const updates = newActivities.map((activity) => ({
+        activityId: activity.id,
+        date: activity.date,
+        sort_order: activity.sort_order,
+      }));
+
+      // Persist changes to the database
+      const result = await reorderActivities(tripId, updates);
+
+      if (result.error) {
+        toast.error('Erro ao reorganizar atividades', {
+          description: result.error,
+        });
+        // Revert to initial activities on error
+        setActivities(initialActivities);
+      } else {
+        toast.success('Atividades reorganizadas');
+      }
+    },
+    [activities, activitiesByDate, allDates, tripId, initialActivities]
+  );
 
   const handleAddActivity = (date: string) => {
     setSelectedDate(date);
@@ -172,25 +361,47 @@ export function ItineraryList({
         />
       </div>
 
-      {/* Day Sections */}
-      <div className="space-y-8">
-        {allDates.map((date) => {
-          const dayNumber = tripDays.indexOf(date) + 1;
-          const isOutOfRange = !tripDays.includes(date);
+      {/* Day Sections with Drag and Drop */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCorners}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="space-y-8">
+          {allDates.map((date) => {
+            const dayNumber = tripDays.indexOf(date) + 1;
+            const isOutOfRange = !tripDays.includes(date);
 
-          return (
-            <DaySection
-              key={date}
-              date={date}
-              dayNumber={isOutOfRange ? 0 : dayNumber}
-              activities={activitiesByDate[date] || []}
-              onAddActivity={handleAddActivity}
-              onEditActivity={handleEditActivity}
-              onDeleteActivity={handleDeleteActivity}
-            />
-          );
-        })}
-      </div>
+            return (
+              <DaySection
+                key={date}
+                date={date}
+                dayNumber={isOutOfRange ? 0 : dayNumber}
+                activities={activitiesByDate[date] || []}
+                onAddActivity={handleAddActivity}
+                onEditActivity={handleEditActivity}
+                onDeleteActivity={handleDeleteActivity}
+              />
+            );
+          })}
+        </div>
+
+        {/* Drag Overlay - Shows a preview of the dragged item */}
+        <DragOverlay>
+          {activeActivity ? (
+            <div className="w-full max-w-md">
+              <DraggableActivityCard
+                activity={activeActivity}
+                onEdit={() => {}}
+                onDelete={() => {}}
+                isDragOverlay
+              />
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
 
       {/* Add Activity Dialog - Triggered by selecting a date */}
       <AddActivityDialog

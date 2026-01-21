@@ -4,12 +4,12 @@ import { useCallback, useState, useRef } from 'react';
 import { Upload, X, FileText, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { uploadAttachment } from '@/lib/supabase/attachments';
 import {
-  uploadAttachment,
   isValidAttachmentType,
   MAX_ATTACHMENT_SIZE,
   ALLOWED_ATTACHMENT_TYPES,
-} from '@/lib/supabase/attachments';
+} from '@/lib/utils/attachment-helpers';
 
 interface FileUploadProps {
   activityId: string;

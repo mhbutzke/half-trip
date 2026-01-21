@@ -10,6 +10,7 @@ import {
   ExternalLink,
   ChevronDown,
   ChevronUp,
+  Paperclip,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -55,7 +56,7 @@ export function ActivityCard({ activity, onEdit, onDelete }: ActivityCardProps) 
               <div className="min-w-0 flex-1">
                 <h3 className="font-medium leading-tight">{activity.title}</h3>
 
-                {/* Time and Duration */}
+                {/* Time, Duration, and Attachments */}
                 <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
                   {activity.start_time && (
                     <span className="flex items-center gap-1">

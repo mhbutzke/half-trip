@@ -65,6 +65,10 @@ function LoginForm() {
     authError === 'auth_error' ? 'Ocorreu um erro na autenticação. Tente novamente.' : null
   );
 
+  // Build register link with redirect param if present
+  const registerHref =
+    redirectTo !== '/trips' ? `/register?redirect=${encodeURIComponent(redirectTo)}` : '/register';
+
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -162,7 +166,7 @@ function LoginForm() {
       <CardFooter className="justify-center">
         <p className="text-sm text-muted-foreground">
           Ainda não tem conta?{' '}
-          <Link href="/register" className="font-medium text-primary hover:underline">
+          <Link href={registerHref} className="font-medium text-primary hover:underline">
             Criar conta
           </Link>
         </p>

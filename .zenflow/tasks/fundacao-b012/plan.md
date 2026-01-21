@@ -53,7 +53,9 @@ Set up Next.js 14 project with App Router, TypeScript, and core tooling.
 
 **Completed:** Project scaffolded with Next.js 16 (latest), TypeScript, Tailwind CSS v4, ESLint, Prettier, husky, and lint-staged.
 
-### [ ] Step 1.2: UI Component Library Setup
+### [x] Step 1.2: UI Component Library Setup
+
+<!-- chat-id: d11785dc-b4de-4fc4-9669-368bffbd73d9 -->
 
 Install and configure shadcn/ui with base components.
 
@@ -69,6 +71,23 @@ Install and configure shadcn/ui with base components.
 
 - Components render correctly in dev mode
 - Responsive layout works on mobile viewport
+
+**Completed:** shadcn/ui initialized with Tailwind v4 support. Installed 17 core components (button, card, input, label, form, dialog, sheet, select, avatar, badge, tabs, sonner, skeleton, dropdown-menu, separator, scroll-area, tooltip). Created custom Half Trip theme with:
+
+- Teal/cyan primary color (travel, trust, exploration)
+- Warm amber secondary (collaboration)
+- Green success color (fairness in expense splits)
+- Custom positive/negative/warning colors for balance display
+- Full dark mode support with OKLCH colors
+
+Created layout components:
+
+- `Header` with responsive navigation, theme toggle, user menu
+- `MobileNav` bottom navigation for mobile devices
+- `PageContainer` for consistent page layouts
+- `ThemeProvider` for dark/light mode support
+
+Updated home page with Half Trip landing page showcasing all components.
 
 ### [ ] Step 1.3: Supabase Project Setup
 

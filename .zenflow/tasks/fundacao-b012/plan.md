@@ -788,6 +788,8 @@ Implement general notes for the trip.
 
 ### [ ] Step 4.1: Expense CRUD Operations
 
+<!-- chat-id: 99fafa03-6a3d-4fb8-a431-469913faf9f9 -->
+
 Implement expense management.
 
 **Tasks:**
@@ -806,6 +808,8 @@ Implement expense management.
 - Expenses appear in list
 
 ### [ ] Step 4.2: Expense Split Types
+
+<!-- chat-id: b87d1f93-bad0-4dc9-a310-491fedf266d4 -->
 
 Implement different ways to split expenses.
 
@@ -826,6 +830,8 @@ Implement different ways to split expenses.
 
 ### [ ] Step 4.3: Expense List and Filters
 
+<!-- chat-id: 35c7ff11-567b-4337-b27b-fd7dfbd7a70b -->
+
 Implement expense list with filtering and search.
 
 **Tasks:**
@@ -844,6 +850,8 @@ Implement expense list with filtering and search.
 - Search finds matching expenses
 
 ### [ ] Step 4.4: Receipt Upload
+
+<!-- chat-id: 6b1e9256-3935-49be-a904-5880537adb45 -->
 
 Implement receipt photo/file upload.
 

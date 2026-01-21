@@ -453,21 +453,21 @@ Os seguintes itens **não** fazem parte do MVP, mas podem ser considerados para 
 
 ---
 
-## 11. Decisoes de Escopo (MVP)
+## 11. Decisões de Escopo (MVP)
 
-As seguintes decisoes foram tomadas para definir o escopo do MVP:
+As seguintes decisões foram tomadas para definir o escopo do MVP:
 
-| Decisao                    | Escolha                           | Justificativa                                                                  |
+| Decisão                    | Escolha                           | Justificativa                                                                  |
 | -------------------------- | --------------------------------- | ------------------------------------------------------------------------------ |
 | **Suporte Offline**        | Completo (leitura + escrita)      | Essencial para viajantes que frequentemente ficam sem internet                 |
-| **Moeda**                  | Uma moeda selecionavel por viagem | Flexibilidade para viagens internacionais sem complexidade de conversao        |
-| **Resolucao de Conflitos** | Last-write-wins com historico     | Simplicidade tecnica mantendo transparencia atraves do historico de alteracoes |
+| **Moeda**                  | Uma moeda selecionável por viagem | Flexibilidade para viagens internacionais sem complexidade de conversão        |
+| **Resolução de Conflitos** | Last-write-wins com histórico     | Simplicidade técnica mantendo transparência através do histórico de alterações |
 
 ---
 
-## 12. Historico de Revisoes
+## 12. Histórico de Revisões
 
-| Data       | Versao | Descricao                                                                         |
+| Data       | Versão | Descrição                                                                         |
 | ---------- | ------ | --------------------------------------------------------------------------------- |
-| 2026-01-21 | 1.0    | Versao inicial do PRD                                                             |
-| 2026-01-21 | 1.1    | Decisoes de escopo: offline completo, moeda por viagem, conflitos last-write-wins |
+| 2026-01-21 | 1.0    | Versão inicial do PRD                                                             |
+| 2026-01-21 | 1.1    | Decisões de escopo: offline completo, moeda por viagem, conflitos last-write-wins |

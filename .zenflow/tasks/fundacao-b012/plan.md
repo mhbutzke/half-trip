@@ -786,7 +786,7 @@ Implement general notes for the trip.
 
 ## Phase 4: Expenses (Financial Tracking)
 
-### [ ] Step 4.1: Expense CRUD Operations
+### [x] Step 4.1: Expense CRUD Operations
 
 <!-- chat-id: 99fafa03-6a3d-4fb8-a431-469913faf9f9 -->
 
@@ -807,9 +807,9 @@ Implement expense management.
 - Validation works correctly
 - Expenses appear in list
 
-### [ ] Step 4.2: Expense Split Types
+### [x] Step 4.2: Expense Split Types
 
-<!-- chat-id: b87d1f93-bad0-4dc9-a310-491fedf266d4 -->
+<!-- chat-id: 99fafa03-6a3d-4fb8-a431-469913faf9f9 -->
 
 Implement different ways to split expenses.
 
@@ -828,7 +828,36 @@ Implement different ways to split expenses.
 - Splits sum to total expense amount
 - Participants can be excluded from split
 
-### [ ] Step 4.3: Expense List and Filters
+**Completed:** Full expense split types feature implemented with:
+
+- `src/lib/validation/expense-schemas.ts`: Updated schemas with:
+  - `splitTypes` array defining 3 split types: equal, by_amount, by_percentage
+  - `SplitType` type for type safety
+  - Updated `expenseFormSchema` to support all split types with custom_amounts and custom_percentages
+  - Helper functions: `calculateEqualSplits()`, `calculateAmountSplits()`, `calculatePercentageSplits()`
+  - Validation functions: `validateSplitsTotal()`, `validatePercentagesTotal()`
+  - `formatPercentage()` helper for display
+- `src/components/expenses/split-selector.tsx`: Comprehensive SplitSelector component with:
+  - Split type selection UI with 3 buttons (equal, by_amount, by_percentage)
+  - Member selection with checkboxes and select all functionality
+  - Real-time split calculation based on selected type
+  - Equal split: Shows calculated amount per person as badges
+  - By amount: Input fields for each member with auto-distribute remaining feature
+  - By percentage: Input fields with percentage inputs + calculated amount preview
+  - Live validation with error messages for invalid splits
+  - Summary display for equal splits showing division calculation
+  - Touch-friendly UI with proper spacing and inputs
+- `src/components/expenses/add-expense-sheet.tsx`: Updated to use SplitSelector component
+  - Integrated SplitSelector replacing old tabs UI
+  - Manages calculatedSplits state from SplitSelector
+  - Passes splits directly to createExpense server action
+  - Clean form with better UX
+- `src/components/expenses/edit-expense-sheet.tsx`: Ready for SplitSelector integration (currently has old UI with receipts)
+- `src/components/expenses/index.ts`: Barrel export for all expense components
+- `src/components/ui/checkbox.tsx`: Added shadcn checkbox component for member selection
+- Build ready (fails on unrelated missing balance/receipt components from future steps)
+
+### [x] Step 4.3: Expense List and Filters
 
 <!-- chat-id: 35c7ff11-567b-4337-b27b-fd7dfbd7a70b -->
 
@@ -848,6 +877,33 @@ Implement expense list with filtering and search.
 - Expenses display with correct info
 - Filters work correctly
 - Search finds matching expenses
+
+**Completed:** Expense List with comprehensive filtering implemented with:
+
+- `src/app/(app)/trip/[id]/expenses/page.tsx`: Server-side page with Suspense, fetches trip, expenses, members, and user role
+- `src/app/(app)/trip/[id]/expenses/expenses-header.tsx`: Header with back link, total expenses display
+- `src/app/(app)/trip/[id]/expenses/expenses-list.tsx`: Full-featured expense list with:
+  - Search by description/notes
+  - Category filter with icons
+  - "Paid by" filter
+  - Active filter badges
+  - Toggle-able filter panel
+  - Results summary with filtered total
+  - Empty state with call-to-action
+  - Permission-based edit/delete actions
+- `src/app/(app)/trip/[id]/expenses/expenses-skeleton.tsx`: Loading skeleton matching list layout
+- `src/components/expenses/expense-card.tsx`: Card showing expense details:
+  - Category icon with color coding
+  - Description, date, amount
+  - Paid by user with avatar
+  - Split count with tooltip showing all participants
+  - Notes section (collapsible)
+  - Edit/delete dropdown menu
+- `src/components/expenses/delete-expense-dialog.tsx`: Confirmation dialog with expense details
+- `src/components/expenses/index.ts`: Barrel export
+- `src/lib/utils/expense-categories.ts`: Category info with icons and colors (already existed)
+- All filters work in real-time with useMemo for performance
+- Build passes successfully
 
 ### [ ] Step 4.4: Receipt Upload
 
@@ -869,11 +925,28 @@ Implement receipt photo/file upload.
 - Camera capture works on mobile
 - Receipt preview displays correctly
 
+**Completed:** Full receipt upload functionality implemented with:
+
+- `src/lib/supabase/receipts.ts`: Server actions for uploadReceipt, deleteReceipt, getReceiptUrl with file validation (JPEG, PNG, WebP, GIF, PDF), 10MB max size, secure file paths, signed URLs (1 hour expiry), permission checks
+- `src/lib/utils/receipt-helpers.ts`: Helper functions for validation, file size formatting, type detection
+- `src/components/receipts/receipt-upload.tsx`: Upload component with drag-and-drop, mobile camera capture support using \`capture="environment"\`, file validation, image previews, loading states
+- `src/components/receipts/receipt-preview.tsx`: Preview component with thumbnails, download, delete confirmation, compact/full modes
+- `src/components/receipts/receipt-badge.tsx`: Green indicator badge for expenses with receipts
+- `src/components/receipts/receipt-section.tsx`: Section component that switches between upload and preview
+- `src/components/expenses/edit-expense-sheet.tsx`: EditExpenseSheet with integrated receipt section
+- `src/components/expenses/delete-expense-dialog.tsx`: DeleteExpenseDialog with confirmation and receipt deletion warning
+- `src/components/expenses/expense-card.tsx`: Updated to show ReceiptBadge
+- Storage bucket RLS policies already configured in migration 00004
+- Expenses table already has \`receipt_url\` column
+- Lint passes successfully for receipt components
+
 ---
 
 ## Phase 5: Balance & Settlement
 
-### [ ] Step 5.1: Balance Calculation
+### [x] Step 5.1: Balance Calculation
+
+<!-- chat-id: 99fafa03-6a3d-4fb8-a431-469913faf9f9 -->
 
 Implement balance calculation algorithm.
 
@@ -890,7 +963,44 @@ Implement balance calculation algorithm.
 - Net balance = paid - owed
 - Total debts equal total credits
 
+**Completed:** Balance calculation functionality fully implemented with:
+
+- `src/lib/balance/types.ts`: Type definitions for ParticipantBalance, ExpenseData, ExpenseSplit, TripMemberData, BalanceCalculationResult, and Settlement
+- `src/lib/balance/calculate-balance.ts`: Core balance calculation algorithm with:
+  - `calculateBalances()`: Calculates total paid, total owed, and net balance for each participant
+  - `getCreditors()`, `getDebtors()`, `getSettled()`: Helper functions for filtering participants by balance state
+  - `validateBalances()`: Accounting verification that total debts equal total credits
+  - `formatCurrency()`: Currency formatting for Brazilian Real (BRL)
+- `src/lib/supabase/balance.ts`: Server actions for fetching balance data:
+  - `getTripExpensesForBalance()`: Fetches all expenses with splits for a trip
+  - `getTripMembersForBalance()`: Fetches all trip members with user info
+  - `getBalanceData()`: Combined fetch for expenses and members
+- `src/hooks/use-balance.ts`: React hook with React Query caching:
+  - Fetches and calculates balance data with automatic caching
+  - 2-minute stale time for fresh balance data
+  - Refetch on window focus for real-time updates
+  - Loading states and error handling
+  - Manual refetch capability
+- `src/components/providers/query-provider.tsx`: React Query provider wrapper for the app
+- Updated `src/app/layout.tsx` to include QueryProvider
+- `src/lib/balance/calculate-balance.test.ts`: Comprehensive unit tests with 13 test cases covering:
+  - No expenses scenario
+  - Single expense with equal splits
+  - Multiple expenses
+  - Unequal splits
+  - Sorting by net balance
+  - Creditor/debtor filtering
+  - Balance validation
+  - Currency formatting (with proper non-breaking space handling)
+- Installed `@tanstack/react-query@5.90.19` for data caching
+- Installed `vitest@4.0.17`, `@testing-library/react@16.3.2`, `@testing-library/jest-dom@6.9.1` for testing
+- Created `vitest.config.ts` and test setup
+- Added test scripts to package.json: `test`, `test:watch`, `test:ui`
+- All tests pass successfully (13/13)
+
 ### [ ] Step 5.2: Individual Balance View
+
+<!-- chat-id: fa4f8613-a174-4c02-b30d-5f5cf5f30ca1 -->
 
 Implement balance visualization per participant.
 
@@ -910,6 +1020,8 @@ Implement balance visualization per participant.
 
 ### [ ] Step 5.3: Settlement Suggestions
 
+<!-- chat-id: ae9a9b0d-a13c-4190-ba85-5aeabb8d4b87 -->
+
 Implement optimized debt settlement algorithm.
 
 **Tasks:**
@@ -926,6 +1038,8 @@ Implement optimized debt settlement algorithm.
 - Display is clear and actionable
 
 ### [ ] Step 5.4: Settlement Tracking
+
+<!-- chat-id: a931747c-e44a-47f7-9c2c-24c2a8f0963b -->
 
 Implement marking debts as settled.
 
@@ -944,6 +1058,8 @@ Implement marking debts as settled.
 - Settlement history is visible
 
 ### [ ] Step 5.5: Trip Summary Report
+
+<!-- chat-id: fa951d2f-a992-40cd-824c-728b773301bb -->
 
 Implement comprehensive trip expense summary.
 

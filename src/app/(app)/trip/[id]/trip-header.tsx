@@ -31,9 +31,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { EditTripDialog } from '@/components/trips/edit-trip-dialog';
 import { DeleteTripDialog } from '@/components/trips/delete-trip-dialog';
+import { InviteDialog } from '@/components/invites/invite-dialog';
 import { archiveTrip, unarchiveTrip, type TripWithMembers } from '@/lib/supabase/trips';
 import type { TripStyle } from '@/types/database';
 import Link from 'next/link';
@@ -41,6 +41,7 @@ import Link from 'next/link';
 interface TripHeaderProps {
   trip: TripWithMembers;
   userRole: 'organizer' | 'participant' | null;
+  currentUserId?: string;
 }
 
 const styleIcons: Record<TripStyle, typeof Mountain> = {
@@ -85,10 +86,11 @@ function getTripStatus(startDate: string, endDate: string) {
   return { label: 'Em andamento', variant: 'default' as const };
 }
 
-export function TripHeader({ trip, userRole }: TripHeaderProps) {
+export function TripHeader({ trip, userRole, currentUserId }: TripHeaderProps) {
   const router = useRouter();
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [isArchiving, setIsArchiving] = useState(false);
 
   const StyleIcon = trip.style ? styleIcons[trip.style] : MapPin;
@@ -161,16 +163,14 @@ export function TripHeader({ trip, userRole }: TripHeaderProps) {
           </Link>
 
           <div className="flex items-center gap-1 sm:gap-2">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="outline" size="icon" aria-label="Compartilhar viagem">
-                    <Share2 className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Em breve: Convidar participantes</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Convidar participantes"
+              onClick={() => setIsInviteOpen(true)}
+            >
+              <Share2 className="h-4 w-4" />
+            </Button>
 
             {isOrganizer && (
               <DropdownMenu>
@@ -284,6 +284,15 @@ export function TripHeader({ trip, userRole }: TripHeaderProps) {
         open={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
         onSuccess={handleDeleteSuccess}
+      />
+
+      <InviteDialog
+        tripId={trip.id}
+        tripName={trip.name}
+        open={isInviteOpen}
+        onOpenChange={setIsInviteOpen}
+        userRole={userRole}
+        currentUserId={currentUserId}
       />
     </>
   );

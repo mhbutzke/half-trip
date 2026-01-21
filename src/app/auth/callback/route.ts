@@ -5,6 +5,7 @@ export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
   const type = searchParams.get('type');
+  const redirectTo = searchParams.get('redirect');
 
   if (code) {
     const supabase = await createClient();
@@ -15,6 +16,14 @@ export async function GET(request: Request) {
       if (type === 'recovery') {
         return NextResponse.redirect(`${origin}/reset-password`);
       }
+
+      // If there's a redirect URL (e.g., from invite flow), use it
+      if (redirectTo) {
+        // Ensure the redirect is a relative path for security
+        const safeRedirect = redirectTo.startsWith('/') ? redirectTo : `/${redirectTo}`;
+        return NextResponse.redirect(`${origin}${safeRedirect}`);
+      }
+
       // Otherwise, redirect to trips page (main app)
       return NextResponse.redirect(`${origin}/trips`);
     }

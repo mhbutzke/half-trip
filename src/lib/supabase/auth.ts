@@ -9,10 +9,20 @@ export type AuthResult = {
   success?: boolean;
 };
 
-export async function signUp(name: string, email: string, password: string): Promise<AuthResult> {
+export async function signUp(
+  name: string,
+  email: string,
+  password: string,
+  redirectTo?: string
+): Promise<AuthResult> {
   const supabase = await createClient();
   const headersList = await headers();
   const origin = headersList.get('origin') || '';
+
+  // Build the callback URL with optional redirect
+  const callbackUrl = redirectTo
+    ? `${origin}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`
+    : `${origin}/auth/callback`;
 
   const { error } = await supabase.auth.signUp({
     email,
@@ -21,7 +31,7 @@ export async function signUp(name: string, email: string, password: string): Pro
       data: {
         name,
       },
-      emailRedirectTo: `${origin}/auth/callback`,
+      emailRedirectTo: callbackUrl,
     },
   });
 

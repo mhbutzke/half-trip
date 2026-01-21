@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, CheckCircle } from 'lucide-react';
@@ -26,8 +27,45 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export default function RegisterPage() {
+function RegisterFormSkeleton() {
+  return (
+    <Card>
+      <CardHeader className="text-center">
+        <Skeleton className="mx-auto h-8 w-32" />
+        <Skeleton className="mx-auto h-4 w-64" />
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-12" />
+          <Skeleton className="h-11 w-full" />
+        </div>
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-12" />
+          <Skeleton className="h-11 w-full" />
+        </div>
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-12" />
+          <Skeleton className="h-11 w-full" />
+        </div>
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-11 w-full" />
+        </div>
+        <Skeleton className="h-11 w-full" />
+      </CardContent>
+      <CardFooter className="justify-center">
+        <Skeleton className="h-4 w-48" />
+      </CardFooter>
+    </Card>
+  );
+}
+
+function RegisterForm() {
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect');
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -46,7 +84,7 @@ export default function RegisterPage() {
     setIsLoading(true);
     setError(null);
 
-    const result = await signUp(data.name, data.email, data.password);
+    const result = await signUp(data.name, data.email, data.password, redirectTo || undefined);
 
     if (result.error) {
       setError(result.error);
@@ -57,6 +95,9 @@ export default function RegisterPage() {
     setSuccess(true);
     setIsLoading(false);
   }
+
+  // Build login link with redirect param if present
+  const loginHref = redirectTo ? `/login?redirect=${encodeURIComponent(redirectTo)}` : '/login';
 
   if (success) {
     return (
@@ -185,11 +226,19 @@ export default function RegisterPage() {
       <CardFooter className="justify-center">
         <p className="text-sm text-muted-foreground">
           Já tem uma conta?{' '}
-          <Link href="/login" className="font-medium text-primary hover:underline">
+          <Link href={loginHref} className="font-medium text-primary hover:underline">
             Entrar
           </Link>
         </p>
       </CardFooter>
     </Card>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<RegisterFormSkeleton />}>
+      <RegisterForm />
+    </Suspense>
   );
 }

@@ -1554,7 +1554,9 @@ Implement synchronization when back online.
 - Build passes successfully
 - Lint passes without errors
 
-### [ ] Step 6.7: PWA Setup
+### [x] Step 6.7: PWA Setup
+
+<!-- chat-id: 19aec143-bf03-44cf-9508-f1a0a9c53c3c -->
 
 Configure Progressive Web App capabilities.
 
@@ -1572,6 +1574,95 @@ Configure Progressive Web App capabilities.
 - App installable on mobile
 - Works offline after installation
 - Service worker caches assets
+
+**Completed:** Full PWA implementation with:
+
+- **Package Installation:**
+  - Installed `@ducanh2912/next-pwa@10.2.9` for PWA functionality
+  - Configured in `next.config.ts` with Turbopack compatibility
+  - Service worker generation enabled for production builds
+  - PWA disabled in development mode to avoid caching issues
+
+- **Web App Manifest:**
+  - `src/app/manifest.ts`: Complete PWA manifest with:
+    - App name: "Half Trip - Planeje e Divida Viagens"
+    - Short name: "Half Trip"
+    - Description highlighting trip planning and expense splitting
+    - Standalone display mode for native app feel
+    - Theme colors: #14b8a6 (teal primary), #0f172a (dark background)
+    - Portrait-primary orientation
+    - Categories: travel, finance, productivity
+    - Multiple icon definitions (72x72 to 512x512)
+  - Updated `src/app/layout.tsx` with PWA metadata:
+    - Apple Web App configuration
+    - Open Graph tags for social sharing
+    - Twitter card metadata
+    - Format detection settings
+
+- **PWA Icons:**
+  - Created `public/icon.svg`: Custom Half Trip logo with teal background, location pin icon, and "HT" text
+  - Generated 8 icon sizes: 72x72, 96x96, 128x128, 144x144, 152x152, 192x192, 384x384, 512x512
+  - Created `public/apple-touch-icon.png` (180x180) for iOS
+  - Created `public/favicon.ico` (32x32) for browsers
+  - `scripts/generate-icons.js`: Automated icon generation script using Sharp
+    - Converts SVG to PNG at multiple resolutions
+    - Uses brand color (#14b8a6) as background
+    - ESM module for compatibility with modern tooling
+  - Added `pnpm generate-icons` script to package.json
+
+- **Service Worker Configuration:**
+  - `next.config.ts` configured with:
+    - `dest: 'public'`: Service worker output directory
+    - `cacheOnFrontEndNav: true`: Cache on client-side navigation
+    - `aggressiveFrontEndNavCaching: true`: Prefetch and cache links
+    - `reloadOnOnline: true`: Auto-reload when connection restored
+    - `disable: process.env.NODE_ENV === 'development'`: Disabled in dev
+    - `workboxOptions.disableDevLogs: true`: Suppress console logs
+  - Service worker automatically generated during production build
+  - Caches all static assets, pages, and API routes
+
+- **Install Prompt:**
+  - `src/components/pwa/install-prompt.tsx`: Smart install banner component
+    - Listens for `beforeinstallprompt` event
+    - Shows custom install UI with branding
+    - Dismissal cooldown: 7 days (stored in localStorage)
+    - Checks if app is already installed (display-mode: standalone)
+    - Mobile-optimized positioning (bottom with bottom nav clearance)
+    - Desktop positioning (bottom-right corner)
+    - Call-to-action: "Instalar" button with description
+  - Integrated into `src/app/(app)/layout.tsx` for authenticated users
+
+- **Offline Fallback Page:**
+  - `src/app/offline/page.tsx`: User-friendly offline page
+    - Client component with interactive elements
+    - WifiOff icon with branded styling
+    - Helpful message explaining offline status
+    - List of capabilities available offline:
+      - View cached trips
+      - View saved expenses and balances
+      - Create new expenses (synced later)
+    - "Try Again" button to refresh and check connection
+    - Consistent with Half Trip design system
+
+- **Testing Documentation:**
+  - `PWA_TESTING.md`: Comprehensive testing guide with:
+    - Prerequisites and setup instructions
+    - Feature overview and implementation details
+    - Step-by-step testing procedures:
+      - Production build process
+      - Lighthouse PWA audit
+      - Installation testing (desktop and mobile)
+      - Offline functionality testing
+      - Service worker debugging
+    - Development workflow tips
+    - Configuration file reference
+    - PWA checklist for verification
+    - Troubleshooting guide for common issues
+    - Production deployment notes
+    - Future PWA enhancements roadmap
+
+- Build and lint pass successfully
+- PWA ready for production deployment with HTTPS
 
 ---
 

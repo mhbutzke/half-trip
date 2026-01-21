@@ -1,0 +1,20 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <rect width="512" height="512" rx="128" fill="#14b8a6"/>
+
+  <!-- Half circle representing "Half" -->
+  <path d="M 256 128 A 96 96 0 0 1 256 320 Z" fill="white" opacity="0.9"/>
+
+  <!-- Location pin icon representing trip -->
+  <g transform="translate(256, 240)">
+    <path d="M 0 -80 C -44 -80 -80 -44 -80 0 C -80 44 0 96 0 96 C 0 96 80 44 80 0 C 80 -44 44 -80 0 -80 Z"
+          fill="white" opacity="0.95"/>
+    <circle cx="0" cy="-20" r="24" fill="#14b8a6"/>
+  </g>
+
+  <!-- Text HT at bottom -->
+  <text x="256" y="420" font-family="system-ui, sans-serif" font-size="80" font-weight="bold"
+        fill="white" text-anchor="middle" dominant-baseline="middle">
+    HT
+  </text>
+</svg>

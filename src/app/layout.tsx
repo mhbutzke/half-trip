@@ -19,6 +19,28 @@ export const metadata: Metadata = {
   title: 'Half Trip - Planeje junto. Divida justo.',
   description:
     'Plataforma para planejar viagens em grupo, compartilhar roteiros e dividir despesas de forma justa.',
+  applicationName: 'Half Trip',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Half Trip',
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  openGraph: {
+    type: 'website',
+    siteName: 'Half Trip',
+    title: 'Half Trip - Planeje junto. Divida justo.',
+    description:
+      'Plataforma para planejar viagens em grupo, compartilhar roteiros e dividir despesas de forma justa.',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Half Trip - Planeje junto. Divida justo.',
+    description:
+      'Plataforma para planejar viagens em grupo, compartilhar roteiros e dividir despesas de forma justa.',
+  },
 };
 
 export const viewport: Viewport = {

@@ -1,6 +1,7 @@
 import { AppHeader } from '@/components/layout/app-header';
 import { MobileNav } from '@/components/layout/mobile-nav';
 import { OfflineIndicator } from '@/components/offline';
+import { InstallPrompt } from '@/components/pwa/install-prompt';
 import { createClient } from '@/lib/supabase/server';
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -42,6 +43,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <main className="flex-1 pb-20 md:pb-0">{children}</main>
       {/* Mobile bottom navigation - auto-detects trip context */}
       <MobileNav />
+      {/* PWA install prompt */}
+      <InstallPrompt />
     </div>
   );
 }

@@ -197,6 +197,8 @@ Implement user registration, login, and password recovery.
 
 ### [ ] Step 1.6: User Profile Management
 
+<!-- chat-id: 1f9358b5-adae-43d1-8392-0ba27afcb9fb -->
+
 Implement user profile view and edit functionality.
 
 **Tasks:**

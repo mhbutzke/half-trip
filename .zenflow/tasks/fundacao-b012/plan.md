@@ -522,6 +522,8 @@ Implement permission checks throughout the app.
 
 ### [ ] Step 3.1: Activity CRUD Operations
 
+<!-- chat-id: 53021ad2-cecd-49e0-a8f6-95bc54c37301 -->
+
 Implement activity management.
 
 **Tasks:**

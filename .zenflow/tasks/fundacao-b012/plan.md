@@ -195,7 +195,7 @@ Implement user registration, login, and password recovery.
 - `src/app/(app)/trips/page.tsx`: Placeholder trips page with empty state
 - Build and lint pass successfully
 
-### [ ] Step 1.6: User Profile Management
+### [x] Step 1.6: User Profile Management
 
 <!-- chat-id: 1f9358b5-adae-43d1-8392-0ba27afcb9fb -->
 
@@ -214,6 +214,20 @@ Implement user profile view and edit functionality.
 - User can view and edit profile
 - Avatar upload works
 - Changes persist after refresh
+
+**Completed:** Full user profile management implemented with:
+
+- `src/app/(app)/settings/page.tsx`: Settings page with profile card, user data fetching, redirect for unauthenticated users
+- `src/components/profile/profile-form.tsx`: ProfileForm component with:
+  - Avatar upload with preview, file validation (JPEG, PNG, WebP, GIF, max 5MB)
+  - Avatar removal functionality
+  - Name editing with form validation
+  - Loading states and toast notifications
+- `src/hooks/use-user.ts`: useUser hook that fetches user profile from Supabase, subscribes to auth state changes, provides refetch capability
+- `src/lib/supabase/profile.ts`: Server actions for updateProfile, uploadAvatar, removeAvatar, getUserProfile
+- `src/lib/validation/profile-schemas.ts`: Zod schema for profile validation, avatar file validation helper
+- `supabase/migrations/00004_storage_buckets.sql`: Storage bucket configuration for avatars (public), trip-covers, attachments, and receipts with appropriate RLS policies
+- Build and lint pass successfully
 
 ### [ ] Step 1.7: Trip CRUD Operations
 

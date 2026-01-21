@@ -14,7 +14,7 @@ interface BalanceContentProps {
   isOrganizer: boolean;
 }
 
-export function BalanceContent({ summary, trip }: BalanceContentProps) {
+export function BalanceContent({ summary, trip, currentUserId, isOrganizer }: BalanceContentProps) {
   // Show empty state if no expenses
   if (summary.expenseCount === 0) {
     return (
@@ -39,7 +39,7 @@ export function BalanceContent({ summary, trip }: BalanceContentProps) {
 
   return (
     <main className="container flex-1 space-y-6 px-4 py-6 pb-20 md:pb-6">
-      <TripSummary summary={summary} />
+      <TripSummary summary={summary} currentUserId={currentUserId} isOrganizer={isOrganizer} />
     </main>
   );
 }

@@ -21,6 +21,7 @@ export type PersonExpenseSummary = {
 };
 
 export type TripExpenseSummary = {
+  tripId: string;
   totalExpenses: number;
   expenseCount: number;
   participantCount: number;
@@ -156,6 +157,7 @@ export async function getTripExpenseSummary(tripId: string): Promise<TripExpense
     .sort((a, b) => b.totalPaid - a.totalPaid); // Sort by total paid descending
 
   return {
+    tripId,
     totalExpenses,
     expenseCount,
     participantCount,

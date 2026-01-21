@@ -33,7 +33,7 @@ async function BalancePageContent({ tripId }: { tripId: string }) {
   const [trip, summary, userRole] = await Promise.all([
     getTripById(tripId),
     getTripExpenseSummary(tripId),
-    getUserRoleInTrip(tripId, user.id),
+    getUserRoleInTrip(tripId),
   ]);
 
   if (!trip || !summary || !userRole) {

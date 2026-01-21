@@ -1159,7 +1159,7 @@ Implement marking debts as settled.
   - Refresh functionality after settlement updates
 - Lint passes successfully
 
-### [ ] Step 5.5: Trip Summary Report
+### [x] Step 5.5: Trip Summary Report
 
 <!-- chat-id: fa951d2f-a992-40cd-824c-728b773301bb -->
 
@@ -1178,6 +1178,17 @@ Implement comprehensive trip expense summary.
 - Summary totals are accurate
 - Category breakdown is correct
 - Charts render properly
+
+**Completed:** Created comprehensive trip summary report with:
+
+- `src/lib/supabase/expense-summary.ts`: API function `getTripExpenseSummary()` that calculates total expenses, expense count, participant count, average per person, category breakdown (with percentages), and person breakdown (with percentages).
+- `src/components/summary/trip-summary.tsx`: TripSummary component displaying:
+  - Three overview cards (Total Expenses, Participants, Average per Person)
+  - Category breakdown card with color-coded icons, progress bars, and percentage distribution
+  - Person breakdown card showing who paid what with avatars, badges, and progress bars
+  - Empty state for when no expenses exist
+- `src/app/(app)/trip/[id]/balance/`: Balance page structure with page, header, content, skeleton, and loading components
+- All calculations verified: totals sum correctly, percentages add to 100%, category and person breakdowns sorted by amount descending
 
 ---
 

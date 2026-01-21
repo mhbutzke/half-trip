@@ -119,6 +119,8 @@ Configure Supabase backend and database schema.
 
 ### [ ] Step 1.4: Supabase Client Integration
 
+<!-- chat-id: e93b5fbf-1997-43b0-bd29-bd8f5c2793e9 -->
+
 Set up Supabase client for frontend with SSR support.
 
 **Tasks:**

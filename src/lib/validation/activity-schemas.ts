@@ -25,11 +25,12 @@ export const createActivitySchema = z.object({
   date: z.string().min(1, 'Data é obrigatória'),
   start_time: z
     .string()
-    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Horário inválido (use HH:MM)')
-    .optional()
-    .or(z.literal(''))
-    .transform((val) => (val === '' ? undefined : val)),
-  duration_minutes: z.coerce
+    .refine(
+      (val) => val === '' || /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(val),
+      'Horário inválido (use HH:MM)'
+    )
+    .optional(),
+  duration_minutes: z
     .number()
     .positive('Duração deve ser positiva')
     .int('Duração deve ser um número inteiro')

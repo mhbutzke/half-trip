@@ -1,13 +1,18 @@
 'use client';
 
 import { Suspense, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { PageContainer } from '@/components/layout/page-container';
 import { Plane } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TripsList } from './trips-list';
-import { CreateTripDialog } from '@/components/trips/create-trip-dialog';
 import { EmptyState } from '@/components/ui/empty-state';
+
+// Lazy load the create trip dialog - only needed when user clicks create
+const CreateTripDialog = dynamic(() =>
+  import('@/components/trips/create-trip-dialog').then((mod) => ({ default: mod.CreateTripDialog }))
+);
 
 function TripsLoading() {
   return (

@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import {
   DndContext,
   DragOverlay,
@@ -22,13 +23,25 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { DaySection } from './day-section';
 import { DraggableActivityCard } from './draggable-activity-card';
-import { DeleteActivityDialog } from './delete-activity-dialog';
-import { AddActivityDialog } from '@/components/activities/add-activity-dialog';
-import { EditActivityDialog } from '@/components/activities/edit-activity-dialog';
 import { reorderActivities } from '@/lib/supabase/activities';
 import { useTripRealtime } from '@/hooks/use-trip-realtime';
 import type { ActivityWithCreator } from '@/lib/supabase/activities';
 import type { Activity } from '@/types/database';
+
+// Lazy load activity dialogs - only needed when user interacts
+const DeleteActivityDialog = dynamic(() =>
+  import('./delete-activity-dialog').then((mod) => ({ default: mod.DeleteActivityDialog }))
+);
+const AddActivityDialog = dynamic(() =>
+  import('@/components/activities/add-activity-dialog').then((mod) => ({
+    default: mod.AddActivityDialog,
+  }))
+);
+const EditActivityDialog = dynamic(() =>
+  import('@/components/activities/edit-activity-dialog').then((mod) => ({
+    default: mod.EditActivityDialog,
+  }))
+);
 
 interface ItineraryListProps {
   tripId: string;

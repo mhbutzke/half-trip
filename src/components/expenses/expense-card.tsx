@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { MoreHorizontal, Pencil, Trash2, Users } from 'lucide-react';
@@ -28,7 +29,12 @@ interface ExpenseCardProps {
   onDelete: () => void;
 }
 
-export function ExpenseCard({ expense, canEdit, onEdit, onDelete }: ExpenseCardProps) {
+export const ExpenseCard = memo(function ExpenseCard({
+  expense,
+  canEdit,
+  onEdit,
+  onDelete,
+}: ExpenseCardProps) {
   const categoryInfo = getCategoryInfo(expense.category);
   const CategoryIcon = categoryInfo.icon;
   const { isPending } = useSyncStatus('expenses', expense.id);
@@ -160,4 +166,4 @@ export function ExpenseCard({ expense, canEdit, onEdit, onDelete }: ExpenseCardP
       </CardContent>
     </Card>
   );
-}
+});

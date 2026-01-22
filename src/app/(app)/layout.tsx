@@ -1,5 +1,6 @@
 import { AppHeader } from '@/components/layout/app-header';
 import { MobileNav } from '@/components/layout/mobile-nav';
+import { SkipNav } from '@/components/layout/skip-nav';
 import { OfflineIndicator } from '@/components/offline';
 import { InstallPrompt } from '@/components/pwa/install-prompt';
 import { NotificationToastListener } from '@/components/notifications';
@@ -38,10 +39,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-svh flex-col">
+      <SkipNav />
       <AppHeader user={user} />
       <OfflineIndicator />
       {/* Main content with bottom padding for mobile nav */}
-      <main className="flex-1 pb-20 md:pb-0">{children}</main>
+      <main id="main-content" className="flex-1 pb-20 md:pb-0">
+        {children}
+      </main>
       {/* Mobile bottom navigation - auto-detects trip context */}
       <MobileNav />
       {/* PWA install prompt */}

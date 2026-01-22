@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import Link from 'next/link';
 import { format, differenceInDays, isFuture, isPast, isToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -83,7 +84,7 @@ function getTripStatus(startDate: string, endDate: string) {
   return { label: 'Em andamento', variant: 'default' as const };
 }
 
-export function TripCard({
+export const TripCard = memo(function TripCard({
   trip,
   userRole,
   onEdit,
@@ -138,9 +139,9 @@ export function TripCard({
                   variant="ghost"
                   size="icon-sm"
                   className="relative z-10 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
-                  aria-label="Opções da viagem"
+                  aria-label={`Opções da viagem ${trip.name}`}
                 >
-                  <MoreHorizontal className="h-4 w-4" />
+                  <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -151,7 +152,7 @@ export function TripCard({
                       onEdit?.(trip);
                     }}
                   >
-                    <Pencil className="mr-2 h-4 w-4" />
+                    <Pencil className="mr-2 h-4 w-4" aria-hidden="true" />
                     Editar
                   </DropdownMenuItem>
                 )}
@@ -163,7 +164,7 @@ export function TripCard({
                         onUnarchive?.(trip.id);
                       }}
                     >
-                      <ArchiveRestore className="mr-2 h-4 w-4" />
+                      <ArchiveRestore className="mr-2 h-4 w-4" aria-hidden="true" />
                       Desarquivar
                     </DropdownMenuItem>
                   ) : (
@@ -173,7 +174,7 @@ export function TripCard({
                         onArchive?.(trip.id);
                       }}
                     >
-                      <Archive className="mr-2 h-4 w-4" />
+                      <Archive className="mr-2 h-4 w-4" aria-hidden="true" />
                       Arquivar
                     </DropdownMenuItem>
                   ))}
@@ -187,7 +188,7 @@ export function TripCard({
                       }}
                       className="text-destructive focus:text-destructive"
                     >
-                      <Trash2 className="mr-2 h-4 w-4" />
+                      <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />
                       Excluir
                     </DropdownMenuItem>
                   </>
@@ -200,12 +201,12 @@ export function TripCard({
 
       <CardContent className="space-y-3">
         <div className="flex items-center gap-2 text-muted-foreground">
-          <MapPin className="h-4 w-4 shrink-0" />
+          <MapPin className="h-4 w-4 shrink-0" aria-hidden="true" />
           <span className="text-sm truncate">{trip.destination}</span>
         </div>
 
         <div className="flex items-center gap-2 text-muted-foreground">
-          <Calendar className="h-4 w-4 shrink-0" />
+          <Calendar className="h-4 w-4 shrink-0" aria-hidden="true" />
           <span className="text-sm">
             {formatDate(trip.start_date)} - {formatDate(trip.end_date)}
             <span className="text-xs ml-1">
@@ -216,14 +217,14 @@ export function TripCard({
 
         {trip.style && (
           <div className="flex items-center gap-2 text-muted-foreground">
-            <StyleIcon className="h-4 w-4 shrink-0" />
+            <StyleIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span className="text-sm">{styleLabels[trip.style]}</span>
           </div>
         )}
 
         <div className="flex items-center justify-between pt-2 border-t">
           <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <Users className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
             <div className="flex -space-x-2">
               {displayMembers.map((member) => (
                 <Avatar key={member.id} className="h-6 w-6 border-2 border-background">
@@ -247,4 +248,4 @@ export function TripCard({
       </CardContent>
     </Card>
   );
-}
+});

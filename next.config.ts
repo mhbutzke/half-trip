@@ -1,5 +1,6 @@
 import type { NextConfig } from 'next';
 import withPWAInit from '@ducanh2912/next-pwa';
+import withBundleAnalyzer from '@next/bundle-analyzer';
 
 const withPWA = withPWAInit({
   dest: 'public',
@@ -12,9 +13,13 @@ const withPWA = withPWAInit({
   },
 });
 
+const withAnalyzer = withBundleAnalyzer({
+  enabled: process.env.ANALYZE === 'true',
+});
+
 const nextConfig: NextConfig = {
   // Empty turbopack config to silence warning
   turbopack: {},
 };
 
-export default withPWA(nextConfig);
+export default withAnalyzer(withPWA(nextConfig));

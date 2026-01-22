@@ -44,18 +44,18 @@ export function SyncStatus() {
 
   const getIcon = () => {
     if (!isOnline) {
-      return <CloudOff className="h-4 w-4" />;
+      return <CloudOff className="h-4 w-4" aria-hidden="true" />;
     }
     if (isSyncing) {
-      return <Loader2 className="h-4 w-4 animate-spin" />;
+      return <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />;
     }
     if (hasPermanentErrors) {
-      return <AlertTriangle className="h-4 w-4" />;
+      return <AlertTriangle className="h-4 w-4" aria-hidden="true" />;
     }
     if (hasPendingChanges) {
-      return <CloudOff className="h-4 w-4" />;
+      return <CloudOff className="h-4 w-4" aria-hidden="true" />;
     }
-    return <Cloud className="h-4 w-4" />;
+    return <Cloud className="h-4 w-4" aria-hidden="true" />;
   };
 
   const handleClick = () => {
@@ -87,7 +87,7 @@ export function SyncStatus() {
               {getIcon()}
               <span className="hidden sm:inline text-xs font-medium">{getStatusText()}</span>
               {isOnline && !isSyncing && (hasPendingChanges || hasPermanentErrors) && (
-                <RefreshCw className="h-3 w-3" />
+                <RefreshCw className="h-3 w-3" aria-hidden="true" />
               )}
             </Button>
           </TooltipTrigger>

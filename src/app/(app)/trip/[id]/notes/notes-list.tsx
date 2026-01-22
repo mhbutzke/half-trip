@@ -1,15 +1,24 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { StickyNote } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
 import { NoteCard } from '@/components/notes/note-card';
-import { AddNoteDialog } from '@/components/notes/add-note-dialog';
-import { EditNoteDialog } from '@/components/notes/edit-note-dialog';
-import { DeleteNoteDialog } from '@/components/notes/delete-note-dialog';
 import { useTripRealtime } from '@/hooks/use-trip-realtime';
 import type { NoteWithCreator } from '@/lib/supabase/notes';
 import type { TripMemberRole } from '@/types/database';
+
+// Lazy load note dialogs - only needed when user interacts
+const AddNoteDialog = dynamic(() =>
+  import('@/components/notes/add-note-dialog').then((mod) => ({ default: mod.AddNoteDialog }))
+);
+const EditNoteDialog = dynamic(() =>
+  import('@/components/notes/edit-note-dialog').then((mod) => ({ default: mod.EditNoteDialog }))
+);
+const DeleteNoteDialog = dynamic(() =>
+  import('@/components/notes/delete-note-dialog').then((mod) => ({ default: mod.DeleteNoteDialog }))
+);
 
 interface NotesListProps {
   tripId: string;

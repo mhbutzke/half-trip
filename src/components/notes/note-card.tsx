@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { MoreVertical, Pencil, Trash2 } from 'lucide-react';
@@ -32,7 +33,7 @@ function getInitials(name: string): string {
     .slice(0, 2);
 }
 
-export function NoteCard({ note, canEdit, onEdit, onDelete }: NoteCardProps) {
+export const NoteCard = memo(function NoteCard({ note, canEdit, onEdit, onDelete }: NoteCardProps) {
   const createdAt = new Date(note.created_at);
   const updatedAt = new Date(note.updated_at);
   const wasEdited = note.updated_at !== note.created_at;
@@ -107,4 +108,4 @@ export function NoteCard({ note, canEdit, onEdit, onDelete }: NoteCardProps) {
       </CardContent>
     </Card>
   );
-}
+});

@@ -1,13 +1,20 @@
 'use client';
 
 import { useState, useEffect, useCallback, ReactNode } from 'react';
+import dynamic from 'next/dynamic';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { Archive } from 'lucide-react';
 import { TripCard } from '@/components/trips/trip-card';
-import { EditTripDialog } from '@/components/trips/edit-trip-dialog';
-import { DeleteTripDialog } from '@/components/trips/delete-trip-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+// Lazy load dialogs - only needed when user clicks actions
+const EditTripDialog = dynamic(() =>
+  import('@/components/trips/edit-trip-dialog').then((mod) => ({ default: mod.EditTripDialog }))
+);
+const DeleteTripDialog = dynamic(() =>
+  import('@/components/trips/delete-trip-dialog').then((mod) => ({ default: mod.DeleteTripDialog }))
+);
 import { useRealtimeSubscription } from '@/hooks/use-realtime-subscription';
 import { useOnlineStatus } from '@/hooks/use-online-status';
 import { cacheTrips, getCachedUserTrips } from '@/lib/sync';

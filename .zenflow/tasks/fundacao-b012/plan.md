@@ -1814,7 +1814,9 @@ Implement empty states for lists.
 - Build and lint pass successfully with no errors
 - Summary documentation created at `step-7.3-summary.md`
 
-### [ ] Step 7.4: In-App Notifications
+### [x] Step 7.4: In-App Notifications
+
+<!-- chat-id: ac918ef8-9554-402a-939e-398f7dc822a7 -->
 
 Implement notification system.
 
@@ -1834,7 +1836,69 @@ Implement notification system.
 - Can be dismissed
 - Settings control notification types
 
+**Completed:** Full in-app notification system implemented with:
+
+- **Notification Store:**
+  - Installed Zustand v5.0.10 for state management
+  - `src/types/notification.ts`: NotificationType enum (17 types), Notification interface, NotificationSettings interface with DEFAULT_NOTIFICATION_SETTINGS
+  - `src/lib/notifications/notification-store.ts`: Zustand store with persistence using localStorage:
+    - State: notifications array, settings object
+    - Actions: addNotification, removeNotification, markAsRead, markAllAsRead, clearAll, clearOld, updateSettings
+    - Selectors: getUnreadCount, getUnreadNotifications, getNotificationsByTrip
+    - Auto-filtering based on enabled settings before adding notifications
+  - `src/lib/notifications/notification-helpers.ts`: Helper functions for creating notifications:
+    - `notify()`: Generic notification creator
+    - `notifications` object with convenience methods for all notification types
+    - Portuguese notification messages with proper formatting
+
+- **UI Components:**
+  - `src/components/notifications/notification-toast.tsx`: NotificationToastListener component that automatically displays toast notifications using sonner:
+    - Maps notification types to icons (DollarSign, Users, MapPin, StickyNote, etc.)
+    - Auto-detects toast variant (success, error, info, default)
+    - Shows latest unread notification automatically
+  - `src/components/notifications/notification-panel.tsx`: Dropdown notification panel with:
+    - Bell icon with unread badge count
+    - Scrollable list of notifications with icons and timestamps
+    - Mark all as read, clear all actions
+    - Delete individual notifications
+    - Opens notification settings dialog
+    - Empty state with friendly message
+  - `src/components/notifications/notification-settings.tsx`: NotificationSettingsDialog with granular controls:
+    - Global enable/disable toggle
+    - Organized by category: Despesas, Participantes, Atividades, Anotações, Pagamentos, Outros
+    - Individual toggles for 16 notification types
+    - Uses shadcn/ui Switch component (installed)
+    - Settings persist via Zustand
+
+- **Integration:**
+  - `src/app/(app)/layout.tsx`: Added NotificationToastListener to app layout
+  - `src/components/layout/header.tsx`: Added NotificationPanel to header with settings dialog integration
+  - `src/hooks/use-trip-realtime-notifications.ts`: Enhanced realtime hook that triggers notifications on database changes:
+    - Activity added/updated/deleted
+    - Expense added/updated/deleted
+    - Participant joined/left
+    - Note added/updated
+    - Settlement marked paid/unpaid
+    - Trip updated
+    - Fetches user info for proper notification attribution
+    - Only shows notifications for changes made by other users
+  - `src/hooks/use-auto-sync.ts`: Updated to trigger sync_completed and sync_failed notifications with metadata
+
+- **Notification Types Supported:**
+  - expense_added, expense_updated, expense_deleted
+  - participant_joined, participant_left, participant_removed
+  - activity_added, activity_updated, activity_deleted
+  - note_added, note_updated
+  - settlement_marked_paid, settlement_marked_unpaid
+  - trip_updated, invite_accepted
+  - sync_completed, sync_failed
+
+- Build passes successfully
+- Lint passes with no errors
+
 ### [ ] Step 7.5: Performance Optimization
+
+<!-- chat-id: 1d359b9a-c48c-4538-a8ad-6f2f575fef8b -->
 
 Optimize app performance.
 
@@ -1854,6 +1918,8 @@ Optimize app performance.
 
 ### [ ] Step 7.6: Accessibility Review
 
+<!-- chat-id: 6fc0fb01-98e9-4769-b9c7-95efa8e3be73 -->
+
 Ensure accessibility compliance.
 
 **Tasks:**
@@ -1871,6 +1937,8 @@ Ensure accessibility compliance.
 - Form labels associated correctly
 
 ### [ ] Step 7.7: Unit Tests
+
+<!-- chat-id: 09876185-403c-4dcd-93cc-c06ca2e0aa97 -->
 
 Write unit tests for core logic.
 
@@ -1891,6 +1959,8 @@ Write unit tests for core logic.
 
 ### [ ] Step 7.8: E2E Tests
 
+<!-- chat-id: 7808898d-c61a-4734-9996-85a024d26283 -->
+
 Write end-to-end tests for critical flows.
 
 **Tasks:**
@@ -1909,6 +1979,8 @@ Write end-to-end tests for critical flows.
 - Tests run in CI
 
 ### [ ] Step 7.9: Production Deployment
+
+<!-- chat-id: 92a17d8c-5713-4a17-b61e-c23c02c6d17c -->
 
 Deploy to production environment.
 

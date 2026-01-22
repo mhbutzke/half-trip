@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useOnlineStatus } from './use-online-status';
 import { syncEngine, type SyncResult } from '@/lib/sync';
 import { toast } from 'sonner';
+import { notifications } from '@/lib/notifications';
 
 type AutoSyncConfig = {
   enabled?: boolean;
@@ -61,6 +62,11 @@ export function useAutoSync(config: AutoSyncConfig = {}): AutoSyncHook {
           toast.success(
             `Sincronização concluída: ${result.processedCount} ${result.processedCount === 1 ? 'item' : 'itens'}`
           );
+          notifications.syncCompleted({
+            metadata: {
+              processedCount: result.processedCount,
+            },
+          });
         }
         console.log('[AutoSync] Sync completed successfully');
       } else {
@@ -72,6 +78,12 @@ export function useAutoSync(config: AutoSyncConfig = {}): AutoSyncHook {
           toast.error(
             `Erro na sincronização: ${permanentErrors} ${permanentErrors === 1 ? 'erro permanente' : 'erros permanentes'}. Verifique suas permissões.`
           );
+          notifications.syncFailed({
+            metadata: {
+              errorCount: permanentErrors,
+              retryableErrors,
+            },
+          });
         } else if (retryableErrors > 0) {
           toast.warning(
             `${retryableErrors} ${retryableErrors === 1 ? 'item' : 'itens'} não sincronizado${retryableErrors === 1 ? '' : 's'}. Tentando novamente...`

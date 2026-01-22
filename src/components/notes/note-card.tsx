@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { MoreVertical, Pencil, Trash2 } from 'lucide-react';
@@ -13,6 +14,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import type { NoteWithCreator } from '@/lib/supabase/notes';
+import { useSyncStatus } from '@/hooks/use-sync-status';
+import { PendingIndicator } from '@/components/sync';
 
 interface NoteCardProps {
   note: NoteWithCreator;
@@ -30,10 +33,11 @@ function getInitials(name: string): string {
     .slice(0, 2);
 }
 
-export function NoteCard({ note, canEdit, onEdit, onDelete }: NoteCardProps) {
+export const NoteCard = memo(function NoteCard({ note, canEdit, onEdit, onDelete }: NoteCardProps) {
   const createdAt = new Date(note.created_at);
   const updatedAt = new Date(note.updated_at);
   const wasEdited = note.updated_at !== note.created_at;
+  const { isPending } = useSyncStatus('trip_notes', note.id);
 
   return (
     <Card>
@@ -46,24 +50,27 @@ export function NoteCard({ note, canEdit, onEdit, onDelete }: NoteCardProps) {
             </Avatar>
             <div className="flex flex-col">
               <span className="text-sm font-medium">{note.users.name}</span>
-              <span
-                className="text-xs text-muted-foreground"
-                title={format(createdAt, "d 'de' MMMM 'de' yyyy 'às' HH:mm", {
-                  locale: ptBR,
-                })}
-              >
-                {formatDistanceToNow(createdAt, { addSuffix: true, locale: ptBR })}
-                {wasEdited && (
-                  <span
-                    className="ml-1"
-                    title={`Editado em ${format(updatedAt, "d 'de' MMMM 'de' yyyy 'às' HH:mm", {
-                      locale: ptBR,
-                    })}`}
-                  >
-                    (editado)
-                  </span>
-                )}
-              </span>
+              <div className="flex items-center gap-2">
+                <span
+                  className="text-xs text-muted-foreground"
+                  title={format(createdAt, "d 'de' MMMM 'de' yyyy 'às' HH:mm", {
+                    locale: ptBR,
+                  })}
+                >
+                  {formatDistanceToNow(createdAt, { addSuffix: true, locale: ptBR })}
+                  {wasEdited && (
+                    <span
+                      className="ml-1"
+                      title={`Editado em ${format(updatedAt, "d 'de' MMMM 'de' yyyy 'às' HH:mm", {
+                        locale: ptBR,
+                      })}`}
+                    >
+                      (editado)
+                    </span>
+                  )}
+                </span>
+                {isPending && <PendingIndicator isPending={isPending} size="sm" />}
+              </div>
             </div>
           </div>
 
@@ -101,4 +108,4 @@ export function NoteCard({ note, canEdit, onEdit, onDelete }: NoteCardProps) {
       </CardContent>
     </Card>
   );
-}
+});

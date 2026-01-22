@@ -40,41 +40,24 @@ export async function createTrip(input: CreateTripInput): Promise<TripResult> {
     return { error: 'Não autorizado' };
   }
 
-  // Create the trip
-  const { data: trip, error: tripError } = await supabase
-    .from('trips')
-    .insert({
-      name: input.name,
-      destination: input.destination,
-      start_date: input.start_date,
-      end_date: input.end_date,
-      description: input.description || null,
-      style: input.style || null,
-      created_by: authUser.id,
-    })
-    .select('id')
-    .single();
-
-  if (tripError) {
-    return { error: tripError.message };
-  }
-
-  // Add the creator as an organizer
-  const { error: memberError } = await supabase.from('trip_members').insert({
-    trip_id: trip.id,
-    user_id: authUser.id,
-    role: 'organizer',
+  // Use RPC function to create trip and member atomically
+  // This bypasses RLS issues and ensures the user profile exists
+  const { data: tripId, error } = await supabase.rpc('create_trip_with_member', {
+    p_name: input.name,
+    p_destination: input.destination,
+    p_start_date: input.start_date,
+    p_end_date: input.end_date,
+    p_description: input.description || null,
+    p_style: input.style || null,
   });
 
-  if (memberError) {
-    // Rollback: delete the trip if member creation fails
-    await supabase.from('trips').delete().eq('id', trip.id);
-    return { error: memberError.message };
+  if (error) {
+    return { error: error.message };
   }
 
   revalidatePath('/trips');
 
-  return { success: true, tripId: trip.id };
+  return { success: true, tripId };
 }
 
 export async function updateTrip(tripId: string, input: UpdateTripInput): Promise<TripResult> {

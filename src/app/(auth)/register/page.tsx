@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, CheckCircle } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
 
 import { registerSchema, type RegisterInput } from '@/lib/validation/auth-schemas';
 import { signUp } from '@/lib/supabase/auth';
@@ -216,8 +216,7 @@ function RegisterForm() {
               )}
             />
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button type="submit" className="w-full" loading={isLoading}>
               Criar conta
             </Button>
           </form>

@@ -80,7 +80,8 @@
   --secondary-foreground: oklch(0.35 0.05 60);
   /* Muted - Soft gray with slight warmth */
   --muted: oklch(0.965 0.005 285);
-  --muted-foreground: oklch(0.5 0.01 285);
+  /* Improved contrast: changed from 0.5 to 0.45 for WCAG AA compliance (4.5:1) */
+  --muted-foreground: oklch(0.45 0.01 285);
   /* Accent - Lighter teal for hover states */
   --accent: oklch(0.94 0.04 195);
   --accent-foreground: oklch(0.35 0.1 195);
@@ -134,7 +135,8 @@
   --secondary-foreground: oklch(0.9 0.02 85);
   /* Muted */
   --muted: oklch(0.22 0.01 285);
-  --muted-foreground: oklch(0.65 0.01 285);
+  /* Improved contrast: changed from 0.65 to 0.68 for better readability in dark mode */
+  --muted-foreground: oklch(0.68 0.01 285);
   /* Accent */
   --accent: oklch(0.25 0.05 195);
   --accent-foreground: oklch(0.85 0.08 195);

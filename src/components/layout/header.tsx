@@ -16,6 +16,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { SyncStatus } from '@/components/sync';
+import { NotificationPanel, NotificationSettingsDialog } from '@/components/notifications';
 
 interface HeaderProps {
   user?: {
@@ -30,6 +32,7 @@ export function Header({ user, onSignOut }: HeaderProps) {
   const pathname = usePathname();
   const { setTheme, theme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [notificationSettingsOpen, setNotificationSettingsOpen] = useState(false);
 
   const navigation = user
     ? [
@@ -69,6 +72,12 @@ export function Header({ user, onSignOut }: HeaderProps) {
 
         {/* Right side actions */}
         <div className="flex items-center gap-1">
+          {/* Sync status - only show for authenticated users */}
+          {user && <SyncStatus />}
+
+          {/* Notifications - only show for authenticated users */}
+          {user && <NotificationPanel onOpenSettings={() => setNotificationSettingsOpen(true)} />}
+
           {/* Theme toggle - 44px touch target */}
           <Button
             variant="ghost"
@@ -221,6 +230,14 @@ export function Header({ user, onSignOut }: HeaderProps) {
           )}
         </div>
       </div>
+
+      {/* Notification settings dialog */}
+      {user && (
+        <NotificationSettingsDialog
+          open={notificationSettingsOpen}
+          onOpenChange={setNotificationSettingsOpen}
+        />
+      )}
     </header>
   );
 }

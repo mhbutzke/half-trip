@@ -1,0 +1,47 @@
+'use client';
+
+import { useRouter } from 'next/navigation';
+import { EmptyState } from '@/components/ui/empty-state';
+import { TripSummary } from '@/components/summary';
+import { useTripRealtime } from '@/hooks/use-trip-realtime';
+import type { TripExpenseSummary } from '@/types/expense-summary';
+import type { Trip } from '@/types/database';
+import { Receipt } from 'lucide-react';
+
+interface BalanceContentProps {
+  summary: TripExpenseSummary;
+  trip: Trip;
+  currentUserId: string;
+  isOrganizer: boolean;
+}
+
+export function BalanceContent({ summary, trip, currentUserId, isOrganizer }: BalanceContentProps) {
+  const router = useRouter();
+
+  // Enable real-time updates for this trip
+  useTripRealtime({ tripId: trip.id });
+
+  // Show empty state if no expenses
+  if (summary.expenseCount === 0) {
+    return (
+      <main className="container flex-1 space-y-6 px-4 py-6 pb-20 md:pb-6">
+        <EmptyState
+          icon={Receipt}
+          title="Nenhuma despesa registrada"
+          description="Comece a registrar despesas para ver o balanço da viagem e as divisões entre participantes"
+          action={{
+            label: 'Ir para Despesas',
+            onClick: () => router.push(`/trip/${trip.id}/expenses`),
+          }}
+          className="min-h-[400px]"
+        />
+      </main>
+    );
+  }
+
+  return (
+    <main className="container flex-1 space-y-6 px-4 py-6 pb-20 md:pb-6">
+      <TripSummary summary={summary} currentUserId={currentUserId} isOrganizer={isOrganizer} />
+    </main>
+  );
+}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import {
   Clock,
   MapPin,
@@ -25,6 +25,8 @@ import { getCategoryInfo, formatDuration, formatTime } from '@/lib/utils/activit
 import { getAttachmentsCount } from '@/lib/supabase/attachments';
 import type { ActivityWithCreator } from '@/lib/supabase/activities';
 import type { ActivityLink } from '@/types/database';
+import { useSyncStatus } from '@/hooks/use-sync-status';
+import { PendingIndicator } from '@/components/sync';
 
 interface ActivityCardProps {
   activity: ActivityWithCreator;
@@ -32,12 +34,17 @@ interface ActivityCardProps {
   onDelete: (activity: ActivityWithCreator) => void;
 }
 
-export function ActivityCard({ activity, onEdit, onDelete }: ActivityCardProps) {
+export const ActivityCard = memo(function ActivityCard({
+  activity,
+  onEdit,
+  onDelete,
+}: ActivityCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [attachmentsCount, setAttachmentsCount] = useState(0);
   const categoryInfo = getCategoryInfo(activity.category);
   const CategoryIcon = categoryInfo.icon;
   const links = Array.isArray(activity.links) ? (activity.links as ActivityLink[]) : [];
+  const { isPending } = useSyncStatus('activities', activity.id);
 
   const hasDetails = activity.description || links.length > 0;
 
@@ -54,7 +61,7 @@ export function ActivityCard({ activity, onEdit, onDelete }: ActivityCardProps) 
           <div
             className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg ${categoryInfo.bgColor}`}
           >
-            <CategoryIcon className={`h-5 w-5 ${categoryInfo.color}`} />
+            <CategoryIcon className={`h-5 w-5 ${categoryInfo.color}`} aria-hidden="true" />
           </div>
 
           {/* Content */}
@@ -63,11 +70,11 @@ export function ActivityCard({ activity, onEdit, onDelete }: ActivityCardProps) 
               <div className="min-w-0 flex-1">
                 <h3 className="font-medium leading-tight">{activity.title}</h3>
 
-                {/* Time, Duration, and Attachments */}
+                {/* Time, Duration, Attachments, and Sync Status */}
                 <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
                   {activity.start_time && (
                     <span className="flex items-center gap-1">
-                      <Clock className="h-3.5 w-3.5" />
+                      <Clock className="h-3.5 w-3.5" aria-hidden="true" />
                       {formatTime(activity.start_time)}
                     </span>
                   )}
@@ -80,17 +87,19 @@ export function ActivityCard({ activity, onEdit, onDelete }: ActivityCardProps) 
                     <span
                       className="flex items-center gap-1"
                       title={`${attachmentsCount} anexo(s)`}
+                      aria-label={`${attachmentsCount} anexo${attachmentsCount > 1 ? 's' : ''}`}
                     >
-                      <Paperclip className="h-3.5 w-3.5" />
+                      <Paperclip className="h-3.5 w-3.5" aria-hidden="true" />
                       {attachmentsCount}
                     </span>
                   )}
+                  {isPending && <PendingIndicator isPending={isPending} size="sm" showLabel />}
                 </div>
 
                 {/* Location */}
                 {activity.location && (
                   <div className="mt-1.5 flex items-center gap-1 text-sm text-muted-foreground">
-                    <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+                    <MapPin className="h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />
                     <span className="truncate">{activity.location}</span>
                   </div>
                 )}
@@ -102,22 +111,22 @@ export function ActivityCard({ activity, onEdit, onDelete }: ActivityCardProps) 
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 opacity-0 transition-opacity group-hover:opacity-100 data-[state=open]:opacity-100"
+                    className="h-8 w-8 opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100 data-[state=open]:opacity-100"
                     aria-label="Opções da atividade"
                   >
-                    <MoreVertical className="h-4 w-4" />
+                    <MoreVertical className="h-4 w-4" aria-hidden="true" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={() => onEdit(activity)}>
-                    <Pencil className="mr-2 h-4 w-4" />
+                    <Pencil className="mr-2 h-4 w-4" aria-hidden="true" />
                     Editar
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => onDelete(activity)}
                     className="text-destructive focus:text-destructive"
                   >
-                    <Trash2 className="mr-2 h-4 w-4" />
+                    <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />
                     Excluir
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -150,8 +159,9 @@ export function ActivityCard({ activity, onEdit, onDelete }: ActivityCardProps) 
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1.5 rounded-md border bg-muted/50 px-2.5 py-1 text-sm transition-colors hover:bg-muted"
+                              aria-label={`${link.label} (abre em nova aba)`}
                             >
-                              <ExternalLink className="h-3.5 w-3.5" />
+                              <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
                               {link.label}
                             </a>
                           ))}
@@ -167,15 +177,16 @@ export function ActivityCard({ activity, onEdit, onDelete }: ActivityCardProps) 
                   size="sm"
                   className="mt-2 h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
                   onClick={() => setIsExpanded(!isExpanded)}
+                  aria-expanded={isExpanded}
                 >
                   {isExpanded ? (
                     <>
-                      <ChevronUp className="mr-1 h-3.5 w-3.5" />
+                      <ChevronUp className="mr-1 h-3.5 w-3.5" aria-hidden="true" />
                       Mostrar menos
                     </>
                   ) : (
                     <>
-                      <ChevronDown className="mr-1 h-3.5 w-3.5" />
+                      <ChevronDown className="mr-1 h-3.5 w-3.5" aria-hidden="true" />
                       Ver detalhes
                     </>
                   )}
@@ -187,4 +198,4 @@ export function ActivityCard({ activity, onEdit, onDelete }: ActivityCardProps) 
       </CardContent>
     </Card>
   );
-}
+});

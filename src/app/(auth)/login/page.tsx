@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2 } from 'lucide-react';
 
 import { loginSchema, type LoginInput } from '@/lib/validation/auth-schemas';
 import { signIn } from '@/lib/supabase/auth';
@@ -156,8 +155,7 @@ function LoginForm() {
               )}
             />
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button type="submit" className="w-full" loading={isLoading}>
               Entrar
             </Button>
           </form>

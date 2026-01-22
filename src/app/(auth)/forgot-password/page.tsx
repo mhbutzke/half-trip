@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, Mail, ArrowLeft } from 'lucide-react';
+import { Mail, ArrowLeft } from 'lucide-react';
 
 import { forgotPasswordSchema, type ForgotPasswordInput } from '@/lib/validation/auth-schemas';
 import { forgotPassword } from '@/lib/supabase/auth';
@@ -117,8 +117,7 @@ export default function ForgotPasswordPage() {
               )}
             />
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button type="submit" className="w-full" loading={isLoading}>
               Enviar link de recuperação
             </Button>
           </form>

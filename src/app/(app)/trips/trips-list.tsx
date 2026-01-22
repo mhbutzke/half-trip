@@ -1,13 +1,24 @@
 'use client';
 
 import { useState, useEffect, useCallback, ReactNode } from 'react';
+import dynamic from 'next/dynamic';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { Archive } from 'lucide-react';
 import { TripCard } from '@/components/trips/trip-card';
-import { EditTripDialog } from '@/components/trips/edit-trip-dialog';
-import { DeleteTripDialog } from '@/components/trips/delete-trip-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+// Lazy load dialogs - only needed when user clicks actions
+const EditTripDialog = dynamic(() =>
+  import('@/components/trips/edit-trip-dialog').then((mod) => ({ default: mod.EditTripDialog }))
+);
+const DeleteTripDialog = dynamic(() =>
+  import('@/components/trips/delete-trip-dialog').then((mod) => ({ default: mod.DeleteTripDialog }))
+);
+import { useRealtimeSubscription } from '@/hooks/use-realtime-subscription';
+import { useOnlineStatus } from '@/hooks/use-online-status';
+import { cacheTrips, getCachedUserTrips } from '@/lib/sync';
+import { getUser } from '@/lib/supabase/auth';
 import {
   getUserTrips,
   getArchivedTrips,
@@ -22,6 +33,7 @@ interface TripsListProps {
 
 export function TripsList({ emptyState }: TripsListProps) {
   const router = useRouter();
+  const isOnline = useOnlineStatus();
   const [trips, setTrips] = useState<TripWithMembers[]>([]);
   const [archivedTrips, setArchivedTrips] = useState<TripWithMembers[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -31,19 +43,55 @@ export function TripsList({ emptyState }: TripsListProps) {
   const loadTrips = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [activeTrips, archived] = await Promise.all([getUserTrips(), getArchivedTrips()]);
-      setTrips(activeTrips);
-      setArchivedTrips(archived);
+      if (isOnline) {
+        // Fetch from server when online
+        const [activeTrips, archived] = await Promise.all([getUserTrips(), getArchivedTrips()]);
+        setTrips(activeTrips);
+        setArchivedTrips(archived);
+
+        // Cache trips for offline use
+        const allTrips = [...activeTrips, ...archived];
+        if (allTrips.length > 0) {
+          await cacheTrips(allTrips);
+        }
+      } else {
+        // Load from cache when offline
+        const user = await getUser();
+        if (user) {
+          const cachedTrips = await getCachedUserTrips(user.id);
+
+          // Convert CachedTrip to TripWithMembers format
+          const tripsWithMembers: TripWithMembers[] = cachedTrips.map((trip) => ({
+            ...trip,
+            trip_members: [],
+            memberCount: 0,
+          }));
+
+          const active = tripsWithMembers.filter((t) => !t.archived_at);
+          const archived = tripsWithMembers.filter((t) => t.archived_at);
+          setTrips(active);
+          setArchivedTrips(archived);
+        }
+      }
     } catch {
       toast.error('Erro ao carregar viagens');
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isOnline]);
 
   useEffect(() => {
     loadTrips();
   }, [loadTrips]);
+
+  // Subscribe to trip changes
+  useRealtimeSubscription({
+    table: 'trips',
+    onChange: () => {
+      console.log('🔄 Trips changed, reloading list');
+      loadTrips();
+    },
+  });
 
   const handleEdit = (trip: TripWithMembers) => {
     setEditingTrip(trip);

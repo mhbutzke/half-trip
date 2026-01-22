@@ -1,0 +1,19 @@
+
+> half-trip@0.1.0 build /Users/mhbutzke/.zenflow/worktrees/fundacao-b012
+> next build
+
+▲ Next.js 16.1.4 (Turbopack)
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 3.5s
+  Running TypeScript ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/13) ...
+Error occurred prerendering page "/_global-error". Read more: https://nextjs.org/docs/messages/prerender-error
+Error [InvariantError]: Invariant: Expected workUnitAsyncStorage to have a store. This is a bug in Next.js.
+    at M (.next/server/chunks/ssr/[root-of-the-server]__9ca1c49a._.js:1:80503)
+    at bM (.next/server/chunks/ssr/[root-of-the-server]__9ca1c49a._.js:4:7728)
+Export encountered an error on /_global-error/page: /_global-error, exiting the build.
+⨯ Next.js build worker exited with code: 1 and signal: null
+ ELIFECYCLE  Command failed with exit code 1.

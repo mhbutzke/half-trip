@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, CheckCircle } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
 
 import { resetPasswordSchema, type ResetPasswordInput } from '@/lib/validation/auth-schemas';
 import { resetPassword } from '@/lib/supabase/auth';
@@ -132,8 +132,7 @@ export default function ResetPasswordPage() {
               )}
             />
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button type="submit" className="w-full" loading={isLoading}>
               Redefinir senha
             </Button>
           </form>

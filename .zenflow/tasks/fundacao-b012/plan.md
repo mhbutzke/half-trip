@@ -2328,6 +2328,14 @@ Set up basic monitoring.
     - Daily, weekly, monthly monitoring checklists
     - Troubleshooting common monitoring issues
 
+- **Health Check API Endpoint:**
+  - `src/app/api/health/route.ts`: Health check endpoint for uptime monitoring
+    - Returns overall status (healthy/degraded/unhealthy)
+    - Verifies database connectivity
+    - Includes uptime, response time, environment
+    - Status codes: 200 (healthy), 503 (unhealthy)
+    - Use for UptimeRobot, Pingdom, load balancer health checks
+
 - **Environment Variables:**
   - Updated `.env.example` with monitoring-related variables:
     - `NEXT_PUBLIC_ANALYTICS_ENDPOINT` for custom analytics

@@ -57,7 +57,7 @@ export function useAutoSync(config: AutoSyncConfig = {}): AutoSyncHook {
       const count = await syncEngine.getPendingCount();
       setPendingCount(count);
 
-      if (result.success) {
+      if (result.success || result.errors.length === 0) {
         if (result.processedCount > 0) {
           toast.success(
             `Sincronização concluída: ${result.processedCount} ${result.processedCount === 1 ? 'item' : 'itens'}`

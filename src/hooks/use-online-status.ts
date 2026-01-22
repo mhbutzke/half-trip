@@ -7,10 +7,13 @@ import { useEffect, useState } from 'react';
  * Listens to browser online/offline events and navigator.onLine
  */
 export function useOnlineStatus() {
-  // Initialize with true as default (SSR-safe)
-  const [isOnline, setIsOnline] = useState(() =>
-    typeof navigator !== 'undefined' ? navigator.onLine : true
-  );
+  // Initialize with navigator.onLine if available (client-side), otherwise true for SSR
+  const [isOnline, setIsOnline] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return navigator.onLine;
+    }
+    return true;
+  });
 
   useEffect(() => {
     // Event handlers

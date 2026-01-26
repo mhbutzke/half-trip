@@ -1,0 +1,320 @@
+'use client';
+
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { format } from 'date-fns';
+import { Loader2, Plane, AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
+
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { createActivity } from '@/lib/supabase/activities';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+
+const formSchema = z.object({
+  flightNumber: z.string().min(2, {
+    message: 'Flight number required (e.g. AA123)',
+  }),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
+    message: 'Date must be YYYY-MM-DD',
+  }),
+});
+
+interface FlightData {
+  [key: string]: unknown;
+  found: boolean;
+  carrier?: string;
+  flight_number?: string;
+  departure: {
+    airport?: string;
+    iata?: string;
+    scheduled?: string;
+    terminal?: string;
+    gate?: string;
+  };
+  arrival: {
+    airport?: string;
+    iata?: string;
+    scheduled?: string;
+    terminal?: string;
+    gate?: string;
+  };
+  duration?: number;
+  status?: string;
+}
+
+interface FlightSearchDialogProps {
+  tripId: string;
+  defaultDate?: string;
+  trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  onSuccess?: () => void;
+}
+
+export function FlightSearchDialog({
+  tripId,
+  defaultDate,
+  trigger,
+  open,
+  onOpenChange,
+  onSuccess,
+}: FlightSearchDialogProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [flightData, setFlightData] = useState<FlightData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      flightNumber: '',
+      date: defaultDate || format(new Date(), 'yyyy-MM-dd'),
+    },
+  });
+
+  const handleOpenChange = (newOpen: boolean) => {
+    setIsOpen(newOpen);
+    if (onOpenChange) {
+      onOpenChange(newOpen);
+    }
+    if (!newOpen) {
+      form.reset();
+      setFlightData(null);
+      setError(null);
+    }
+  };
+
+  const controlledOpen = open !== undefined ? open : isOpen;
+
+  const onSearch = async (values: z.infer<typeof formSchema>) => {
+    setLoading(true);
+    setError(null);
+    setFlightData(null);
+
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const response = await fetch(`${supabaseUrl}/functions/v1/fetch-flight-data`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ flight_number: values.flightNumber, date: values.date }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      if (data.found === false) {
+        setError('Flight not found. Please check the number and date.');
+      } else {
+        setFlightData(data as FlightData);
+      }
+    } catch (err: unknown) {
+      console.error(err);
+      const message =
+        err instanceof Error ? err.message : 'An error occurred while searching for the flight.';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onAddFlight = async () => {
+    if (!flightData) return;
+
+    setLoading(true);
+    try {
+      // Create activity from flight data
+      const departureTime = flightData.departure.scheduled
+        ? new Date(flightData.departure.scheduled)
+        : null;
+      // Duration in minutes
+      const duration = flightData.duration || 0;
+
+      // Calculate Activity Title
+      const title = `Flight ${flightData.carrier} ${flightData.flight_number}: ${flightData.departure.iata} -> ${flightData.arrival.iata}`;
+
+      const result = await createActivity({
+        trip_id: tripId,
+        title: title,
+        date: form.getValues('date'),
+        category: 'transport',
+        start_time: departureTime ? format(departureTime, 'HH:mm') : undefined,
+        duration_minutes: duration,
+        description: `Flight from ${flightData.departure.airport} (${flightData.departure.iata}) to ${flightData.arrival.airport} (${flightData.arrival.iata}).`,
+        location: `${flightData.departure.airport}`,
+        metadata: flightData,
+      });
+
+      if (result.error) {
+        toast.error('Error adding flight', { description: result.error });
+      } else {
+        toast.success('Flight added to itinerary');
+        handleOpenChange(false);
+        if (onSuccess) onSuccess();
+      }
+    } catch {
+      toast.error('Failed to create activity');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={controlledOpen} onOpenChange={handleOpenChange}>
+      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle>Add Flight</DialogTitle>
+          <DialogDescription>
+            Search for a flight to automatically add it to your itinerary.
+          </DialogDescription>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSearch)} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="flightNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Flight Number</FormLabel>
+                    <FormControl>
+                      <Input placeholder="AA100" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Date</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {!flightData && (
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Plane className="mr-2 h-4 w-4" />
+                )}
+                Search Flight
+              </Button>
+            )}
+          </form>
+        </Form>
+
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {flightData && (
+          <div className="rounded-lg border p-4 bg-muted/50 space-y-3">
+            <div className="font-semibold text-lg flex items-center justify-between">
+              <span>
+                {flightData.carrier} {flightData.flight_number}
+              </span>
+              <span className="text-sm px-2 py-1 rounded bg-primary/10 text-primary">
+                {flightData.status}
+              </span>
+            </div>
+            <div className="flex justify-between items-center text-sm">
+              <div className="text-center">
+                <div className="text-2xl font-bold">{flightData.departure.iata}</div>
+                <div className="text-muted-foreground">
+                  {flightData.departure.scheduled
+                    ? format(new Date(flightData.departure.scheduled), 'HH:mm')
+                    : '--:--'}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  Term: {flightData.departure.terminal || '-'} Gate:{' '}
+                  {flightData.departure.gate || '-'}
+                </div>
+              </div>
+              <div className="flex-1 px-4 text-center">
+                <div className="h-[1px] bg-border w-full relative top-3"></div>
+                <Plane className="h-4 w-4 mx-auto rotate-90 relative bg-background px-1" />
+                <div className="text-xs text-muted-foreground mt-2">
+                  {flightData.duration
+                    ? `${Math.floor(flightData.duration / 60)}h ${flightData.duration % 60}m`
+                    : ''}
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold">{flightData.arrival.iata}</div>
+                <div className="text-muted-foreground">
+                  {flightData.arrival.scheduled
+                    ? format(new Date(flightData.arrival.scheduled), 'HH:mm')
+                    : '--:--'}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  Term: {flightData.arrival.terminal || '-'} Gate: {flightData.arrival.gate || '-'}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <DialogFooter className="sm:justify-between gap-2">
+          {flightData && (
+            <>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setFlightData(null);
+                  form.reset();
+                }}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              <Button onClick={onAddFlight} disabled={loading}>
+                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Add to Itinerary'}
+              </Button>
+            </>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

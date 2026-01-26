@@ -144,6 +144,7 @@ export type Database = {
           description: string | null;
           category: 'transport' | 'accommodation' | 'tour' | 'meal' | 'event' | 'other';
           links: Json;
+          metadata: Json;
           sort_order: number;
           created_by: string;
           created_at: string;

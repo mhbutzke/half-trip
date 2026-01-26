@@ -28,6 +28,7 @@ export type CreateActivityInput = {
   description?: string | null;
   category: ActivityCategory;
   links?: ActivityLink[];
+  metadata?: Record<string, unknown>;
 };
 
 export type UpdateActivityInput = Partial<Omit<CreateActivityInput, 'trip_id'>>;
@@ -83,6 +84,7 @@ export async function createActivity(input: CreateActivityInput): Promise<Activi
       description: input.description || null,
       category: input.category,
       links: input.links || [],
+      metadata: input.metadata || {},
       sort_order: nextSortOrder,
       created_by: authUser.id,
     })
@@ -150,7 +152,9 @@ export async function updateActivity(
       ...(input.location !== undefined && { location: input.location }),
       ...(input.description !== undefined && { description: input.description }),
       ...(input.category !== undefined && { category: input.category }),
+      ...(input.category !== undefined && { category: input.category }),
       ...(input.links !== undefined && { links: input.links }),
+      ...(input.metadata !== undefined && { metadata: input.metadata }),
     })
     .eq('id', activityId);
 

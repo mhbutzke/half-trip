@@ -103,6 +103,38 @@ export const ActivityCard = memo(function ActivityCard({
                     <span className="truncate">{activity.location}</span>
                   </div>
                 )}
+
+                {/* Flight Details */}
+                {activity.category === 'transport' &&
+                  (() => {
+                    const meta = activity.metadata as {
+                      carrier?: string;
+                      flight_number?: string;
+                      status?: string;
+                      departure?: { iata?: string; terminal?: string };
+                      arrival?: { iata?: string; terminal?: string };
+                    } | null;
+                    return meta?.carrier ? (
+                      <div className="mt-2 text-sm bg-muted/50 p-2 rounded border">
+                        <div className="font-medium">
+                          {meta.carrier} {meta.flight_number}
+                          <span className="ml-2 text-xs font-normal text-muted-foreground">
+                            ({meta.status})
+                          </span>
+                        </div>
+                        <div className="flex gap-4 mt-1 text-xs text-muted-foreground">
+                          <div>
+                            <span className="font-semibold">Dep:</span> {meta.departure?.iata}
+                            {meta.departure?.terminal && ` (T${meta.departure.terminal})`}
+                          </div>
+                          <div>
+                            <span className="font-semibold">Arr:</span> {meta.arrival?.iata}
+                            {meta.arrival?.terminal && ` (T${meta.arrival.terminal})`}
+                          </div>
+                        </div>
+                      </div>
+                    ) : null;
+                  })()}
               </div>
 
               {/* Actions Dropdown */}

@@ -18,7 +18,7 @@ import {
 } from '@dnd-kit/core';
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { format, parseISO, eachDayOfInterval } from 'date-fns';
-import { MapPin, Plus } from 'lucide-react';
+import { MapPin, Plus, Plane } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { DaySection } from './day-section';
@@ -29,18 +29,32 @@ import type { ActivityWithCreator } from '@/lib/supabase/activities';
 import type { Activity } from '@/types/database';
 
 // Lazy load activity dialogs - only needed when user interacts
-const DeleteActivityDialog = dynamic(() =>
-  import('./delete-activity-dialog').then((mod) => ({ default: mod.DeleteActivityDialog }))
+// Using ssr: false to prevent hydration mismatch with Radix Dialog IDs
+const DeleteActivityDialog = dynamic(
+  () => import('./delete-activity-dialog').then((mod) => ({ default: mod.DeleteActivityDialog })),
+  { ssr: false }
 );
-const AddActivityDialog = dynamic(() =>
-  import('@/components/activities/add-activity-dialog').then((mod) => ({
-    default: mod.AddActivityDialog,
-  }))
+const AddActivityDialog = dynamic(
+  () =>
+    import('@/components/activities/add-activity-dialog').then((mod) => ({
+      default: mod.AddActivityDialog,
+    })),
+  { ssr: false }
 );
-const EditActivityDialog = dynamic(() =>
-  import('@/components/activities/edit-activity-dialog').then((mod) => ({
-    default: mod.EditActivityDialog,
-  }))
+const EditActivityDialog = dynamic(
+  () =>
+    import('@/components/activities/edit-activity-dialog').then((mod) => ({
+      default: mod.EditActivityDialog,
+    })),
+  { ssr: false }
+);
+
+const FlightSearchDialog = dynamic(
+  () =>
+    import('@/components/activities/flight-search-dialog').then((mod) => ({
+      default: mod.FlightSearchDialog,
+    })),
+  { ssr: false }
 );
 
 interface ItineraryListProps {
@@ -370,17 +384,30 @@ export function ItineraryList({
           <p className="text-sm text-muted-foreground">Total de atividades</p>
           <p className="text-2xl font-bold">{totalActivities}</p>
         </div>
-        <AddActivityDialog
-          tripId={tripId}
-          defaultDate={tripDays[0]}
-          trigger={
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Nova atividade
-            </Button>
-          }
-          onSuccess={handleAddSuccess}
-        />
+
+        <div className="flex items-center gap-2">
+          <FlightSearchDialog
+            tripId={tripId}
+            onSuccess={handleAddSuccess}
+            trigger={
+              <Button variant="outline" size="sm">
+                <Plane className="mr-2 h-4 w-4" />
+                Adicionar Voo
+              </Button>
+            }
+          />
+          <AddActivityDialog
+            tripId={tripId}
+            defaultDate={tripDays[0]}
+            trigger={
+              <Button size="sm">
+                <Plus className="mr-2 h-4 w-4" />
+                Nova atividade
+              </Button>
+            }
+            onSuccess={handleAddSuccess}
+          />
+        </div>
       </div>
 
       {/* Day Sections with Drag and Drop */}

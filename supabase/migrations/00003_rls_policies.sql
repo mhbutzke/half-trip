@@ -15,7 +15,6 @@ ALTER TABLE expense_splits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE trip_notes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE trip_invites ENABLE ROW LEVEL SECURITY;
 ALTER TABLE settlements ENABLE ROW LEVEL SECURITY;
-
 -- ============================================================================
 -- HELPER FUNCTIONS
 -- ============================================================================
@@ -31,7 +30,6 @@ BEGIN
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
-
 -- Check if user is an organizer of a trip
 CREATE OR REPLACE FUNCTION is_trip_organizer(trip_uuid UUID)
 RETURNS BOOLEAN AS $$
@@ -44,7 +42,6 @@ BEGIN
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
-
 -- ============================================================================
 -- USERS POLICIES
 -- ============================================================================
@@ -53,7 +50,6 @@ $$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
 CREATE POLICY "users_select_own"
   ON users FOR SELECT
   USING (id = auth.uid());
-
 -- Users can view profiles of people in their trips
 CREATE POLICY "users_select_trip_members"
   ON users FOR SELECT
@@ -65,13 +61,11 @@ CREATE POLICY "users_select_trip_members"
       AND tm2.user_id = users.id
     )
   );
-
 -- Users can update their own profile
 CREATE POLICY "users_update_own"
   ON users FOR UPDATE
   USING (id = auth.uid())
   WITH CHECK (id = auth.uid());
-
 -- ============================================================================
 -- TRIPS POLICIES
 -- ============================================================================
@@ -80,23 +74,19 @@ CREATE POLICY "users_update_own"
 CREATE POLICY "trips_select_member"
   ON trips FOR SELECT
   USING (is_trip_member(id));
-
 -- Any authenticated user can create a trip
 CREATE POLICY "trips_insert"
   ON trips FOR INSERT
   WITH CHECK (auth.uid() = created_by);
-
 -- Only organizers can update trips
 CREATE POLICY "trips_update_organizer"
   ON trips FOR UPDATE
   USING (is_trip_organizer(id))
   WITH CHECK (is_trip_organizer(id));
-
 -- Only organizers can delete trips
 CREATE POLICY "trips_delete_organizer"
   ON trips FOR DELETE
   USING (is_trip_organizer(id));
-
 -- ============================================================================
 -- TRIP MEMBERS POLICIES
 -- ============================================================================
@@ -105,7 +95,6 @@ CREATE POLICY "trips_delete_organizer"
 CREATE POLICY "trip_members_select"
   ON trip_members FOR SELECT
   USING (is_trip_member(trip_id));
-
 -- Only organizers can add members (or self-join via invite)
 CREATE POLICY "trip_members_insert"
   ON trip_members FOR INSERT
@@ -116,13 +105,11 @@ CREATE POLICY "trip_members_insert"
     -- Users can add themselves (via invite flow)
     (user_id = auth.uid())
   );
-
 -- Only organizers can update member roles
 CREATE POLICY "trip_members_update"
   ON trip_members FOR UPDATE
   USING (is_trip_organizer(trip_id))
   WITH CHECK (is_trip_organizer(trip_id));
-
 -- Organizers can remove members, users can remove themselves
 CREATE POLICY "trip_members_delete"
   ON trip_members FOR DELETE
@@ -130,7 +117,6 @@ CREATE POLICY "trip_members_delete"
     is_trip_organizer(trip_id)
     OR user_id = auth.uid()
   );
-
 -- ============================================================================
 -- ACTIVITIES POLICIES
 -- ============================================================================
@@ -139,7 +125,6 @@ CREATE POLICY "trip_members_delete"
 CREATE POLICY "activities_select"
   ON activities FOR SELECT
   USING (is_trip_member(trip_id));
-
 -- Members can create activities
 CREATE POLICY "activities_insert"
   ON activities FOR INSERT
@@ -147,13 +132,11 @@ CREATE POLICY "activities_insert"
     is_trip_member(trip_id)
     AND created_by = auth.uid()
   );
-
 -- Members can update activities (collaborative editing)
 CREATE POLICY "activities_update"
   ON activities FOR UPDATE
   USING (is_trip_member(trip_id))
   WITH CHECK (is_trip_member(trip_id));
-
 -- Only creator or organizers can delete activities
 CREATE POLICY "activities_delete"
   ON activities FOR DELETE
@@ -161,7 +144,6 @@ CREATE POLICY "activities_delete"
     created_by = auth.uid()
     OR is_trip_organizer(trip_id)
   );
-
 -- ============================================================================
 -- ACTIVITY ATTACHMENTS POLICIES
 -- ============================================================================
@@ -176,7 +158,6 @@ CREATE POLICY "activity_attachments_select"
       AND is_trip_member(activities.trip_id)
     )
   );
-
 -- Members can add attachments
 CREATE POLICY "activity_attachments_insert"
   ON activity_attachments FOR INSERT
@@ -187,7 +168,6 @@ CREATE POLICY "activity_attachments_insert"
       AND is_trip_member(activities.trip_id)
     )
   );
-
 -- Members can delete attachments (or restrict to creator/organizer if needed)
 CREATE POLICY "activity_attachments_delete"
   ON activity_attachments FOR DELETE
@@ -198,7 +178,6 @@ CREATE POLICY "activity_attachments_delete"
       AND is_trip_member(activities.trip_id)
     )
   );
-
 -- ============================================================================
 -- EXPENSES POLICIES
 -- ============================================================================
@@ -207,7 +186,6 @@ CREATE POLICY "activity_attachments_delete"
 CREATE POLICY "expenses_select"
   ON expenses FOR SELECT
   USING (is_trip_member(trip_id));
-
 -- Members can create expenses
 CREATE POLICY "expenses_insert"
   ON expenses FOR INSERT
@@ -215,7 +193,6 @@ CREATE POLICY "expenses_insert"
     is_trip_member(trip_id)
     AND created_by = auth.uid()
   );
-
 -- Creator or organizers can update expenses
 CREATE POLICY "expenses_update"
   ON expenses FOR UPDATE
@@ -227,7 +204,6 @@ CREATE POLICY "expenses_update"
     created_by = auth.uid()
     OR is_trip_organizer(trip_id)
   );
-
 -- Creator or organizers can delete expenses
 CREATE POLICY "expenses_delete"
   ON expenses FOR DELETE
@@ -235,7 +211,6 @@ CREATE POLICY "expenses_delete"
     created_by = auth.uid()
     OR is_trip_organizer(trip_id)
   );
-
 -- ============================================================================
 -- EXPENSE SPLITS POLICIES
 -- ============================================================================
@@ -250,7 +225,6 @@ CREATE POLICY "expense_splits_select"
       AND is_trip_member(expenses.trip_id)
     )
   );
-
 -- Expense creator can manage splits
 CREATE POLICY "expense_splits_insert"
   ON expense_splits FOR INSERT
@@ -261,7 +235,6 @@ CREATE POLICY "expense_splits_insert"
       AND (expenses.created_by = auth.uid() OR is_trip_organizer(expenses.trip_id))
     )
   );
-
 -- Expense creator or organizers can update splits
 CREATE POLICY "expense_splits_update"
   ON expense_splits FOR UPDATE
@@ -272,7 +245,6 @@ CREATE POLICY "expense_splits_update"
       AND (expenses.created_by = auth.uid() OR is_trip_organizer(expenses.trip_id))
     )
   );
-
 -- Expense creator or organizers can delete splits
 CREATE POLICY "expense_splits_delete"
   ON expense_splits FOR DELETE
@@ -283,7 +255,6 @@ CREATE POLICY "expense_splits_delete"
       AND (expenses.created_by = auth.uid() OR is_trip_organizer(expenses.trip_id))
     )
   );
-
 -- ============================================================================
 -- TRIP NOTES POLICIES
 -- ============================================================================
@@ -292,7 +263,6 @@ CREATE POLICY "expense_splits_delete"
 CREATE POLICY "trip_notes_select"
   ON trip_notes FOR SELECT
   USING (is_trip_member(trip_id));
-
 -- Members can create notes
 CREATE POLICY "trip_notes_insert"
   ON trip_notes FOR INSERT
@@ -300,13 +270,11 @@ CREATE POLICY "trip_notes_insert"
     is_trip_member(trip_id)
     AND created_by = auth.uid()
   );
-
 -- Only creator can update their notes
 CREATE POLICY "trip_notes_update"
   ON trip_notes FOR UPDATE
   USING (created_by = auth.uid())
   WITH CHECK (created_by = auth.uid());
-
 -- Creator or organizers can delete notes
 CREATE POLICY "trip_notes_delete"
   ON trip_notes FOR DELETE
@@ -314,7 +282,6 @@ CREATE POLICY "trip_notes_delete"
     created_by = auth.uid()
     OR is_trip_organizer(trip_id)
   );
-
 -- ============================================================================
 -- TRIP INVITES POLICIES
 -- ============================================================================
@@ -323,7 +290,6 @@ CREATE POLICY "trip_notes_delete"
 CREATE POLICY "trip_invites_select_by_code"
   ON trip_invites FOR SELECT
   USING (true);
-
 -- Only organizers can create invites
 CREATE POLICY "trip_invites_insert"
   ON trip_invites FOR INSERT
@@ -331,18 +297,15 @@ CREATE POLICY "trip_invites_insert"
     is_trip_organizer(trip_id)
     AND invited_by = auth.uid()
   );
-
 -- Anyone can update an invite (to mark as accepted)
 CREATE POLICY "trip_invites_update"
   ON trip_invites FOR UPDATE
   USING (true)
   WITH CHECK (true);
-
 -- Only organizers can delete invites
 CREATE POLICY "trip_invites_delete"
   ON trip_invites FOR DELETE
   USING (is_trip_organizer(trip_id));
-
 -- ============================================================================
 -- SETTLEMENTS POLICIES
 -- ============================================================================
@@ -351,12 +314,10 @@ CREATE POLICY "trip_invites_delete"
 CREATE POLICY "settlements_select"
   ON settlements FOR SELECT
   USING (is_trip_member(trip_id));
-
 -- Members can create settlements
 CREATE POLICY "settlements_insert"
   ON settlements FOR INSERT
   WITH CHECK (is_trip_member(trip_id));
-
 -- Involved parties can update settlements (mark as settled)
 CREATE POLICY "settlements_update"
   ON settlements FOR UPDATE
@@ -365,12 +326,10 @@ CREATE POLICY "settlements_update"
     OR to_user = auth.uid()
     OR is_trip_organizer(trip_id)
   );
-
 -- Organizers can delete settlements
 CREATE POLICY "settlements_delete"
   ON settlements FOR DELETE
   USING (is_trip_organizer(trip_id));
-
 -- ============================================================================
 -- STORAGE POLICIES (for Supabase Storage buckets)
 -- ============================================================================
@@ -397,4 +356,4 @@ CREATE POLICY "settlements_delete"
 -- Bucket: receipts (expense receipts)
 -- SELECT: authenticated, must be trip member
 -- INSERT: authenticated, must be trip member
--- DELETE: authenticated, expense creator or organizer
+-- DELETE: authenticated, expense creator or organizer;

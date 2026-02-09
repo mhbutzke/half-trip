@@ -49,6 +49,5 @@ BEGIN
   RETURN v_trip_id;
 END;
 $$;
-
 -- Grant execute permission to authenticated users
 GRANT EXECUTE ON FUNCTION create_trip_with_member TO authenticated;

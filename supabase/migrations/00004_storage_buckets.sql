@@ -19,7 +19,6 @@ ON CONFLICT (id) DO UPDATE SET
   public = EXCLUDED.public,
   file_size_limit = EXCLUDED.file_size_limit,
   allowed_mime_types = EXCLUDED.allowed_mime_types;
-
 -- Trip covers bucket
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES (
@@ -33,7 +32,6 @@ ON CONFLICT (id) DO UPDATE SET
   public = EXCLUDED.public,
   file_size_limit = EXCLUDED.file_size_limit,
   allowed_mime_types = EXCLUDED.allowed_mime_types;
-
 -- Activity attachments bucket
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES (
@@ -47,7 +45,6 @@ ON CONFLICT (id) DO UPDATE SET
   public = EXCLUDED.public,
   file_size_limit = EXCLUDED.file_size_limit,
   allowed_mime_types = EXCLUDED.allowed_mime_types;
-
 -- Receipts bucket (expense receipts)
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES (
@@ -61,7 +58,6 @@ ON CONFLICT (id) DO UPDATE SET
   public = EXCLUDED.public,
   file_size_limit = EXCLUDED.file_size_limit,
   allowed_mime_types = EXCLUDED.allowed_mime_types;
-
 -- ============================================================================
 -- AVATARS BUCKET POLICIES
 -- ============================================================================
@@ -70,7 +66,6 @@ ON CONFLICT (id) DO UPDATE SET
 CREATE POLICY "avatars_select_public"
   ON storage.objects FOR SELECT
   USING (bucket_id = 'avatars');
-
 -- Users can upload their own avatar (folder must match user id)
 CREATE POLICY "avatars_insert_own"
   ON storage.objects FOR INSERT
@@ -78,7 +73,6 @@ CREATE POLICY "avatars_insert_own"
     bucket_id = 'avatars'
     AND (storage.foldername(name))[1] = auth.uid()::text
   );
-
 -- Users can update their own avatar
 CREATE POLICY "avatars_update_own"
   ON storage.objects FOR UPDATE
@@ -90,7 +84,6 @@ CREATE POLICY "avatars_update_own"
     bucket_id = 'avatars'
     AND (storage.foldername(name))[1] = auth.uid()::text
   );
-
 -- Users can delete their own avatar
 CREATE POLICY "avatars_delete_own"
   ON storage.objects FOR DELETE
@@ -98,7 +91,6 @@ CREATE POLICY "avatars_delete_own"
     bucket_id = 'avatars'
     AND (storage.foldername(name))[1] = auth.uid()::text
   );
-
 -- ============================================================================
 -- TRIP COVERS BUCKET POLICIES
 -- ============================================================================
@@ -107,7 +99,6 @@ CREATE POLICY "avatars_delete_own"
 CREATE POLICY "trip_covers_select_public"
   ON storage.objects FOR SELECT
   USING (bucket_id = 'trip-covers');
-
 -- Trip organizers can upload covers (folder must be trip_id)
 CREATE POLICY "trip_covers_insert"
   ON storage.objects FOR INSERT
@@ -115,7 +106,6 @@ CREATE POLICY "trip_covers_insert"
     bucket_id = 'trip-covers'
     AND is_trip_organizer((storage.foldername(name))[1]::uuid)
   );
-
 -- Trip organizers can update covers
 CREATE POLICY "trip_covers_update"
   ON storage.objects FOR UPDATE
@@ -127,7 +117,6 @@ CREATE POLICY "trip_covers_update"
     bucket_id = 'trip-covers'
     AND is_trip_organizer((storage.foldername(name))[1]::uuid)
   );
-
 -- Trip organizers can delete covers
 CREATE POLICY "trip_covers_delete"
   ON storage.objects FOR DELETE
@@ -135,7 +124,6 @@ CREATE POLICY "trip_covers_delete"
     bucket_id = 'trip-covers'
     AND is_trip_organizer((storage.foldername(name))[1]::uuid)
   );
-
 -- ============================================================================
 -- ATTACHMENTS BUCKET POLICIES
 -- ============================================================================
@@ -147,7 +135,6 @@ CREATE POLICY "attachments_select"
     bucket_id = 'attachments'
     AND is_trip_member((storage.foldername(name))[1]::uuid)
   );
-
 -- Trip members can upload attachments
 CREATE POLICY "attachments_insert"
   ON storage.objects FOR INSERT
@@ -155,7 +142,6 @@ CREATE POLICY "attachments_insert"
     bucket_id = 'attachments'
     AND is_trip_member((storage.foldername(name))[1]::uuid)
   );
-
 -- Trip members can delete attachments (or restrict to organizer if needed)
 CREATE POLICY "attachments_delete"
   ON storage.objects FOR DELETE
@@ -163,7 +149,6 @@ CREATE POLICY "attachments_delete"
     bucket_id = 'attachments'
     AND is_trip_member((storage.foldername(name))[1]::uuid)
   );
-
 -- ============================================================================
 -- RECEIPTS BUCKET POLICIES
 -- ============================================================================
@@ -175,7 +160,6 @@ CREATE POLICY "receipts_select"
     bucket_id = 'receipts'
     AND is_trip_member((storage.foldername(name))[1]::uuid)
   );
-
 -- Trip members can upload receipts
 CREATE POLICY "receipts_insert"
   ON storage.objects FOR INSERT
@@ -183,7 +167,6 @@ CREATE POLICY "receipts_insert"
     bucket_id = 'receipts'
     AND is_trip_member((storage.foldername(name))[1]::uuid)
   );
-
 -- Trip members can delete receipts (expense creator or organizer should be validated in app)
 CREATE POLICY "receipts_delete"
   ON storage.objects FOR DELETE

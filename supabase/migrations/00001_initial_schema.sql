@@ -4,7 +4,6 @@
 
 -- Enable UUID extension (usually enabled by default in Supabase)
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
 -- ============================================================================
 -- USERS TABLE
 -- ============================================================================
@@ -17,10 +16,8 @@ CREATE TABLE users (
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
-
 COMMENT ON TABLE users IS 'User profiles extending Supabase auth.users';
 COMMENT ON COLUMN users.avatar_url IS 'URL to user avatar in Supabase Storage';
-
 -- ============================================================================
 -- TRIPS TABLE
 -- ============================================================================
@@ -41,11 +38,9 @@ CREATE TABLE trips (
 
   CONSTRAINT valid_dates CHECK (end_date >= start_date)
 );
-
 COMMENT ON TABLE trips IS 'Trips created by users';
 COMMENT ON COLUMN trips.style IS 'Trip style: adventure, relaxation, cultural, gastronomic, other';
 COMMENT ON COLUMN trips.archived_at IS 'When set, trip is archived and hidden from active list';
-
 -- ============================================================================
 -- TRIP MEMBERS TABLE
 -- ============================================================================
@@ -60,10 +55,8 @@ CREATE TABLE trip_members (
 
   CONSTRAINT unique_trip_member UNIQUE(trip_id, user_id)
 );
-
 COMMENT ON TABLE trip_members IS 'Trip participants with their roles';
 COMMENT ON COLUMN trip_members.role IS 'organizer has full control, participant can add/view content';
-
 -- ============================================================================
 -- ACTIVITIES TABLE
 -- ============================================================================
@@ -84,11 +77,9 @@ CREATE TABLE activities (
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
-
 COMMENT ON TABLE activities IS 'Itinerary activities for trips';
 COMMENT ON COLUMN activities.links IS 'Array of {url, label} objects for related links';
 COMMENT ON COLUMN activities.sort_order IS 'Order within the day for drag-drop reordering';
-
 -- ============================================================================
 -- ACTIVITY ATTACHMENTS TABLE
 -- ============================================================================
@@ -102,11 +93,9 @@ CREATE TABLE activity_attachments (
   file_size INTEGER,
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
-
 COMMENT ON TABLE activity_attachments IS 'File attachments for activities';
 COMMENT ON COLUMN activity_attachments.file_type IS 'MIME type of the file';
 COMMENT ON COLUMN activity_attachments.file_size IS 'File size in bytes';
-
 -- ============================================================================
 -- EXPENSES TABLE
 -- ============================================================================
@@ -126,11 +115,9 @@ CREATE TABLE expenses (
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
-
 COMMENT ON TABLE expenses IS 'Expense records for trips';
 COMMENT ON COLUMN expenses.paid_by IS 'User who paid for this expense';
 COMMENT ON COLUMN expenses.currency IS 'ISO 4217 currency code (default BRL)';
-
 -- ============================================================================
 -- EXPENSE SPLITS TABLE
 -- ============================================================================
@@ -145,11 +132,9 @@ CREATE TABLE expense_splits (
 
   CONSTRAINT unique_expense_split UNIQUE(expense_id, user_id)
 );
-
 COMMENT ON TABLE expense_splits IS 'How expenses are split among participants';
 COMMENT ON COLUMN expense_splits.amount IS 'Calculated share amount for this user';
 COMMENT ON COLUMN expense_splits.percentage IS 'Percentage share (for percentage-based splits)';
-
 -- ============================================================================
 -- TRIP NOTES TABLE
 -- ============================================================================
@@ -162,9 +147,7 @@ CREATE TABLE trip_notes (
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
-
 COMMENT ON TABLE trip_notes IS 'General notes for trips';
-
 -- ============================================================================
 -- TRIP INVITES TABLE
 -- ============================================================================
@@ -180,11 +163,9 @@ CREATE TABLE trip_invites (
   accepted_by UUID REFERENCES users(id),
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
-
 COMMENT ON TABLE trip_invites IS 'Invitation links for trips';
 COMMENT ON COLUMN trip_invites.code IS 'Short unique invite code for sharing';
 COMMENT ON COLUMN trip_invites.email IS 'Optional email for direct email invites';
-
 -- ============================================================================
 -- SETTLEMENTS TABLE
 -- ============================================================================
@@ -200,12 +181,10 @@ CREATE TABLE settlements (
 
   CONSTRAINT different_users CHECK (from_user != to_user)
 );
-
 COMMENT ON TABLE settlements IS 'Debt settlements between trip participants';
 COMMENT ON COLUMN settlements.from_user IS 'User who owes money';
 COMMENT ON COLUMN settlements.to_user IS 'User who is owed money';
 COMMENT ON COLUMN settlements.settled_at IS 'When the settlement was marked as paid';
-
 -- ============================================================================
 -- UPDATED_AT TRIGGER FUNCTION
 -- ============================================================================
@@ -217,28 +196,22 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
-
 -- Apply updated_at triggers to relevant tables
 CREATE TRIGGER update_users_updated_at
   BEFORE UPDATE ON users
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
 CREATE TRIGGER update_trips_updated_at
   BEFORE UPDATE ON trips
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
 CREATE TRIGGER update_activities_updated_at
   BEFORE UPDATE ON activities
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
 CREATE TRIGGER update_expenses_updated_at
   BEFORE UPDATE ON expenses
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
 CREATE TRIGGER update_trip_notes_updated_at
   BEFORE UPDATE ON trip_notes
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
 -- ============================================================================
 -- HANDLE NEW USER FUNCTION
 -- ============================================================================
@@ -255,7 +228,6 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-
 -- Trigger to auto-create user profile on signup
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users

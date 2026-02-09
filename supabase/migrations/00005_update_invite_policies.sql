@@ -9,7 +9,6 @@
 
 DROP POLICY IF EXISTS "trip_invites_insert" ON trip_invites;
 DROP POLICY IF EXISTS "trip_invites_delete" ON trip_invites;
-
 -- ============================================================================
 -- CREATE NEW POLICIES
 -- ============================================================================
@@ -22,7 +21,6 @@ CREATE POLICY "trip_invites_insert"
     is_trip_member(trip_id)
     AND invited_by = auth.uid()
   );
-
 -- Organizers can delete any invite, or creators can delete their own invites
 CREATE POLICY "trip_invites_delete"
   ON trip_invites FOR DELETE

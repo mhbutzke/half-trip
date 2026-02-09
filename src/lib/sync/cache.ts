@@ -91,6 +91,7 @@ export async function cacheActivities(tripId: string, activities: Activity[]): P
     ...activity,
     // Serialize links to JSON string for IndexedDB
     links: activity.links ? JSON.stringify(activity.links) : null,
+    metadata: activity.metadata ? JSON.stringify(activity.metadata) : '{}',
     _syncStatus: 'synced' as const,
     _lastSyncedAt: new Date().toISOString(),
   }));
@@ -104,6 +105,7 @@ export async function getCachedActivities(tripId: string): Promise<Activity[]> {
   return cached.map((activity) => ({
     ...activity,
     links: activity.links ? JSON.parse(activity.links) : null,
+    metadata: activity.metadata ? JSON.parse(activity.metadata) : {},
   })) as Activity[];
 }
 
@@ -113,6 +115,7 @@ export async function getCachedActivitiesByDate(tripId: string, date: string): P
   return cached.map((activity) => ({
     ...activity,
     links: activity.links ? JSON.parse(activity.links) : null,
+    metadata: activity.metadata ? JSON.parse(activity.metadata) : {},
   })) as Activity[];
 }
 

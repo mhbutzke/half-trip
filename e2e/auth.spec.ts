@@ -1,5 +1,5 @@
 import { test, expect } from './setup';
-import { generateTestUser, registerUser, loginUser } from './utils/test-helpers';
+import { generateTestUser, registerUser } from './utils/test-helpers';
 
 test.describe('Authentication Flow', () => {
   test.describe('Registration', () => {
@@ -66,7 +66,7 @@ test.describe('Authentication Flow', () => {
   });
 
   test.describe('Login', () => {
-    test('should redirect authenticated user away from login', async ({ page, context }) => {
+    test('should redirect authenticated user away from login', async ({ page }) => {
       // Note: This test assumes there's a valid session in cookies
       // In a real scenario, we'd need to create a user and set up auth
 

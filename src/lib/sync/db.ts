@@ -71,6 +71,7 @@ export interface CachedActivity extends SyncMetadata {
   description: string | null;
   category: 'transport' | 'accommodation' | 'tour' | 'meal' | 'event' | 'other';
   links: string | null; // JSON serialized
+  metadata: string | null; // JSON serialized
   sort_order: number;
   created_by: string;
   created_at: string;

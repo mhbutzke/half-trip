@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Plus, Search, Receipt, Filter, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,10 +13,10 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { ExpenseCard, DeleteExpenseDialog } from '@/components/expenses';
-import { expenseCategoryList, getExpenseCategoryInfo } from '@/lib/utils/expense-categories';
+import { expenseCategoryList, getCategoryInfo } from '@/lib/utils/expense-categories';
 import { formatAmount } from '@/lib/validation/expense-schemas';
-import type { ExpenseWithDetails } from '@/lib/supabase/expenses';
 import type { TripMemberWithUser } from '@/lib/supabase/trips';
+import type { ExpenseWithDetails } from '@/types/expense';
 import type { TripMemberRole, ExpenseCategory } from '@/types/database';
 
 interface ExpensesListProps {
@@ -45,6 +45,10 @@ export function ExpensesList({
   const [categoryFilter, setCategoryFilter] = useState<FilterCategory>('all');
   const [paidByFilter, setPaidByFilter] = useState<FilterPaidBy>('all');
   const [showFilters, setShowFilters] = useState(false);
+
+  useEffect(() => {
+    setExpenses(initialExpenses);
+  }, [initialExpenses]);
 
   // Check if user can edit an expense
   const canEditExpense = (expense: ExpenseWithDetails) => {
@@ -211,7 +215,7 @@ export function ExpensesList({
                 className="cursor-pointer gap-1"
                 onClick={() => setCategoryFilter('all')}
               >
-                {getExpenseCategoryInfo(categoryFilter).label}
+                {getCategoryInfo(categoryFilter).label}
                 <X className="h-3 w-3" />
               </Badge>
             )}

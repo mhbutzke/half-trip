@@ -29,6 +29,7 @@ export async function createActivityOffline(
     location: data.location ?? null,
     description: data.description ?? null,
     links: data.links ? JSON.stringify(data.links) : null,
+    metadata: data.metadata ? JSON.stringify(data.metadata) : '{}',
     sort_order: data.sort_order ?? 0,
     created_by: data.created_by,
     created_at: now(),
@@ -71,6 +72,7 @@ export async function updateActivityOffline(
   const updated: Partial<CachedActivity> = {
     ...data,
     links: data.links ? JSON.stringify(data.links) : existing.links,
+    metadata: data.metadata ? JSON.stringify(data.metadata) : existing.metadata,
     updated_at: now(),
     _syncStatus: 'pending',
     _locallyModifiedAt: now(),

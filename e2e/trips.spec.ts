@@ -1,11 +1,5 @@
 import { test, expect } from './setup';
-import {
-  generateTestUser,
-  registerUser,
-  loginUser,
-  createTrip,
-  getDaysFromNow,
-} from './utils/test-helpers';
+import { getDaysFromNow } from './utils/test-helpers';
 
 test.describe('Trip Management', () => {
   test.describe('Create Trip Flow', () => {

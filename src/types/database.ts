@@ -161,6 +161,7 @@ export type Database = {
           description?: string | null;
           category: 'transport' | 'accommodation' | 'tour' | 'meal' | 'event' | 'other';
           links?: Json;
+          metadata?: Json;
           sort_order?: number;
           created_by: string;
           created_at?: string;
@@ -177,6 +178,7 @@ export type Database = {
           description?: string | null;
           category?: 'transport' | 'accommodation' | 'tour' | 'meal' | 'event' | 'other';
           links?: Json;
+          metadata?: Json;
           sort_order?: number;
           created_by?: string;
           created_at?: string;
@@ -506,6 +508,17 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      create_trip_with_member: {
+        Args: {
+          p_name: string;
+          p_destination: string;
+          p_start_date: string;
+          p_end_date: string;
+          p_description?: string | null;
+          p_style?: string | null;
+        };
+        Returns: string;
+      };
       is_trip_member: {
         Args: {
           trip_id: string;

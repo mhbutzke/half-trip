@@ -31,6 +31,40 @@ export class SyncEngine {
   private maxRetries = 3;
 
   /**
+   * Convert cached payloads to the shape expected by Supabase.
+   * Some cached fields are JSON-serialized for IndexedDB compatibility.
+   */
+  private normalizeDataForTable(
+    table: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    data: Record<string, any>
+  ) {
+    if (table !== 'activities') {
+      return data;
+    }
+
+    const normalized = { ...data };
+
+    if (typeof normalized.links === 'string') {
+      try {
+        normalized.links = JSON.parse(normalized.links);
+      } catch {
+        normalized.links = [];
+      }
+    }
+
+    if (typeof normalized.metadata === 'string') {
+      try {
+        normalized.metadata = JSON.parse(normalized.metadata);
+      } catch {
+        normalized.metadata = {};
+      }
+    }
+
+    return normalized;
+  }
+
+  /**
    * Categorize error and determine if it's retryable
    */
   private categorizeError(error: unknown): { type: SyncErrorType; retryable: boolean } {
@@ -223,7 +257,9 @@ export class SyncEngine {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { _syncStatus, _lastSyncedAt, _syncError, _locallyModifiedAt, ...insertData } = data;
 
-    const { error } = await supabase.from(table as TableName).insert(insertData);
+    const normalizedInsertData = this.normalizeDataForTable(table, insertData);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await supabase.from(table as TableName).insert(normalizedInsertData as any);
 
     if (error) {
       // Check if this is a duplicate key error (record already exists)
@@ -238,7 +274,7 @@ export class SyncEngine {
       throw new Error(`Insert failed: ${error.message}`);
     }
 
-    console.log(`[SyncEngine] Successfully inserted ${table}:${insertData.id}`);
+    console.log(`[SyncEngine] Successfully inserted ${table}:${normalizedInsertData.id}`);
   }
 
   /**
@@ -284,9 +320,12 @@ export class SyncEngine {
       }
     }
 
+    const normalizedUpdateData = this.normalizeDataForTable(table, updateData);
+
     const { error } = await supabase
       .from(table as TableName)
-      .update(updateData)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .update(normalizedUpdateData as any)
       .eq('id', id);
 
     if (error) {

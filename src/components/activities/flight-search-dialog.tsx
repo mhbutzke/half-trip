@@ -29,6 +29,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { createActivity } from '@/lib/supabase/activities';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import type { Json } from '@/types/database';
 
 const formSchema = z.object({
   flightNumber: z.string().min(2, {
@@ -168,7 +169,7 @@ export function FlightSearchDialog({
         duration_minutes: duration,
         description: `Flight from ${flightData.departure.airport} (${flightData.departure.iata}) to ${flightData.arrival.airport} (${flightData.arrival.iata}).`,
         location: `${flightData.departure.airport}`,
-        metadata: flightData,
+        metadata: flightData as Json,
       });
 
       if (result.error) {

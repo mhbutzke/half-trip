@@ -2,7 +2,7 @@
 
 import { createClient } from './server';
 import { revalidatePath } from 'next/cache';
-import type { Activity, ActivityCategory, ActivityLink } from '@/types/database';
+import type { Activity, ActivityCategory, ActivityLink, Json } from '@/types/database';
 
 export type ActivityResult = {
   error?: string;
@@ -28,7 +28,7 @@ export type CreateActivityInput = {
   description?: string | null;
   category: ActivityCategory;
   links?: ActivityLink[];
-  metadata?: Record<string, unknown>;
+  metadata?: Json;
 };
 
 export type UpdateActivityInput = Partial<Omit<CreateActivityInput, 'trip_id'>>;
@@ -151,7 +151,6 @@ export async function updateActivity(
       ...(input.duration_minutes !== undefined && { duration_minutes: input.duration_minutes }),
       ...(input.location !== undefined && { location: input.location }),
       ...(input.description !== undefined && { description: input.description }),
-      ...(input.category !== undefined && { category: input.category }),
       ...(input.category !== undefined && { category: input.category }),
       ...(input.links !== undefined && { links: input.links }),
       ...(input.metadata !== undefined && { metadata: input.metadata }),

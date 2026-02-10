@@ -2,7 +2,16 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Calendar, DollarSign, FileText, Users, ChevronRight, Plus } from 'lucide-react';
+import {
+  Calendar,
+  DollarSign,
+  FileText,
+  Users,
+  Wallet,
+  CheckSquare,
+  ChevronRight,
+  Plus,
+} from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { InviteDialog } from '@/components/invites/invite-dialog';
@@ -42,6 +51,24 @@ const sections = [
     href: (tripId: string) => `/trip/${tripId}/participants`,
     placeholder: null,
     cta: 'Convidar participante',
+  },
+  {
+    id: 'budget',
+    title: 'Orçamento',
+    description: 'Defina limites e acompanhe os gastos',
+    icon: Wallet,
+    href: (tripId: string) => `/trip/${tripId}/budget`,
+    placeholder: 'Nenhum orçamento definido ainda',
+    cta: 'Definir orçamento',
+  },
+  {
+    id: 'checklists',
+    title: 'Checklists',
+    description: 'Listas de itens e tarefas da viagem',
+    icon: CheckSquare,
+    href: (tripId: string) => `/trip/${tripId}/checklists`,
+    placeholder: 'Nenhuma checklist criada ainda',
+    cta: 'Criar checklist',
   },
   {
     id: 'notes',

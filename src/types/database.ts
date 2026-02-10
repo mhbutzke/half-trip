@@ -451,6 +451,193 @@ export type Database = {
           },
         ];
       };
+      trip_budgets: {
+        Row: {
+          id: string;
+          trip_id: string;
+          category:
+            | 'accommodation'
+            | 'food'
+            | 'transport'
+            | 'tickets'
+            | 'shopping'
+            | 'other'
+            | 'total';
+          amount: number;
+          currency: string;
+          created_by: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          trip_id: string;
+          category:
+            | 'accommodation'
+            | 'food'
+            | 'transport'
+            | 'tickets'
+            | 'shopping'
+            | 'other'
+            | 'total';
+          amount: number;
+          currency?: string;
+          created_by: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          trip_id?: string;
+          category?:
+            | 'accommodation'
+            | 'food'
+            | 'transport'
+            | 'tickets'
+            | 'shopping'
+            | 'other'
+            | 'total';
+          amount?: number;
+          currency?: string;
+          created_by?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'trip_budgets_trip_id_fkey';
+            columns: ['trip_id'];
+            isOneToOne: false;
+            referencedRelation: 'trips';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'trip_budgets_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      trip_checklists: {
+        Row: {
+          id: string;
+          trip_id: string;
+          name: string;
+          description: string | null;
+          category: 'packing' | 'todo' | 'shopping' | 'documents' | 'other';
+          sort_order: number;
+          created_by: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          trip_id: string;
+          name: string;
+          description?: string | null;
+          category: 'packing' | 'todo' | 'shopping' | 'documents' | 'other';
+          sort_order?: number;
+          created_by: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          trip_id?: string;
+          name?: string;
+          description?: string | null;
+          category?: 'packing' | 'todo' | 'shopping' | 'documents' | 'other';
+          sort_order?: number;
+          created_by?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'trip_checklists_trip_id_fkey';
+            columns: ['trip_id'];
+            isOneToOne: false;
+            referencedRelation: 'trips';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'trip_checklists_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      checklist_items: {
+        Row: {
+          id: string;
+          checklist_id: string;
+          title: string;
+          is_completed: boolean;
+          assigned_to: string | null;
+          completed_by: string | null;
+          completed_at: string | null;
+          quantity: number;
+          sort_order: number;
+          created_by: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          checklist_id: string;
+          title: string;
+          is_completed?: boolean;
+          assigned_to?: string | null;
+          completed_by?: string | null;
+          completed_at?: string | null;
+          quantity?: number;
+          sort_order?: number;
+          created_by: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          checklist_id?: string;
+          title?: string;
+          is_completed?: boolean;
+          assigned_to?: string | null;
+          completed_by?: string | null;
+          completed_at?: string | null;
+          quantity?: number;
+          sort_order?: number;
+          created_by?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'checklist_items_checklist_id_fkey';
+            columns: ['checklist_id'];
+            isOneToOne: false;
+            referencedRelation: 'trip_checklists';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'checklist_items_assigned_to_fkey';
+            columns: ['assigned_to'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'checklist_items_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       settlements: {
         Row: {
           id: string;
@@ -560,6 +747,7 @@ export type ExpenseSplit = Tables<'expense_splits'>;
 export type TripNote = Tables<'trip_notes'>;
 export type TripInvite = Tables<'trip_invites'>;
 export type Settlement = Tables<'settlements'>;
+export type TripBudgetRow = Tables<'trip_budgets'>;
 
 // Insert types
 export type InsertUser = InsertTables<'users'>;
@@ -572,6 +760,7 @@ export type InsertExpenseSplit = InsertTables<'expense_splits'>;
 export type InsertTripNote = InsertTables<'trip_notes'>;
 export type InsertTripInvite = InsertTables<'trip_invites'>;
 export type InsertSettlement = InsertTables<'settlements'>;
+export type InsertTripBudget = InsertTables<'trip_budgets'>;
 
 // Update types
 export type UpdateUser = UpdateTables<'users'>;
@@ -584,6 +773,7 @@ export type UpdateExpenseSplit = UpdateTables<'expense_splits'>;
 export type UpdateTripNote = UpdateTables<'trip_notes'>;
 export type UpdateTripInvite = UpdateTables<'trip_invites'>;
 export type UpdateSettlement = UpdateTables<'settlements'>;
+export type UpdateTripBudget = UpdateTables<'trip_budgets'>;
 
 // Enum types extracted from database constraints
 export type TripStyle = 'adventure' | 'relaxation' | 'cultural' | 'gastronomic' | 'other';
@@ -596,6 +786,8 @@ export type ExpenseCategory =
   | 'tickets'
   | 'shopping'
   | 'other';
+
+export type BudgetCategory = ExpenseCategory | 'total';
 
 // Activity link type
 export type ActivityLink = {

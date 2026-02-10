@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { ArrowLeft, Receipt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ExportDropdown } from '@/components/export/export-dropdown';
 
 interface ExpensesHeaderProps {
   tripId: string;
@@ -25,10 +26,11 @@ export function ExpensesHeader({ tripId, tripName }: ExpensesHeaderProps) {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Despesas</h1>
           <div className="mt-1 flex items-center gap-2 text-muted-foreground">
-            <Receipt className="h-4 w-4" />
+            <Receipt className="h-4 w-4" aria-hidden="true" />
             <span className="text-sm">Registre e acompanhe os gastos da viagem</span>
           </div>
         </div>
+        <ExportDropdown tripId={tripId} tripName={tripName} />
       </div>
     </div>
   );

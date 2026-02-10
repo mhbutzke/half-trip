@@ -1,8 +1,11 @@
 import { redirect } from 'next/navigation';
 import { PageContainer } from '@/components/layout/page-container';
 import { ProfileForm } from '@/components/profile/profile-form';
+import { PasswordChangeForm } from '@/components/settings/password-change-form';
+import { DangerZone } from '@/components/settings/danger-zone';
 import { getUserProfile } from '@/lib/supabase/profile';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 
 export const metadata = {
   title: 'Configurações | Half Trip',
@@ -35,6 +38,29 @@ export default async function SettingsPage() {
           </CardHeader>
           <CardContent>
             <ProfileForm user={user} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Segurança</CardTitle>
+            <CardDescription>Altere sua senha de acesso.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PasswordChangeForm />
+          </CardContent>
+        </Card>
+
+        <Card className="border-destructive/50">
+          <CardHeader>
+            <CardTitle className="text-destructive">Zona de perigo</CardTitle>
+            <CardDescription>
+              Ações irreversíveis que afetam permanentemente sua conta.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Separator className="mb-4" />
+            <DangerZone userEmail={user.email} />
           </CardContent>
         </Card>
       </div>

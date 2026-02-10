@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useRef } from 'react';
 import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
@@ -21,6 +23,16 @@ interface RealtimeSubscriptionOptions {
   onUpdate?: (payload: RealtimePayload) => void;
   onDelete?: (payload: RealtimePayload) => void;
   onChange?: (payload: RealtimePayload) => void;
+}
+
+function hashStringToHex(input: string): string {
+  // Small, deterministic hash for channel naming (avoid invalid topic characters).
+  // Not cryptographic; just to keep names short + stable.
+  let hash = 5381;
+  for (let i = 0; i < input.length; i++) {
+    hash = (hash * 33) ^ input.charCodeAt(i);
+  }
+  return (hash >>> 0).toString(16);
 }
 
 /**
@@ -50,8 +62,14 @@ export function useRealtimeSubscription({
 
   useEffect(() => {
     const supabase = createClient();
-    // Create channel with unique name
-    const channelName = `${table}-${filter || 'all'}-${event}-${Date.now()}`;
+    // Create channel with a safe topic name (avoid '*', '=', '.', spaces, etc.).
+    const nonce =
+      typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const eventKey = event === '*' ? 'all' : event.toLowerCase();
+    const filterKey = filter ? `f_${hashStringToHex(filter)}` : 'all';
+    const channelName = `rt:pg:${table}:${eventKey}:${filterKey}:${nonce}`;
     const channel: RealtimeChannel = supabase.channel(channelName);
 
     // Build the postgres_changes configuration
@@ -93,11 +111,15 @@ export function useRealtimeSubscription({
       }
     );
 
-    channel.subscribe((status) => {
+    channel.subscribe((status, err) => {
       if (status === 'SUBSCRIBED') {
         console.log(`✅ Subscribed to ${table} realtime updates`);
       } else if (status === 'CHANNEL_ERROR') {
-        console.error(`❌ Error subscribing to ${table} realtime updates`);
+        console.error(`❌ Error subscribing to ${table} realtime updates`, err);
+      } else if (status === 'TIMED_OUT') {
+        console.warn(`⏱️ Timed out subscribing to ${table} realtime updates`);
+      } else if (status === 'CLOSED') {
+        console.warn(`🔒 Realtime channel closed for ${table}`);
       }
     });
 

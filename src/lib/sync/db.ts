@@ -122,6 +122,20 @@ export interface CachedTripNote extends SyncMetadata {
 }
 
 /**
+ * Cached trip budget data
+ */
+export interface CachedTripBudget extends SyncMetadata {
+  id: string;
+  trip_id: string;
+  category: string;
+  amount: number;
+  currency: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
  * Sync queue entry for offline writes
  */
 export interface SyncQueueEntry {
@@ -147,12 +161,13 @@ export class HalfTripDB extends Dexie {
   expenses!: EntityTable<CachedExpense, 'id'>;
   expense_splits!: EntityTable<CachedExpenseSplit, 'id'>;
   trip_notes!: EntityTable<CachedTripNote, 'id'>;
+  trip_budgets!: EntityTable<CachedTripBudget, 'id'>;
   sync_queue!: EntityTable<SyncQueueEntry, 'id'>;
 
   constructor() {
     super('HalfTripDB');
 
-    this.version(1).stores({
+    this.version(2).stores({
       // Users table
       users: 'id, email, name',
 
@@ -173,6 +188,9 @@ export class HalfTripDB extends Dexie {
 
       // Trip notes - index by trip_id
       trip_notes: 'id, trip_id, created_by, created_at',
+
+      // Trip budgets - index by trip_id and category
+      trip_budgets: 'id, trip_id, category, [trip_id+category]',
 
       // Sync queue - auto-increment id, index by timestamp
       sync_queue: '++id, timestamp, table, operation, recordId',

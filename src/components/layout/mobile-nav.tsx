@@ -2,7 +2,17 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Calendar, Home, Receipt, Settings, Users, Plane, Scale, LucideIcon } from 'lucide-react';
+import {
+  Calendar,
+  Home,
+  Receipt,
+  Settings,
+  Users,
+  Plane,
+  Scale,
+  Wallet,
+  type LucideIcon,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type NavItem = {
@@ -45,6 +55,11 @@ export function MobileNav() {
       name: 'Balanço',
       href: `/trip/${tripId}/balance`,
       icon: Scale,
+    },
+    {
+      name: 'Orçamento',
+      href: `/trip/${tripId}/budget`,
+      icon: Wallet,
     },
     {
       name: 'Grupo',

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Calendar, DollarSign, Plus, Scale, ChevronRight, Receipt } from 'lucide-react';
@@ -81,6 +82,20 @@ export function TripOverview({ trip, userRole, currentUserId, dashboard }: TripO
   return (
     <>
       <div className="space-y-4">
+        {/* Cover Image Hero */}
+        {trip.cover_url && (
+          <div className="relative -mx-4 -mt-6 h-40 overflow-hidden rounded-b-xl sm:mx-0 sm:mt-0 sm:rounded-xl">
+            <Image
+              src={trip.cover_url}
+              alt={`Capa de ${trip.name}`}
+              fill
+              className="object-cover"
+              unoptimized
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
+          </div>
+        )}
+
         {/* Balance Widget - Full Width */}
         <StatWidget
           label="Meu saldo"

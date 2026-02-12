@@ -2,8 +2,8 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
-import { formatCurrency } from '@/lib/balance';
 import type { Settlement } from '@/lib/balance';
+import { MoneyDisplay } from '@/components/ui/money-display';
 import { ArrowRight } from 'lucide-react';
 
 interface SettlementsListProps {
@@ -96,7 +96,7 @@ export function SettlementsList({ settlements, currentUserId }: SettlementsListP
               <div className="flex items-center gap-2 shrink-0">
                 <ArrowRight className="h-5 w-5 text-muted-foreground" />
                 <div className="text-right">
-                  <p className="font-semibold text-lg">{formatCurrency(settlement.amount)}</p>
+                  <MoneyDisplay amount={settlement.amount} size="lg" />
                 </div>
                 <ArrowRight className="h-5 w-5 text-muted-foreground" />
               </div>

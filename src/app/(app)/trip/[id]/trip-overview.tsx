@@ -12,7 +12,6 @@ import { InviteDialog } from '@/components/invites/invite-dialog';
 import { StatWidget } from '@/components/ui/stat-widget';
 import { MoneyDisplay } from '@/components/ui/money-display';
 import { useTripRealtime } from '@/hooks/use-trip-realtime';
-import { formatCurrency } from '@/lib/utils/currency';
 import type { TripWithMembers } from '@/lib/supabase/trips';
 import type { DashboardData } from '@/lib/supabase/dashboard';
 
@@ -186,8 +185,17 @@ export function TripOverview({ trip, userRole, currentUserId, dashboard }: TripO
                     }`}
                   />
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {formatCurrency(dashboard.budgetUsed ?? 0, baseCurrency)} de{' '}
-                    {formatCurrency(dashboard.budgetTotal, baseCurrency)}
+                    <MoneyDisplay
+                      amount={dashboard.budgetUsed ?? 0}
+                      currency={baseCurrency}
+                      size="sm"
+                    />{' '}
+                    de{' '}
+                    <MoneyDisplay
+                      amount={dashboard.budgetTotal}
+                      currency={baseCurrency}
+                      size="sm"
+                    />
                   </p>
                 </div>
               )}

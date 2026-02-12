@@ -9,7 +9,8 @@ import {
   MoreHorizontal,
   type LucideIcon,
 } from 'lucide-react';
-import type { ActivityCategory } from '@/types/database';
+import type { ActivityCategory, ActivityMetadata } from '@/types/database';
+import { transportTypeMap } from '@/lib/utils/transport-types';
 
 export const activityCategoryConfig: Record<
   ActivityCategory,
@@ -47,8 +48,26 @@ export const activityCategoryConfig: Record<
   },
 };
 
+/** Resolve which icon to render for a given category + metadata */
+function renderCategoryIcon(
+  category: ActivityCategory,
+  metadata: ActivityMetadata | null | undefined,
+  className: string
+) {
+  if (category === 'transport' && metadata?.transport_type) {
+    const transportInfo = transportTypeMap[metadata.transport_type];
+    if (transportInfo) {
+      const TransportIcon = transportInfo.icon;
+      return <TransportIcon className={className} aria-hidden="true" />;
+    }
+  }
+  const DefaultIcon = activityCategoryConfig[category].icon;
+  return <DefaultIcon className={className} aria-hidden="true" />;
+}
+
 interface ActivityCategoryIconProps {
   category: ActivityCategory;
+  metadata?: ActivityMetadata | null;
   size?: 'sm' | 'md' | 'lg';
   showLabel?: boolean;
 }
@@ -67,18 +86,18 @@ const iconSizeClasses = {
 
 export function ActivityCategoryIcon({
   category,
+  metadata,
   size = 'md',
   showLabel = false,
 }: ActivityCategoryIconProps) {
   const config = activityCategoryConfig[category];
-  const Icon = config.icon;
 
   return (
     <div className="flex items-center gap-2">
       <div
         className={`flex items-center justify-center rounded-lg ${sizeClasses[size]} ${config.color}`}
       >
-        <Icon className={iconSizeClasses[size]} />
+        {renderCategoryIcon(category, metadata, iconSizeClasses[size])}
       </div>
       {showLabel && <span className="text-sm font-medium">{config.label}</span>}
     </div>
@@ -87,17 +106,17 @@ export function ActivityCategoryIcon({
 
 interface ActivityCategoryBadgeProps {
   category: ActivityCategory;
+  metadata?: ActivityMetadata | null;
 }
 
-export function ActivityCategoryBadge({ category }: ActivityCategoryBadgeProps) {
+export function ActivityCategoryBadge({ category, metadata }: ActivityCategoryBadgeProps) {
   const config = activityCategoryConfig[category];
-  const Icon = config.icon;
 
   return (
     <div
       className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${config.color}`}
     >
-      <Icon className="h-3 w-3" />
+      {renderCategoryIcon(category, metadata, 'h-3 w-3')}
       {config.label}
     </div>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, memo } from 'react';
+import { useState, useEffect, useMemo, memo } from 'react';
 import {
   Clock,
   MapPin,
@@ -22,9 +22,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { getCategoryInfo, formatDuration, formatTime } from '@/lib/utils/activity-categories';
+import { transportTypeMap } from '@/lib/utils/transport-types';
 import { getAttachmentsCount } from '@/lib/supabase/attachments';
 import type { ActivityWithCreator } from '@/lib/supabase/activities';
-import type { ActivityLink } from '@/types/database';
+import type { ActivityLink, ActivityMetadata } from '@/types/database';
 import { useSyncStatus } from '@/hooks/use-sync-status';
 import { PendingIndicator } from '@/components/sync';
 
@@ -41,9 +42,19 @@ export const ActivityCard = memo(function ActivityCard({
 }: ActivityCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [attachmentsCount, setAttachmentsCount] = useState(0);
+  const meta = activity.metadata as ActivityMetadata | null;
   const categoryInfo = getCategoryInfo(activity.category);
-  const CategoryIcon = categoryInfo.icon;
+  const CategoryIcon = useMemo(() => {
+    if (activity.category === 'transport' && meta?.transport_type) {
+      const transportInfo = transportTypeMap[meta.transport_type];
+      if (transportInfo) return transportInfo.icon;
+    }
+    return categoryInfo.icon;
+  }, [activity.category, meta?.transport_type, categoryInfo.icon]);
   const links = Array.isArray(activity.links) ? (activity.links as ActivityLink[]) : [];
+  const locationMapsUrl = meta?.location_place_id
+    ? `https://www.google.com/maps/search/?api=1&query=${meta.location_lat},${meta.location_lng}&query_place_id=${meta.location_place_id}`
+    : null;
   const { isPending } = useSyncStatus('activities', activity.id);
 
   const hasDetails = activity.description || links.length > 0;
@@ -100,7 +111,19 @@ export const ActivityCard = memo(function ActivityCard({
                 {activity.location && (
                   <div className="mt-1.5 flex items-center gap-1 text-sm text-muted-foreground">
                     <MapPin className="h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />
-                    <span className="truncate">{activity.location}</span>
+                    {locationMapsUrl ? (
+                      <a
+                        href={locationMapsUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="truncate hover:text-foreground hover:underline"
+                        aria-label={`${activity.location} - ver no Google Maps (abre em nova aba)`}
+                      >
+                        {activity.location}
+                      </a>
+                    ) : (
+                      <span className="truncate">{activity.location}</span>
+                    )}
                   </div>
                 )}
 

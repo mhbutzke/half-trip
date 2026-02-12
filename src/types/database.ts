@@ -41,6 +41,7 @@ export type Database = {
           cover_url: string | null;
           style: 'adventure' | 'relaxation' | 'cultural' | 'gastronomic' | 'other' | null;
           base_currency: string;
+          transport_type: 'car' | 'plane' | 'bus' | 'mixed';
           created_by: string;
           created_at: string;
           updated_at: string;
@@ -56,6 +57,7 @@ export type Database = {
           cover_url?: string | null;
           style?: 'adventure' | 'relaxation' | 'cultural' | 'gastronomic' | 'other' | null;
           base_currency?: string;
+          transport_type?: 'car' | 'plane' | 'bus' | 'mixed';
           created_by: string;
           created_at?: string;
           updated_at?: string;
@@ -71,6 +73,7 @@ export type Database = {
           cover_url?: string | null;
           style?: 'adventure' | 'relaxation' | 'cultural' | 'gastronomic' | 'other' | null;
           base_currency?: string;
+          transport_type?: 'car' | 'plane' | 'bus' | 'mixed';
           created_by?: string;
           created_at?: string;
           updated_at?: string;
@@ -644,6 +647,95 @@ export type Database = {
           },
         ];
       };
+      google_calendar_connections: {
+        Row: {
+          id: string;
+          user_id: string;
+          google_email: string | null;
+          refresh_token: string;
+          access_token: string | null;
+          access_token_expires_at: string | null;
+          scope: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          google_email?: string | null;
+          refresh_token: string;
+          access_token?: string | null;
+          access_token_expires_at?: string | null;
+          scope?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          google_email?: string | null;
+          refresh_token?: string;
+          access_token?: string | null;
+          access_token_expires_at?: string | null;
+          scope?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'google_calendar_connections_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      google_calendar_activity_syncs: {
+        Row: {
+          id: string;
+          user_id: string;
+          activity_id: string;
+          google_event_id: string;
+          calendar_id: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          activity_id: string;
+          google_event_id: string;
+          calendar_id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          activity_id?: string;
+          google_event_id?: string;
+          calendar_id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'google_calendar_activity_syncs_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'google_calendar_activity_syncs_activity_id_fkey';
+            columns: ['activity_id'];
+            isOneToOne: false;
+            referencedRelation: 'activities';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       settlements: {
         Row: {
           id: string;
@@ -754,6 +846,8 @@ export type TripNote = Tables<'trip_notes'>;
 export type TripInvite = Tables<'trip_invites'>;
 export type Settlement = Tables<'settlements'>;
 export type TripBudgetRow = Tables<'trip_budgets'>;
+export type GoogleCalendarConnection = Tables<'google_calendar_connections'>;
+export type GoogleCalendarActivitySync = Tables<'google_calendar_activity_syncs'>;
 
 // Insert types
 export type InsertUser = InsertTables<'users'>;
@@ -767,6 +861,8 @@ export type InsertTripNote = InsertTables<'trip_notes'>;
 export type InsertTripInvite = InsertTables<'trip_invites'>;
 export type InsertSettlement = InsertTables<'settlements'>;
 export type InsertTripBudget = InsertTables<'trip_budgets'>;
+export type InsertGoogleCalendarConnection = InsertTables<'google_calendar_connections'>;
+export type InsertGoogleCalendarActivitySync = InsertTables<'google_calendar_activity_syncs'>;
 
 // Update types
 export type UpdateUser = UpdateTables<'users'>;
@@ -780,9 +876,12 @@ export type UpdateTripNote = UpdateTables<'trip_notes'>;
 export type UpdateTripInvite = UpdateTables<'trip_invites'>;
 export type UpdateSettlement = UpdateTables<'settlements'>;
 export type UpdateTripBudget = UpdateTables<'trip_budgets'>;
+export type UpdateGoogleCalendarConnection = UpdateTables<'google_calendar_connections'>;
+export type UpdateGoogleCalendarActivitySync = UpdateTables<'google_calendar_activity_syncs'>;
 
 // Enum types extracted from database constraints
 export type TripStyle = 'adventure' | 'relaxation' | 'cultural' | 'gastronomic' | 'other';
+export type TransportType = 'car' | 'plane' | 'bus' | 'mixed';
 export type TripMemberRole = 'organizer' | 'participant';
 export type ActivityCategory = 'transport' | 'accommodation' | 'tour' | 'meal' | 'event' | 'other';
 export type ExpenseCategory =
@@ -794,6 +893,24 @@ export type ExpenseCategory =
   | 'other';
 
 export type BudgetCategory = ExpenseCategory | 'total';
+
+// Activity transport sub-type (for activities with category 'transport')
+export type ActivityTransportType = 'car' | 'plane' | 'bus' | 'train' | 'ship' | 'bike' | 'other';
+
+// Typed metadata for activities (stored as Json in DB)
+export type ActivityMetadata = {
+  transport_type?: ActivityTransportType;
+  location_lat?: number;
+  location_lng?: number;
+  location_place_id?: string;
+  // Flight data (from flight search)
+  carrier?: string;
+  flight_number?: string;
+  status?: string;
+  departure?: { iata?: string; terminal?: string; gate?: string; time?: string };
+  arrival?: { iata?: string; terminal?: string; gate?: string; time?: string };
+  [key: string]: unknown;
+};
 
 // Activity link type
 export type ActivityLink = {

@@ -3,10 +3,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, Plus, X, ExternalLink, Paperclip } from 'lucide-react';
+import { Loader2, Paperclip } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Dialog,
   DialogContent,
@@ -15,29 +14,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
+import { Form } from '@/components/ui/form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { updateActivitySchema, type UpdateActivityInput } from '@/lib/validation/activity-schemas';
 import { updateActivity } from '@/lib/supabase/activities';
 import { getActivityAttachments, type AttachmentWithUrl } from '@/lib/supabase/attachments';
-import { activityCategoryList } from '@/lib/utils/activity-categories';
 import { FileUpload, AttachmentsList } from '@/components/attachments';
-import type { Activity, ActivityLink, ActivityCategory } from '@/types/database';
+import { ActivityFormFields } from './activity-form-fields';
+import type { LocationCoords } from './location-autocomplete';
+import type { Activity, ActivityLink, ActivityMetadata, Json } from '@/types/database';
 
 interface EditActivityDialogProps {
   activity: Activity | null;
@@ -57,6 +42,7 @@ export function EditActivityDialog({
   const [newLinkUrl, setNewLinkUrl] = useState('');
   const [newLinkLabel, setNewLinkLabel] = useState('');
   const [linkError, setLinkError] = useState('');
+  const [locationCoords, setLocationCoords] = useState<LocationCoords | null>(null);
   const [attachments, setAttachments] = useState<AttachmentWithUrl[]>([]);
   const [loadingAttachments, setLoadingAttachments] = useState(false);
 
@@ -90,6 +76,7 @@ export function EditActivityDialog({
       location: '',
       description: '',
       category: undefined,
+      transport_type: null,
       links: [],
     },
   });
@@ -98,6 +85,7 @@ export function EditActivityDialog({
   useEffect(() => {
     if (activity) {
       const activityLinks = Array.isArray(activity.links) ? (activity.links as ActivityLink[]) : [];
+      const meta = activity.metadata as ActivityMetadata | null;
 
       form.reset({
         title: activity.title,
@@ -107,9 +95,21 @@ export function EditActivityDialog({
         location: activity.location || '',
         description: activity.description || '',
         category: activity.category,
+        transport_type: meta?.transport_type || null,
         links: activityLinks,
       });
       setLinks(activityLinks);
+
+      // Restore location coords from metadata
+      if (meta?.location_lat && meta?.location_lng && meta?.location_place_id) {
+        setLocationCoords({
+          lat: meta.location_lat,
+          lng: meta.location_lng,
+          place_id: meta.location_place_id,
+        });
+      } else {
+        setLocationCoords(null);
+      }
     }
   }, [activity, form]);
 
@@ -138,23 +138,44 @@ export function EditActivityDialog({
     setNewLinkLabel('');
   };
 
-  const removeLink = (index: number) => {
-    setLinks(links.filter((_, i) => i !== index));
-  };
-
   const onSubmit = async (data: UpdateActivityInput) => {
     if (!activity) return;
 
     setIsSubmitting(true);
 
     try {
+      // Build metadata: preserve existing metadata (like flight data), merge new fields
+      const existingMeta = (activity.metadata as { [key: string]: Json | undefined }) || {};
+      const metadata: { [key: string]: Json | undefined } = { ...existingMeta };
+
+      // Update transport_type
+      if (data.transport_type) {
+        metadata.transport_type = data.transport_type;
+      } else {
+        delete metadata.transport_type;
+      }
+
+      // Update location coords
+      if (locationCoords) {
+        metadata.location_lat = locationCoords.lat;
+        metadata.location_lng = locationCoords.lng;
+        metadata.location_place_id = locationCoords.place_id;
+      } else {
+        delete metadata.location_lat;
+        delete metadata.location_lng;
+        delete metadata.location_place_id;
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { transport_type: _transportType, ...activityData } = data;
       const result = await updateActivity(activity.id, {
-        ...data,
-        start_time: data.start_time || null,
-        duration_minutes: data.duration_minutes || null,
-        location: data.location || null,
-        description: data.description || null,
+        ...activityData,
+        start_time: activityData.start_time || null,
+        duration_minutes: activityData.duration_minutes || null,
+        location: activityData.location || null,
+        description: activityData.description || null,
         links: links,
+        metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
       });
 
       if (result.error) {
@@ -180,6 +201,7 @@ export function EditActivityDialog({
         setNewLinkLabel('');
         setLinkError('');
         setAttachments([]);
+        setLocationCoords(null);
       }
     }
   };
@@ -201,7 +223,7 @@ export function EditActivityDialog({
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="details">Detalhes</TabsTrigger>
             <TabsTrigger value="attachments" className="flex items-center gap-2">
-              <Paperclip className="h-4 w-4" />
+              <Paperclip className="h-4 w-4" aria-hidden="true" />
               Anexos
               {attachments.length > 0 && (
                 <span className="ml-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
@@ -214,195 +236,19 @@ export function EditActivityDialog({
           <TabsContent value="details" className="mt-4">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Título</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ex: Voo para o destino" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                <ActivityFormFields
+                  form={form}
+                  links={links}
+                  setLinks={setLinks}
+                  newLinkUrl={newLinkUrl}
+                  setNewLinkUrl={setNewLinkUrl}
+                  newLinkLabel={newLinkLabel}
+                  setNewLinkLabel={setNewLinkLabel}
+                  linkError={linkError}
+                  addLink={addLink}
+                  locationCoords={locationCoords}
+                  setLocationCoords={setLocationCoords}
                 />
-
-                <FormField
-                  control={form.control}
-                  name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Categoria</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value as ActivityCategory | undefined}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Selecione a categoria" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {activityCategoryList.map((category) => {
-                            const Icon = category.icon;
-                            return (
-                              <SelectItem key={category.value} value={category.value}>
-                                <span className="flex items-center gap-2">
-                                  <Icon className={`h-4 w-4 ${category.color}`} />
-                                  {category.label}
-                                </span>
-                              </SelectItem>
-                            );
-                          })}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="date"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Data</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="start_time"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Horário (opcional)</FormLabel>
-                        <FormControl>
-                          <Input type="time" {...field} value={field.value || ''} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="duration_minutes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Duração em minutos (opcional)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            placeholder="Ex: 120"
-                            {...field}
-                            value={field.value ?? ''}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              field.onChange(value === '' ? null : parseInt(value, 10));
-                            }}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="location"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Local (opcional)</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Ex: Aeroporto GRU"
-                            {...field}
-                            value={field.value || ''}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Descrição (opcional)</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Detalhes da atividade..."
-                          className="resize-none"
-                          rows={3}
-                          {...field}
-                          value={field.value || ''}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Links section */}
-                <div className="space-y-3">
-                  <FormLabel>Links úteis (opcional)</FormLabel>
-
-                  {links.length > 0 && (
-                    <div className="space-y-2">
-                      {links.map((link, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center gap-2 rounded-md border p-2 text-sm"
-                        >
-                          <ExternalLink className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
-                          <span className="flex-1 truncate">{link.label}</span>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 w-6 p-0"
-                            onClick={() => removeLink(index)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="space-y-2">
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Nome do link"
-                        value={newLinkLabel}
-                        onChange={(e) => setNewLinkLabel(e.target.value)}
-                        className="flex-1"
-                      />
-                      <Input
-                        placeholder="URL"
-                        value={newLinkUrl}
-                        onChange={(e) => setNewLinkUrl(e.target.value)}
-                        className="flex-1"
-                      />
-                      <Button type="button" variant="outline" size="icon" onClick={addLink}>
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    {linkError && <p className="text-sm text-destructive">{linkError}</p>}
-                  </div>
-                </div>
 
                 <DialogFooter className="pt-4">
                   <Button
@@ -443,7 +289,7 @@ export function EditActivityDialog({
 
             {!loadingAttachments && attachments.length === 0 && (
               <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-8 text-center">
-                <Paperclip className="h-8 w-8 text-muted-foreground" />
+                <Paperclip className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
                 <p className="mt-2 text-sm font-medium">Nenhum anexo</p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Adicione arquivos usando a área acima

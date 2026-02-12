@@ -26,7 +26,7 @@ export const createActivitySchema = z.object({
   start_time: z
     .string()
     .refine(
-      (val) => val === '' || /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(val),
+      (val) => val === '' || /^([0-1]?[0-9]|2[0-3]):[0-5][0-9](?::[0-5][0-9])?$/.test(val),
       'Horário inválido (use HH:MM)'
     )
     .optional(),
@@ -48,6 +48,10 @@ export const createActivitySchema = z.object({
       message: 'Categoria inválida',
     })
     .refine((val) => val !== undefined, { message: 'Categoria é obrigatória' }),
+  transport_type: z
+    .enum(['car', 'plane', 'bus', 'train', 'ship', 'bike', 'other'] as const)
+    .optional()
+    .nullable(),
   links: z.array(activityLinkSchema).optional(),
 });
 

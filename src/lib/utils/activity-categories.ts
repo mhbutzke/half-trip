@@ -1,4 +1,4 @@
-import type { ActivityCategory } from '@/types/database';
+import type { ActivityCategory, ActivityMetadata } from '@/types/database';
 import {
   Plane,
   Home,
@@ -8,6 +8,7 @@ import {
   MoreHorizontal,
   type LucideIcon,
 } from 'lucide-react';
+import { getTransportIcon } from './transport-types';
 
 export type ActivityCategoryInfo = {
   value: ActivityCategory;
@@ -68,7 +69,13 @@ export function getCategoryInfo(category: ActivityCategory): ActivityCategoryInf
   return activityCategoryMap[category] || activityCategoryMap.other;
 }
 
-export function getCategoryIcon(category: ActivityCategory): LucideIcon {
+export function getCategoryIcon(
+  category: ActivityCategory,
+  metadata?: ActivityMetadata | null
+): LucideIcon {
+  if (category === 'transport' && metadata?.transport_type) {
+    return getTransportIcon(metadata.transport_type);
+  }
   return getCategoryInfo(category).icon;
 }
 
@@ -102,4 +109,30 @@ export function formatDuration(minutes: number | null | undefined): string | nul
 export function formatTime(time: string | null | undefined): string | null {
   if (!time) return null;
   return time;
+}
+
+/**
+ * Converts minutes to HH:mm format
+ */
+export function minutesToHHmm(minutes: number | null | undefined): string {
+  if (!minutes && minutes !== 0) return '';
+  if (minutes === 0) return '';
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+/**
+ * Converts HH:mm string to minutes
+ */
+export function hhmmToMinutes(hhmm: string): number | null {
+  if (!hhmm || !hhmm.trim()) return null;
+  const match = hhmm.match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return null;
+  const hours = parseInt(match[1], 10);
+  const minutes = parseInt(match[2], 10);
+  if (hours < 0 || minutes < 0 || minutes > 59) return null;
+  const total = hours * 60 + minutes;
+  if (total <= 0 || total > 1440) return null;
+  return total;
 }

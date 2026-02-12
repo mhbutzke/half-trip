@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { FAB } from '@/components/ui/fab';
 import { ExpenseCard, DeleteExpenseDialog } from '@/components/expenses';
 import { expenseCategoryList, getCategoryInfo } from '@/lib/utils/expense-categories';
 import { formatAmount } from '@/lib/validation/expense-schemas';
@@ -52,6 +53,7 @@ export function ExpensesList({
   const router = useRouter();
   const [expenses, setExpenses] = useState<ExpenseWithDetails[]>(initialExpenses);
   const [deletingExpense, setDeletingExpense] = useState<ExpenseWithDetails | null>(null);
+  const [isAddOpen, setIsAddOpen] = useState(false);
 
   const handleExpenseAdded = () => {
     router.refresh();
@@ -327,22 +329,18 @@ export function ExpensesList({
         </div>
       )}
 
-      {/* Mobile FAB for adding expense */}
-      <div className="fixed bottom-20 right-4 sm:hidden">
-        <AddExpenseDialog
-          tripId={tripId}
-          members={members}
-          currentUserId={currentUserId}
-          baseCurrency={baseCurrency}
-          onSuccess={handleExpenseAdded}
-          trigger={
-            <Button size="lg" className="h-14 w-14 rounded-full shadow-lg">
-              <Plus className="h-6 w-6" />
-              <span className="sr-only">Adicionar despesa</span>
-            </Button>
-          }
-        />
-      </div>
+      {/* Mobile FAB */}
+      <FAB icon={Plus} label="Adicionar despesa" onClick={() => setIsAddOpen(true)} />
+
+      <AddExpenseDialog
+        tripId={tripId}
+        members={members}
+        currentUserId={currentUserId}
+        baseCurrency={baseCurrency}
+        open={isAddOpen}
+        onOpenChange={setIsAddOpen}
+        onSuccess={handleExpenseAdded}
+      />
 
       {/* Delete confirmation dialog */}
       <DeleteExpenseDialog

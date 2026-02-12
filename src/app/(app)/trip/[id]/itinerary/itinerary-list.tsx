@@ -21,6 +21,7 @@ import { format, parseISO, eachDayOfInterval } from 'date-fns';
 import { MapPin, Plus, Plane } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { FAB } from '@/components/ui/fab';
 import { DaySection } from './day-section';
 import { DraggableActivityCard } from './draggable-activity-card';
 import { reorderActivities } from '@/lib/supabase/activities';
@@ -549,6 +550,16 @@ export function ItineraryList({
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         onSuccess={handleDeleteSuccess}
+      />
+
+      {/* Mobile FAB */}
+      <FAB
+        icon={Plus}
+        label="Adicionar atividade"
+        onClick={() => {
+          setSelectedDate(tripDays[0]);
+          setIsAddDialogOpen(true);
+        }}
       />
     </>
   );

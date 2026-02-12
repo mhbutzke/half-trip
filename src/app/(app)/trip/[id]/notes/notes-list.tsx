@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { StickyNote } from 'lucide-react';
+import { Plus, StickyNote } from 'lucide-react';
+import { FAB } from '@/components/ui/fab';
 import { EmptyState } from '@/components/ui/empty-state';
 import { EmptyNotesIllustration } from '@/components/illustrations';
 import { NoteCard } from '@/components/notes/note-card';
@@ -120,6 +121,9 @@ export function NotesList({ tripId, initialNotes, userRole, currentUserId }: Not
         onOpenChange={(open) => !open && setDeletingNote(null)}
         onNoteDeleted={handleNoteDeleted}
       />
+
+      {/* Mobile FAB */}
+      <FAB icon={Plus} label="Adicionar nota" onClick={() => setAddNoteDialogOpen(true)} />
     </>
   );
 }

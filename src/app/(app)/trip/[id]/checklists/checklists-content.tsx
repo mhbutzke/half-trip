@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, CheckSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { FAB } from '@/components/ui/fab';
 import { EmptyState } from '@/components/ui/empty-state';
 import { EmptyChecklistsIllustration } from '@/components/illustrations';
 import { ChecklistCard } from '@/components/checklists/checklist-card';
@@ -83,6 +84,9 @@ export function ChecklistsContent({
         }}
         onSuccess={refresh}
       />
+
+      {/* Mobile FAB */}
+      <FAB icon={Plus} label="Nova checklist" onClick={() => setIsFormOpen(true)} />
     </>
   );
 }

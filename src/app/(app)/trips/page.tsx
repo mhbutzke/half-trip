@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TripsList } from './trips-list';
 import { EmptyState } from '@/components/ui/empty-state';
+import { EmptyTripsIllustration } from '@/components/illustrations';
 
 // Lazy load the create trip dialog - only needed when user clicks create
 const CreateTripDialog = dynamic(() =>
@@ -50,10 +51,15 @@ function TripsEmptyState() {
         icon={Plane}
         title="Nenhuma viagem ainda"
         description="Crie sua primeira viagem para começar a planejar com seu grupo e dividir despesas de forma justa"
+        illustration={<EmptyTripsIllustration className="size-20" />}
         action={{
           label: 'Criar primeira viagem',
           onClick: () => setCreateDialogOpen(true),
         }}
+        tips={[
+          'Convide amigos pelo e-mail após criar a viagem',
+          'Defina a moeda base para facilitar a divisão de despesas',
+        ]}
       />
       <CreateTripDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
     </>

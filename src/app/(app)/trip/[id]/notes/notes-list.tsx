@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { StickyNote } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
+import { EmptyNotesIllustration } from '@/components/illustrations';
 import { NoteCard } from '@/components/notes/note-card';
 import { useTripRealtime } from '@/hooks/use-trip-realtime';
 import type { NoteWithCreator } from '@/lib/supabase/notes';
@@ -75,10 +76,15 @@ export function NotesList({ tripId, initialNotes, userRole, currentUserId }: Not
           icon={StickyNote}
           title="Nenhuma nota"
           description="Adicione informações importantes sobre a viagem, como horários de check-in, números de emergência ou dicas úteis"
+          illustration={<EmptyNotesIllustration className="size-20" />}
           action={{
             label: 'Adicionar primeira nota',
             onClick: () => setAddNoteDialogOpen(true),
           }}
+          tips={[
+            'Anote horários de check-in, senhas de Wi-Fi e contatos úteis',
+            'Todos os membros da viagem podem visualizar as notas',
+          ]}
         />
       ) : (
         <div className="space-y-4">

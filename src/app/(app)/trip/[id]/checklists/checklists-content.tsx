@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Plus, CheckSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
+import { EmptyChecklistsIllustration } from '@/components/illustrations';
 import { ChecklistCard } from '@/components/checklists/checklist-card';
 import { ChecklistFormDialog } from '@/components/checklists/checklist-form-dialog';
 import { DeleteChecklistDialog } from '@/components/checklists/delete-checklist-dialog';
@@ -38,7 +39,12 @@ export function ChecklistsContent({
           icon={CheckSquare}
           title="Nenhuma checklist criada"
           description="Crie listas de bagagem, tarefas ou compras para a viagem."
+          illustration={<EmptyChecklistsIllustration className="size-20" />}
           action={{ label: 'Criar checklist', onClick: () => setIsFormOpen(true) }}
+          tips={[
+            'Crie listas separadas para bagagem, documentos e compras',
+            'Atribua itens a membros específicos do grupo',
+          ]}
         />
       ) : (
         <div className="space-y-4">

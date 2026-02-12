@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { getTripById, getUserRoleInTrip } from '@/lib/supabase/trips';
 import { getTripExpenseSummary } from '@/lib/supabase/expense-summary';
 import { getUser } from '@/lib/supabase/auth';
+import { FinancesTabBar } from '@/components/layout/finances-tab-bar';
 import { BalanceHeader } from './balance-header';
 import { BalanceContent } from './balance-content';
 import { BalanceSkeleton } from './balance-skeleton';
@@ -42,6 +43,7 @@ async function BalancePageContent({ tripId }: { tripId: string }) {
 
   return (
     <>
+      <FinancesTabBar tripId={tripId} />
       <BalanceHeader trip={trip} />
       <BalanceContent
         summary={summary}

@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getTripById, getTripMembers, getUserRoleInTrip } from '@/lib/supabase/trips';
 import { getTripExpenses } from '@/lib/supabase/expenses';
 import { PageContainer } from '@/components/layout/page-container';
+import { FinancesTabBar } from '@/components/layout/finances-tab-bar';
 import { ExpensesList } from './expenses-list';
 import { ExpensesHeader } from './expenses-header';
 import { ExpensesSkeleton } from './expenses-skeleton';
@@ -35,6 +36,7 @@ async function ExpensesContent({ tripId }: { tripId: string }) {
 
   return (
     <div className="space-y-6">
+      <FinancesTabBar tripId={tripId} />
       <ExpensesHeader tripId={tripId} tripName={trip.name} />
       <ExpensesList
         tripId={tripId}

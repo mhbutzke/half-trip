@@ -59,6 +59,10 @@
   --color-warning-foreground: var(--warning-foreground);
   --color-positive: var(--positive);
   --color-negative: var(--negative);
+  /* Semantic budget tokens */
+  --color-budget-safe: var(--success);
+  --color-budget-warning: var(--warning);
+  --color-budget-exceeded: var(--destructive);
 }
 
 :root {

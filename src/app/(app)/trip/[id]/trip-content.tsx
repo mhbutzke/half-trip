@@ -7,6 +7,7 @@ import { TripOverview } from './trip-overview';
 import { PageContainer } from '@/components/layout/page-container';
 import type { TripWithMembers } from '@/lib/supabase/trips';
 import type { Trip, TripMemberRole } from '@/types/database';
+import type { DashboardData } from '@/lib/supabase/dashboard';
 
 interface TripContentProps {
   tripId: string;
@@ -18,6 +19,7 @@ interface TripContentProps {
     email: string;
     avatar_url: string | null;
   } | null;
+  initialDashboard?: DashboardData | null;
 }
 
 export function TripContent({
@@ -25,6 +27,7 @@ export function TripContent({
   initialTrip,
   initialUserRole,
   initialCurrentUser,
+  initialDashboard,
 }: TripContentProps) {
   const { data: cachedData, isOffline, cacheData } = useTripOffline(tripId);
 
@@ -139,7 +142,12 @@ export function TripContent({
           currentUserId={currentUser?.id}
           currentUser={currentUser}
         />
-        <TripOverview trip={trip} userRole={userRole} currentUserId={currentUser?.id} />
+        <TripOverview
+          trip={trip}
+          userRole={userRole}
+          currentUserId={currentUser?.id}
+          dashboard={initialDashboard}
+        />
       </div>
     </PageContainer>
   );

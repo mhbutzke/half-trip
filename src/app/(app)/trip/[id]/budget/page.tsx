@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getTripById, getUserRoleInTrip } from '@/lib/supabase/trips';
 import { getTripBudgets, getBudgetSummary } from '@/lib/supabase/budgets';
 import { PageContainer } from '@/components/layout/page-container';
+import { FinancesTabBar } from '@/components/layout/finances-tab-bar';
 import { Button } from '@/components/ui/button';
 import { BudgetContent } from './budget-content';
 import BudgetLoading from './loading';
@@ -44,6 +45,7 @@ async function BudgetPageContent({ tripId }: { tripId: string }) {
 
   return (
     <div className="space-y-6">
+      <FinancesTabBar tripId={tripId} />
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" className="h-8 gap-1 px-2" asChild>

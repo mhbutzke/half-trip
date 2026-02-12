@@ -2,6 +2,7 @@
 
 import { createClient } from './server';
 import { revalidatePath } from 'next/cache';
+import { logActivity } from './activity-log';
 import type { Settlement } from '@/types/database';
 
 export type SettlementResult = {
@@ -96,6 +97,14 @@ export async function createSettlement(input: CreateSettlementInput): Promise<Se
 
   revalidatePath(`/trip/${input.trip_id}/balance`);
 
+  logActivity({
+    tripId: input.trip_id,
+    action: 'created',
+    entityType: 'settlement',
+    entityId: settlement.id,
+    metadata: { amount: input.amount },
+  });
+
   return { success: true, settlementId: settlement.id };
 }
 
@@ -161,6 +170,13 @@ export async function markSettlementAsPaid(settlementId: string): Promise<Settle
   }
 
   revalidatePath(`/trip/${settlement.trip_id}/balance`);
+
+  logActivity({
+    tripId: settlement.trip_id,
+    action: 'marked_paid',
+    entityType: 'settlement',
+    entityId: settlementId,
+  });
 
   return { success: true, settlementId };
 }
@@ -229,6 +245,13 @@ export async function markSettlementAsUnpaid(settlementId: string): Promise<Sett
   }
 
   revalidatePath(`/trip/${settlement.trip_id}/balance`);
+
+  logActivity({
+    tripId: settlement.trip_id,
+    action: 'marked_unpaid',
+    entityType: 'settlement',
+    entityId: settlementId,
+  });
 
   return { success: true, settlementId };
 }

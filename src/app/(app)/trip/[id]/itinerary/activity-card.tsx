@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useMemo, memo } from 'react';
+import { useState, useMemo, memo } from 'react';
 import {
   Clock,
   MapPin,
   MoreVertical,
   Pencil,
+  Share2,
   Trash2,
   CalendarSync,
   ExternalLink,
@@ -24,11 +25,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { getCategoryInfo, formatDuration, formatTime } from '@/lib/utils/activity-categories';
 import { transportTypeMap } from '@/lib/utils/transport-types';
-import { getAttachmentsCount } from '@/lib/supabase/attachments';
 import type { ActivityWithCreator } from '@/lib/supabase/activities';
 import type { ActivityLink, ActivityMetadata } from '@/types/database';
 import { useSyncStatus } from '@/hooks/use-sync-status';
 import { PendingIndicator } from '@/components/sync';
+import { toast } from 'sonner';
 
 interface ActivityCardProps {
   activity: ActivityWithCreator;
@@ -46,7 +47,6 @@ export const ActivityCard = memo(function ActivityCard({
   isSyncing = false,
 }: ActivityCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [attachmentsCount, setAttachmentsCount] = useState(0);
   const meta = activity.metadata as ActivityMetadata | null;
   const categoryInfo = getCategoryInfo(activity.category);
   const CategoryIcon = useMemo(() => {
@@ -61,13 +61,9 @@ export const ActivityCard = memo(function ActivityCard({
     ? `https://www.google.com/maps/search/?api=1&query=${meta.location_lat},${meta.location_lng}&query_place_id=${meta.location_place_id}`
     : null;
   const { isPending } = useSyncStatus('activities', activity.id);
+  const attachmentsCount = activity.attachments_count ?? 0;
 
   const hasDetails = activity.description || links.length > 0;
-
-  // Fetch attachments count
-  useEffect(() => {
-    getAttachmentsCount(activity.id).then(setAttachmentsCount);
-  }, [activity.id]);
 
   return (
     <Card className="group relative transition-shadow hover:shadow-md">
@@ -171,13 +167,33 @@ export const ActivityCard = memo(function ActivityCard({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100 data-[state=open]:opacity-100"
+                    className="h-9 w-9 opacity-100 transition-opacity sm:h-8 sm:w-8 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 data-[state=open]:opacity-100"
                     aria-label="Opções da atividade"
                   >
                     <MoreVertical className="h-4 w-4" aria-hidden="true" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={async () => {
+                      const url = `${window.location.origin}/trip/${activity.trip_id}/itinerary`;
+                      if (navigator.share) {
+                        try {
+                          await navigator.share({
+                            title: activity.title,
+                            text: `${activity.title}${activity.location ? ` em ${activity.location}` : ''}`,
+                            url,
+                          });
+                          return;
+                        } catch {}
+                      }
+                      await navigator.clipboard.writeText(url);
+                      toast.success('Link copiado!');
+                    }}
+                  >
+                    <Share2 className="mr-2 h-4 w-4" aria-hidden="true" />
+                    Compartilhar
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => onSync(activity)} disabled={isSyncing}>
                     <CalendarSync className="mr-2 h-4 w-4" aria-hidden="true" />
                     {isSyncing ? 'Sincronizando...' : 'Sincronizar na agenda'}

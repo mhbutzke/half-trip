@@ -8,6 +8,7 @@ import { PageContainer } from '@/components/layout/page-container';
 import type { TripWithMembers } from '@/lib/supabase/trips';
 import type { Trip, TripMemberRole } from '@/types/database';
 import type { DashboardData } from '@/lib/supabase/dashboard';
+import type { ActivityLogEntry } from '@/types/activity-log';
 
 interface TripContentProps {
   tripId: string;
@@ -20,6 +21,8 @@ interface TripContentProps {
     avatar_url: string | null;
   } | null;
   initialDashboard?: DashboardData | null;
+  initialActivityLog?: ActivityLogEntry[];
+  activityLogHasMore?: boolean;
 }
 
 export function TripContent({
@@ -28,6 +31,8 @@ export function TripContent({
   initialUserRole,
   initialCurrentUser,
   initialDashboard,
+  initialActivityLog,
+  activityLogHasMore,
 }: TripContentProps) {
   const { data: cachedData, isOffline, cacheData } = useTripOffline(tripId);
 
@@ -147,6 +152,8 @@ export function TripContent({
           userRole={userRole}
           currentUserId={currentUser?.id}
           dashboard={initialDashboard}
+          initialActivityLog={initialActivityLog}
+          activityLogHasMore={activityLogHasMore}
         />
       </div>
     </PageContainer>

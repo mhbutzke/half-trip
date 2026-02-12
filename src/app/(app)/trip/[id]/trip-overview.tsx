@@ -12,9 +12,11 @@ import { Progress } from '@/components/ui/progress';
 import { InviteDialog } from '@/components/invites/invite-dialog';
 import { StatWidget } from '@/components/ui/stat-widget';
 import { MoneyDisplay } from '@/components/ui/money-display';
+import { ActivityLogFeed } from '@/components/activity-log/activity-log-feed';
 import { useTripRealtime } from '@/hooks/use-trip-realtime';
 import type { TripWithMembers } from '@/lib/supabase/trips';
 import type { DashboardData } from '@/lib/supabase/dashboard';
+import type { ActivityLogEntry } from '@/types/activity-log';
 
 // Lazy load dialogs - only needed when user clicks a CTA button
 const AddActivityDialog = dynamic(
@@ -37,9 +39,18 @@ interface TripOverviewProps {
   userRole: 'organizer' | 'participant' | null;
   currentUserId?: string;
   dashboard?: DashboardData | null;
+  initialActivityLog?: ActivityLogEntry[];
+  activityLogHasMore?: boolean;
 }
 
-export function TripOverview({ trip, userRole, currentUserId, dashboard }: TripOverviewProps) {
+export function TripOverview({
+  trip,
+  userRole,
+  currentUserId,
+  dashboard,
+  initialActivityLog,
+  activityLogHasMore,
+}: TripOverviewProps) {
   const router = useRouter();
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [isActivityOpen, setIsActivityOpen] = useState(false);
@@ -268,6 +279,15 @@ export function TripOverview({ trip, userRole, currentUserId, dashboard }: TripO
               )}
             </CardContent>
           </Card>
+        )}
+
+        {/* Activity Feed */}
+        {initialActivityLog && (
+          <ActivityLogFeed
+            tripId={trip.id}
+            initialEntries={initialActivityLog}
+            initialHasMore={activityLogHasMore ?? false}
+          />
         )}
 
         {/* Quick Actions */}

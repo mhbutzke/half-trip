@@ -35,6 +35,7 @@ import { EditTripDialog } from '@/components/trips/edit-trip-dialog';
 import { DeleteTripDialog } from '@/components/trips/delete-trip-dialog';
 import { InviteDialog } from '@/components/invites/invite-dialog';
 import { OnlineIndicator } from '@/components/presence/online-indicator';
+import { ShareButton } from '@/components/ui/share-button';
 import { archiveTrip, unarchiveTrip, type TripWithMembers } from '@/lib/supabase/trips';
 import { can } from '@/lib/permissions';
 import { useTripPresence, type PresenceUser } from '@/hooks/use-trip-presence';
@@ -187,6 +188,12 @@ export function TripHeader({ trip, userRole, currentUserId, currentUser }: TripH
           </Link>
 
           <div className="flex items-center gap-1 sm:gap-2">
+            <ShareButton
+              title={`Viagem: ${trip.name}`}
+              text={`${trip.name} - ${trip.destination}`}
+              path={`/trip/${trip.id}`}
+              variant="outline"
+            />
             {canInvite && (
               <Button
                 variant="outline"

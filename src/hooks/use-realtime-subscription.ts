@@ -10,7 +10,8 @@ type TableName =
   | 'expenses'
   | 'trip_members'
   | 'trip_notes'
-  | 'settlements';
+  | 'settlements'
+  | 'trip_activity_log';
 
 type RealtimePayload<T extends Record<string, unknown> = Record<string, unknown>> =
   RealtimePostgresChangesPayload<T>;

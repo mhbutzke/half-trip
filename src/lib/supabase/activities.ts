@@ -2,6 +2,7 @@
 
 import { createClient } from './server';
 import { revalidatePath } from 'next/cache';
+import { logActivity } from './activity-log';
 import type { Activity, ActivityCategory, ActivityLink, Json } from '@/types/database';
 
 export type ActivityResult = {
@@ -16,6 +17,7 @@ export type ActivityWithCreator = Activity & {
     name: string;
     avatar_url: string | null;
   };
+  attachments_count?: number;
 };
 
 export type CreateActivityInput = {
@@ -98,6 +100,14 @@ export async function createActivity(input: CreateActivityInput): Promise<Activi
   revalidatePath(`/trip/${input.trip_id}`);
   revalidatePath(`/trip/${input.trip_id}/itinerary`);
 
+  logActivity({
+    tripId: input.trip_id,
+    action: 'created',
+    entityType: 'activity',
+    entityId: activity.id,
+    metadata: { title: input.title },
+  });
+
   return { success: true, activityId: activity.id };
 }
 
@@ -164,6 +174,14 @@ export async function updateActivity(
   revalidatePath(`/trip/${activity.trip_id}`);
   revalidatePath(`/trip/${activity.trip_id}/itinerary`);
 
+  logActivity({
+    tripId: activity.trip_id,
+    action: 'updated',
+    entityType: 'activity',
+    entityId: activityId,
+    metadata: { title: input.title },
+  });
+
   return { success: true, activityId };
 }
 
@@ -185,7 +203,7 @@ export async function deleteActivity(activityId: string): Promise<ActivityResult
   // Get the activity to check trip membership
   const { data: activity } = await supabase
     .from('activities')
-    .select('trip_id')
+    .select('trip_id, title')
     .eq('id', activityId)
     .single();
 
@@ -213,6 +231,14 @@ export async function deleteActivity(activityId: string): Promise<ActivityResult
 
   revalidatePath(`/trip/${activity.trip_id}`);
   revalidatePath(`/trip/${activity.trip_id}/itinerary`);
+
+  logActivity({
+    tripId: activity.trip_id,
+    action: 'deleted',
+    entityType: 'activity',
+    entityId: activityId,
+    metadata: { title: activity.title },
+  });
 
   return { success: true };
 }
@@ -260,7 +286,27 @@ export async function getTripActivities(tripId: string): Promise<ActivityWithCre
     .order('date', { ascending: true })
     .order('sort_order', { ascending: true });
 
-  return (activities as ActivityWithCreator[]) || [];
+  const parsedActivities = (activities as ActivityWithCreator[]) || [];
+  if (parsedActivities.length === 0) {
+    return [];
+  }
+
+  const activityIds = parsedActivities.map((activity) => activity.id);
+  const { data: attachmentRows } = await supabase
+    .from('activity_attachments')
+    .select('activity_id')
+    .in('activity_id', activityIds);
+
+  const attachmentsByActivity = new Map<string, number>();
+  for (const row of attachmentRows || []) {
+    const count = attachmentsByActivity.get(row.activity_id) || 0;
+    attachmentsByActivity.set(row.activity_id, count + 1);
+  }
+
+  return parsedActivities.map((activity) => ({
+    ...activity,
+    attachments_count: attachmentsByActivity.get(activity.id) || 0,
+  }));
 }
 
 /**

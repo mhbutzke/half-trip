@@ -70,6 +70,15 @@ export function useTripRealtime({ tripId }: UseTripRealtimeOptions) {
     },
   });
 
+  // Subscribe to activity log changes
+  useRealtimeSubscription({
+    table: 'trip_activity_log',
+    filter: `trip_id=eq.${tripId}`,
+    onChange: () => {
+      queryClient.invalidateQueries({ queryKey: ['activity-log', tripId] });
+    },
+  });
+
   // Subscribe to settlement changes
   useRealtimeSubscription({
     table: 'settlements',

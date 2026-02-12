@@ -788,6 +788,54 @@ export type Database = {
           },
         ];
       };
+      trip_activity_log: {
+        Row: {
+          id: string;
+          trip_id: string;
+          user_id: string;
+          action: string;
+          entity_type: string;
+          entity_id: string | null;
+          metadata: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          trip_id: string;
+          user_id: string;
+          action: string;
+          entity_type: string;
+          entity_id?: string | null;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          trip_id?: string;
+          user_id?: string;
+          action?: string;
+          entity_type?: string;
+          entity_id?: string | null;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'trip_activity_log_trip_id_fkey';
+            columns: ['trip_id'];
+            isOneToOne: false;
+            referencedRelation: 'trips';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'trip_activity_log_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -917,3 +965,8 @@ export type ActivityLink = {
   url: string;
   label: string;
 };
+
+// Trip Activity Log convenience types
+export type TripActivityLog = Tables<'trip_activity_log'>;
+export type InsertTripActivityLog = InsertTables<'trip_activity_log'>;
+export type UpdateTripActivityLog = UpdateTables<'trip_activity_log'>;

@@ -2,6 +2,7 @@
 
 import { createClient } from './server';
 import { revalidatePath } from 'next/cache';
+import { logActivity } from './activity-log';
 import type { TripChecklist, ChecklistItem, ChecklistWithItems } from '@/types/checklist';
 
 export type ChecklistResult = {
@@ -113,6 +114,15 @@ export async function createChecklist(input: {
   }
 
   revalidatePath(`/trip/${input.trip_id}/checklists`);
+
+  logActivity({
+    tripId: input.trip_id,
+    action: 'created',
+    entityType: 'checklist',
+    entityId: checklist.id,
+    metadata: { name: input.name },
+  });
+
   return { success: true, checklistId: checklist.id };
 }
 
@@ -222,7 +232,7 @@ export async function toggleChecklistItem(itemId: string): Promise<ChecklistItem
   // Get current item state
   const { data: item } = await supabase
     .from('checklist_items')
-    .select('is_completed, checklist_id')
+    .select('is_completed, checklist_id, title')
     .eq('id', itemId)
     .single();
 
@@ -254,6 +264,16 @@ export async function toggleChecklistItem(itemId: string): Promise<ChecklistItem
 
   if (checklist) {
     revalidatePath(`/trip/${checklist.trip_id}/checklists`);
+
+    if (nowCompleted) {
+      logActivity({
+        tripId: checklist.trip_id,
+        action: 'completed',
+        entityType: 'checklist_item',
+        entityId: itemId,
+        metadata: { title: item.title },
+      });
+    }
   }
 
   return { success: true, itemId };

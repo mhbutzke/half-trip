@@ -3,7 +3,7 @@
 import { memo } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { MoreHorizontal, Pencil, Trash2, Users } from 'lucide-react';
+import { MoreHorizontal, Pencil, Share2, Trash2, Users } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,7 @@ import { formatAmount } from '@/lib/validation/expense-schemas';
 import type { ExpenseWithDetails } from '@/types/expense';
 import { useSyncStatus } from '@/hooks/use-sync-status';
 import { PendingIndicator } from '@/components/sync';
+import { toast } from 'sonner';
 
 interface ExpenseCardProps {
   expense: ExpenseWithDetails;
@@ -101,6 +102,26 @@ export const ExpenseCard = memo(function ExpenseCard({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={async () => {
+                      const url = `${window.location.origin}/trip/${expense.trip_id}/expenses`;
+                      if (navigator.share) {
+                        try {
+                          await navigator.share({
+                            title: expense.description,
+                            text: `${expense.description} - ${formatAmount(expense.amount, expense.currency)}`,
+                            url,
+                          });
+                          return;
+                        } catch {}
+                      }
+                      await navigator.clipboard.writeText(url);
+                      toast.success('Link copiado!');
+                    }}
+                  >
+                    <Share2 className="mr-2 h-4 w-4" aria-hidden="true" />
+                    Compartilhar
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={onEdit}>
                     <Pencil className="mr-2 h-4 w-4" />
                     Editar

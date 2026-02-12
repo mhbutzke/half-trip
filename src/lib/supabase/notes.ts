@@ -2,6 +2,7 @@
 
 import { createClient } from './server';
 import { revalidatePath } from 'next/cache';
+import { logActivity } from './activity-log';
 import type { TripNote } from '@/types/database';
 
 export type NoteResult = {
@@ -71,6 +72,14 @@ export async function createNote(input: CreateNoteInput): Promise<NoteResult> {
   revalidatePath(`/trip/${input.trip_id}`);
   revalidatePath(`/trip/${input.trip_id}/notes`);
 
+  logActivity({
+    tripId: input.trip_id,
+    action: 'created',
+    entityType: 'note',
+    entityId: note.id,
+    metadata: { description: input.content.slice(0, 50) },
+  });
+
   return { success: true, noteId: note.id };
 }
 
@@ -131,6 +140,14 @@ export async function updateNote(noteId: string, input: UpdateNoteInput): Promis
   revalidatePath(`/trip/${note.trip_id}`);
   revalidatePath(`/trip/${note.trip_id}/notes`);
 
+  logActivity({
+    tripId: note.trip_id,
+    action: 'updated',
+    entityType: 'note',
+    entityId: noteId,
+    metadata: { description: input.content.slice(0, 50) },
+  });
+
   return { success: true, noteId };
 }
 
@@ -185,6 +202,13 @@ export async function deleteNote(noteId: string): Promise<NoteResult> {
 
   revalidatePath(`/trip/${note.trip_id}`);
   revalidatePath(`/trip/${note.trip_id}/notes`);
+
+  logActivity({
+    tripId: note.trip_id,
+    action: 'deleted',
+    entityType: 'note',
+    entityId: noteId,
+  });
 
   return { success: true };
 }

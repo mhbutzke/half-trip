@@ -2,6 +2,7 @@
 
 import { createClient } from './server';
 import { revalidatePath } from 'next/cache';
+import { logActivity } from './activity-log';
 import type {
   ExpenseResult,
   ExpenseWithDetails,
@@ -119,6 +120,14 @@ export async function createExpense(input: CreateExpenseInput): Promise<ExpenseR
   revalidatePath(`/trip/${input.trip_id}`);
   revalidatePath(`/trip/${input.trip_id}/expenses`);
   revalidatePath(`/trip/${input.trip_id}/balance`);
+
+  logActivity({
+    tripId: input.trip_id,
+    action: 'created',
+    entityType: 'expense',
+    entityId: expense.id,
+    metadata: { description: input.description, amount: input.amount, currency },
+  });
 
   return { success: true, expenseId: expense.id };
 }
@@ -268,6 +277,14 @@ export async function updateExpense(
   revalidatePath(`/trip/${expense.trip_id}/expenses`);
   revalidatePath(`/trip/${expense.trip_id}/balance`);
 
+  logActivity({
+    tripId: expense.trip_id,
+    action: 'updated',
+    entityType: 'expense',
+    entityId: expenseId,
+    metadata: { description: input.description },
+  });
+
   return { success: true, expenseId };
 }
 
@@ -314,6 +331,13 @@ export async function deleteExpense(expenseId: string): Promise<ExpenseResult> {
     return { error: 'Você não tem permissão para excluir esta despesa' };
   }
 
+  // Get description before deleting for the activity log
+  const { data: expenseFull } = await supabase
+    .from('expenses')
+    .select('description')
+    .eq('id', expenseId)
+    .single();
+
   // Delete expense (splits will be cascade deleted by FK)
   const { error } = await supabase.from('expenses').delete().eq('id', expenseId);
 
@@ -324,6 +348,14 @@ export async function deleteExpense(expenseId: string): Promise<ExpenseResult> {
   revalidatePath(`/trip/${expense.trip_id}`);
   revalidatePath(`/trip/${expense.trip_id}/expenses`);
   revalidatePath(`/trip/${expense.trip_id}/balance`);
+
+  logActivity({
+    tripId: expense.trip_id,
+    action: 'deleted',
+    entityType: 'expense',
+    entityId: expenseId,
+    metadata: { description: expenseFull?.description },
+  });
 
   return { success: true };
 }

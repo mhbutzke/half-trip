@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { normalizeSelectedActivityIds } from './sync-selection';
 
 describe('normalizeSelectedActivityIds', () => {

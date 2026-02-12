@@ -2,10 +2,7 @@
 
 import { useCallback, useRef } from 'react';
 
-export function formatCurrencyWithCursor(
-  raw: string,
-  _cursorPos: number
-): { value: string; cursor: number } {
+export function formatCurrencyWithCursor(raw: string): { value: string; cursor: number } {
   const digits = raw.replace(/\D/g, '');
   if (!digits) return { value: '', cursor: 0 };
 
@@ -20,7 +17,7 @@ export function formatCurrencyWithCursor(
 }
 
 interface UseCurrencyInputOptions {
-  value: string;
+  value?: string;
   onChange: (value: string) => void;
 }
 
@@ -30,8 +27,7 @@ export function useCurrencyInput({ value, onChange }: UseCurrencyInputOptions) {
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const raw = e.target.value;
-      const cursorPos = e.target.selectionStart || 0;
-      const { value: formatted, cursor } = formatCurrencyWithCursor(raw, cursorPos);
+      const { value: formatted, cursor } = formatCurrencyWithCursor(raw);
       onChange(formatted);
 
       requestAnimationFrame(() => {
@@ -43,7 +39,7 @@ export function useCurrencyInput({ value, onChange }: UseCurrencyInputOptions) {
 
   return {
     ref: inputRef,
-    value,
+    value: value ?? '',
     onChange: handleChange,
     inputMode: 'numeric' as const,
     placeholder: '0,00',

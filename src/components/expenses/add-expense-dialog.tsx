@@ -490,10 +490,7 @@ export function AddExpenseDialog({
                                   inputMode="numeric"
                                   value={form.watch(`custom_amounts.${member.user_id}`) || ''}
                                   onChange={(e) => {
-                                    const { value } = formatCurrencyWithCursor(
-                                      e.target.value,
-                                      e.target.selectionStart || 0
-                                    );
+                                    const { value } = formatCurrencyWithCursor(e.target.value);
                                     form.setValue(`custom_amounts.${member.user_id}`, value);
                                   }}
                                 />

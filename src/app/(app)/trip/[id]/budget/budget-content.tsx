@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Plus, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
+import { EmptyBudgetIllustration } from '@/components/illustrations';
 import { BudgetSummaryCard } from '@/components/budget/budget-summary';
 import { BudgetCategoryCard } from '@/components/budget/budget-category-card';
 import { BudgetFormDialog } from '@/components/budget/budget-form-dialog';
@@ -81,11 +82,16 @@ export function BudgetContent({
           icon={Wallet}
           title="Nenhum orçamento definido"
           description="Defina limites de gastos para acompanhar o orçamento da viagem."
+          illustration={<EmptyBudgetIllustration className="size-20" />}
           action={
             isOrganizer
               ? { label: 'Definir orçamento', onClick: () => setIsFormOpen(true) }
               : undefined
           }
+          tips={[
+            'Defina um orçamento total e por categoria para melhor controle',
+            'Acompanhe os alertas quando estiver perto do limite',
+          ]}
         />
       ) : (
         <div className="space-y-4">

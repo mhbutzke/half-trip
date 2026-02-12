@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type { UseFormReturn } from 'react-hook-form';
 import { Plus, X, ExternalLink } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -42,6 +42,7 @@ interface ActivityFormFieldsProps {
   addLink: () => void;
   locationCoords: LocationCoords | null;
   setLocationCoords: (coords: LocationCoords | null) => void;
+  quickMode?: boolean;
 }
 
 export function ActivityFormFields({
@@ -56,8 +57,10 @@ export function ActivityFormFields({
   addLink,
   locationCoords,
   setLocationCoords,
+  quickMode = false,
 }: ActivityFormFieldsProps) {
   const watchCategory = form.watch('category');
+  const [expanded, setExpanded] = useState(false);
 
   // Clear transport_type when category changes away from 'transport'
   useEffect(() => {
@@ -193,118 +196,136 @@ export function ActivityFormFields({
         />
       </div>
 
-      {/* Duration & Location */}
-      <div className="grid grid-cols-2 gap-4">
-        <FormField
-          control={form.control}
-          name="duration_minutes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Duração</FormLabel>
-              <FormControl>
-                <DurationInput value={field.value} onChange={field.onChange} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      {(!quickMode || expanded) && (
+        <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+          {/* Duration & Location */}
+          <div className="grid grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="duration_minutes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Duração</FormLabel>
+                  <FormControl>
+                    <DurationInput value={field.value} onChange={field.onChange} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        <FormField
-          control={form.control}
-          name="location"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Local</FormLabel>
-              <FormControl>
-                <LocationAutocomplete
-                  value={field.value || ''}
-                  onChange={field.onChange}
-                  onPlaceSelect={setLocationCoords}
-                  initialCoords={locationCoords}
+            <FormField
+              control={form.control}
+              name="location"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Local</FormLabel>
+                  <FormControl>
+                    <LocationAutocomplete
+                      value={field.value || ''}
+                      onChange={field.onChange}
+                      onPlaceSelect={setLocationCoords}
+                      initialCoords={locationCoords}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {/* Description */}
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Descrição</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="Detalhes da atividade..."
+                    className="resize-none"
+                    rows={3}
+                    {...field}
+                    value={field.value || ''}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Links section */}
+          <div className="space-y-3">
+            <FormLabel>Links úteis</FormLabel>
+
+            {links.length > 0 && (
+              <div className="space-y-2">
+                {links.map((link, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-2 rounded-md border p-2 text-sm"
+                  >
+                    <ExternalLink
+                      className="h-4 w-4 flex-shrink-0 text-muted-foreground"
+                      aria-hidden="true"
+                    />
+                    <span className="flex-1 truncate">{link.label}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0"
+                      onClick={() => removeLink(index)}
+                      aria-label={`Remover link ${link.label}`}
+                    >
+                      <X className="h-4 w-4" aria-hidden="true" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Nome do link"
+                  value={newLinkLabel}
+                  onChange={(e) => setNewLinkLabel(e.target.value)}
+                  className="flex-1"
                 />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
-
-      {/* Description */}
-      <FormField
-        control={form.control}
-        name="description"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Descrição</FormLabel>
-            <FormControl>
-              <Textarea
-                placeholder="Detalhes da atividade..."
-                className="resize-none"
-                rows={3}
-                {...field}
-                value={field.value || ''}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      {/* Links section */}
-      <div className="space-y-3">
-        <FormLabel>Links úteis</FormLabel>
-
-        {links.length > 0 && (
-          <div className="space-y-2">
-            {links.map((link, index) => (
-              <div key={index} className="flex items-center gap-2 rounded-md border p-2 text-sm">
-                <ExternalLink
-                  className="h-4 w-4 flex-shrink-0 text-muted-foreground"
-                  aria-hidden="true"
+                <Input
+                  placeholder="URL"
+                  value={newLinkUrl}
+                  onChange={(e) => setNewLinkUrl(e.target.value)}
+                  className="flex-1"
                 />
-                <span className="flex-1 truncate">{link.label}</span>
                 <Button
                   type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0"
-                  onClick={() => removeLink(index)}
-                  aria-label={`Remover link ${link.label}`}
+                  variant="outline"
+                  size="icon"
+                  onClick={addLink}
+                  aria-label="Adicionar link"
                 >
-                  <X className="h-4 w-4" aria-hidden="true" />
+                  <Plus className="h-4 w-4" aria-hidden="true" />
                 </Button>
               </div>
-            ))}
+              {linkError && <p className="text-sm text-destructive">{linkError}</p>}
+            </div>
           </div>
-        )}
-
-        <div className="space-y-2">
-          <div className="flex gap-2">
-            <Input
-              placeholder="Nome do link"
-              value={newLinkLabel}
-              onChange={(e) => setNewLinkLabel(e.target.value)}
-              className="flex-1"
-            />
-            <Input
-              placeholder="URL"
-              value={newLinkUrl}
-              onChange={(e) => setNewLinkUrl(e.target.value)}
-              className="flex-1"
-            />
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              onClick={addLink}
-              aria-label="Adicionar link"
-            >
-              <Plus className="h-4 w-4" aria-hidden="true" />
-            </Button>
-          </div>
-          {linkError && <p className="text-sm text-destructive">{linkError}</p>}
         </div>
-      </div>
+      )}
+      {quickMode && !expanded && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => setExpanded(true)}
+          className="w-full"
+        >
+          Mais detalhes
+        </Button>
+      )}
     </div>
   );
 }

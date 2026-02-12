@@ -4,20 +4,13 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus } from 'lucide-react';
+import { Plus, ArrowRight, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+import { Progress } from '@/components/ui/progress';
+import { ResponsiveFormContainer } from '@/components/ui/responsive-form-container';
 import {
   Form,
   FormControl,
@@ -52,9 +45,9 @@ export function CreateTripDialog({
 }: CreateTripDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const router = useRouter();
 
-  // Use controlled open state if provided, otherwise use internal state
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
   const setOpen = onOpenChange || setInternalOpen;
 
@@ -98,9 +91,9 @@ export function CreateTripDialog({
       toast.success('Viagem criada com sucesso!');
       setOpen(false);
       form.reset();
+      setStep(1);
       onSuccess?.();
 
-      // Navigate to the new trip
       if (result.tripId) {
         router.push(`/trip/${result.tripId}`);
       }
@@ -116,193 +109,238 @@ export function CreateTripDialog({
       setOpen(newOpen);
       if (!newOpen) {
         form.reset();
+        setStep(1);
       }
     }
   };
 
+  const handleNext = async () => {
+    let valid = false;
+    if (step === 1) valid = await form.trigger(['name', 'destination']);
+    if (step === 2) valid = await form.trigger(['start_date', 'end_date']);
+    if (valid) setStep((s) => (s + 1) as 2 | 3);
+  };
+
+  const stepTitles = {
+    1: 'Sua viagem',
+    2: 'Quando',
+    3: 'Configurações',
+  };
+
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button>
+    <>
+      {controlledOpen === undefined &&
+        (trigger ? (
+          <span onClick={() => setOpen(true)}>{trigger}</span>
+        ) : (
+          <Button onClick={() => setOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Nova viagem
           </Button>
-        )}
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>Criar nova viagem</DialogTitle>
-          <DialogDescription>
-            Preencha os dados da viagem. Você poderá convidar participantes depois.
-          </DialogDescription>
-        </DialogHeader>
+        ))}
+
+      <ResponsiveFormContainer
+        open={open}
+        onOpenChange={handleOpenChange}
+        title={stepTitles[step]}
+        description="Preencha os dados da viagem. Você poderá convidar participantes depois."
+      >
+        <Progress value={(step / 3) * 100} className="mb-4" />
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome da viagem</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: Férias na praia" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Step 1: Name, Destination, Description */}
+            {step === 1 && (
+              <>
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nome da viagem</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Ex: Férias na praia" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <FormField
-              control={form.control}
-              name="destination"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Destino</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: Florianópolis, SC" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                <FormField
+                  control={form.control}
+                  name="destination"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Destino</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Ex: Florianópolis, SC" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="start_date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Data de início</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Descrição (opcional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Algum detalhe sobre a viagem..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="end_date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Data de término</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                <div className="flex justify-end pt-4">
+                  <Button type="button" onClick={handleNext}>
+                    Próximo
+                    <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+                  </Button>
+                </div>
+              </>
+            )}
 
-            <FormField
-              control={form.control}
-              name="style"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Estilo da viagem</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value || undefined}>
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Selecione o estilo (opcional)" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {tripStyles.map((style) => (
-                        <SelectItem key={style.value} value={style.value}>
-                          {style.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Step 2: Dates, Style */}
+            {step === 2 && (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="start_date"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Data de início</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-            <FormField
-              control={form.control}
-              name="base_currency"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Moeda base</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Selecione a moeda" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {SUPPORTED_CURRENCIES.map((code) => (
-                        <SelectItem key={code} value={code}>
-                          {CURRENCY_LABELS[code]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                  <FormField
+                    control={form.control}
+                    name="end_date"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Data de término</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-            <FormField
-              control={form.control}
-              name="transport_type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Tipo de transporte</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Selecione o transporte" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {transportTypes.map((type) => (
-                        <SelectItem key={type.value} value={type.value}>
-                          {type.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                <FormField
+                  control={form.control}
+                  name="style"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Estilo da viagem</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || undefined}>
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Selecione o estilo (opcional)" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {tripStyles.map((style) => (
+                            <SelectItem key={style.value} value={style.value}>
+                              {style.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Descrição (opcional)</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Algum detalhe sobre a viagem..." {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                <div className="flex justify-between pt-4">
+                  <Button type="button" variant="outline" onClick={() => setStep(1)}>
+                    <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />
+                    Voltar
+                  </Button>
+                  <Button type="button" onClick={handleNext}>
+                    Próximo
+                    <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+                  </Button>
+                </div>
+              </>
+            )}
 
-            <DialogFooter className="pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => handleOpenChange(false)}
-                disabled={isSubmitting}
-              >
-                Cancelar
-              </Button>
-              <Button type="submit" loading={isSubmitting}>
-                Criar viagem
-              </Button>
-            </DialogFooter>
+            {/* Step 3: Currency, Transport */}
+            {step === 3 && (
+              <>
+                <FormField
+                  control={form.control}
+                  name="base_currency"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Moeda base</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Selecione a moeda" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {SUPPORTED_CURRENCIES.map((code) => (
+                            <SelectItem key={code} value={code}>
+                              {CURRENCY_LABELS[code]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="transport_type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tipo de transporte</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Selecione o transporte" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {transportTypes.map((type) => (
+                            <SelectItem key={type.value} value={type.value}>
+                              {type.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="flex justify-between pt-4">
+                  <Button type="button" variant="outline" onClick={() => setStep(2)}>
+                    <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />
+                    Voltar
+                  </Button>
+                  <Button type="submit" loading={isSubmitting}>
+                    Criar viagem
+                  </Button>
+                </div>
+              </>
+            )}
           </form>
         </Form>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveFormContainer>
+    </>
   );
 }

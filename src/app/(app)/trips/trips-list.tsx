@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { Archive } from 'lucide-react';
 import { TripCard } from '@/components/trips/trip-card';
+import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Lazy load dialogs - only needed when user clicks actions
@@ -159,7 +160,7 @@ export function TripsList({ emptyState }: TripsListProps) {
   }
 
   return (
-    <>
+    <PullToRefresh onRefresh={loadTrips}>
       {hasArchivedTrips ? (
         <Tabs defaultValue="active" className="w-full">
           <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
@@ -247,6 +248,6 @@ export function TripsList({ emptyState }: TripsListProps) {
           onSuccess={handleDeleteSuccess}
         />
       )}
-    </>
+    </PullToRefresh>
   );
 }

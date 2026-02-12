@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Calendar, DollarSign, Plus, Scale, ChevronRight, Receipt } from 'lucide-react';
@@ -12,7 +13,6 @@ import { InviteDialog } from '@/components/invites/invite-dialog';
 import { StatWidget } from '@/components/ui/stat-widget';
 import { MoneyDisplay } from '@/components/ui/money-display';
 import { useTripRealtime } from '@/hooks/use-trip-realtime';
-import { formatCurrency } from '@/lib/utils/currency';
 import type { TripWithMembers } from '@/lib/supabase/trips';
 import type { DashboardData } from '@/lib/supabase/dashboard';
 
@@ -82,6 +82,20 @@ export function TripOverview({ trip, userRole, currentUserId, dashboard }: TripO
   return (
     <>
       <div className="space-y-4">
+        {/* Cover Image Hero */}
+        {trip.cover_url && (
+          <div className="relative -mx-4 -mt-6 h-40 overflow-hidden rounded-b-xl sm:mx-0 sm:mt-0 sm:rounded-xl">
+            <Image
+              src={trip.cover_url}
+              alt={`Capa de ${trip.name}`}
+              fill
+              className="object-cover"
+              unoptimized
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
+          </div>
+        )}
+
         {/* Balance Widget - Full Width */}
         <StatWidget
           label="Meu saldo"
@@ -186,8 +200,17 @@ export function TripOverview({ trip, userRole, currentUserId, dashboard }: TripO
                     }`}
                   />
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {formatCurrency(dashboard.budgetUsed ?? 0, baseCurrency)} de{' '}
-                    {formatCurrency(dashboard.budgetTotal, baseCurrency)}
+                    <MoneyDisplay
+                      amount={dashboard.budgetUsed ?? 0}
+                      currency={baseCurrency}
+                      size="sm"
+                    />{' '}
+                    de{' '}
+                    <MoneyDisplay
+                      amount={dashboard.budgetTotal}
+                      currency={baseCurrency}
+                      size="sm"
+                    />
                   </p>
                 </div>
               )}

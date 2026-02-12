@@ -1,35 +1,56 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 
 /**
  * Hook to detect online/offline status
- * Listens to browser online/offline events and navigator.onLine
+ * Uses useSyncExternalStore for React 19 compatibility.
  */
 export function useOnlineStatus() {
-  // Initialize with navigator.onLine if available (client-side), otherwise true for SSR
-  const [isOnline, setIsOnline] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return navigator.onLine;
-    }
-    return true;
-  });
-
-  useEffect(() => {
-    // Event handlers
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-
-    // Listen to online/offline events
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    // Cleanup
+  const subscribe = useCallback((callback: () => void) => {
+    window.addEventListener('online', callback);
+    window.addEventListener('offline', callback);
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('online', callback);
+      window.removeEventListener('offline', callback);
     };
   }, []);
 
-  return isOnline;
+  const getSnapshot = useCallback(() => navigator.onLine, []);
+  const getServerSnapshot = useCallback(() => true, []);
+
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
+
+/**
+ * Extended hook with pending sync queue count.
+ */
+export function useOnlineStatusExtended() {
+  const isOnline = useOnlineStatus();
+  const [pendingCount, setPendingCount] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchCount() {
+      try {
+        const { db } = await import('@/lib/sync/db');
+        const count = await db.sync_queue.count();
+        if (!cancelled) {
+          requestAnimationFrame(() => setPendingCount(count));
+        }
+      } catch {
+        // DB not available
+      }
+    }
+
+    fetchCount();
+    const interval = setInterval(fetchCount, 5000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
+
+  return { isOnline, pendingCount };
 }

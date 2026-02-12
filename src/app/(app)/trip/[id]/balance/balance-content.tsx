@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { EmptyState } from '@/components/ui/empty-state';
+import { EmptyExpensesIllustration } from '@/components/illustrations';
 import { TripSummary } from '@/components/summary';
 import { useTripRealtime } from '@/hooks/use-trip-realtime';
 import type { TripExpenseSummary } from '@/types/expense-summary';
@@ -29,11 +30,16 @@ export function BalanceContent({ summary, trip, currentUserId, isOrganizer }: Ba
           icon={Receipt}
           title="Nenhuma despesa registrada"
           description="Comece a registrar despesas para ver o balanço da viagem e as divisões entre participantes"
+          illustration={<EmptyExpensesIllustration className="size-20" />}
           action={{
             label: 'Ir para Despesas',
             onClick: () => router.push(`/trip/${trip.id}/expenses`),
           }}
           className="min-h-[400px]"
+          tips={[
+            'Registre despesas na aba Despesas para ver o balanço aqui',
+            'O sistema calcula automaticamente quem deve para quem',
+          ]}
         />
       </main>
     );

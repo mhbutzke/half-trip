@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2 } from 'lucide-react';
+import Image from 'next/image';
+import { Loader2, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,6 +37,8 @@ import { updateTrip } from '@/lib/supabase/trips';
 import type { TripWithMembers } from '@/lib/supabase/trips';
 import { SUPPORTED_CURRENCIES, CURRENCY_LABELS, type SupportedCurrency } from '@/types/currency';
 import type { TransportType } from '@/types/database';
+import { uploadTripCover } from '@/lib/supabase/storage';
+import { resizeImage } from '@/lib/utils/image';
 import { buildTripUpdatePayload } from './edit-trip-dialog.utils';
 
 interface EditTripDialogProps {
@@ -47,6 +50,9 @@ interface EditTripDialogProps {
 
 export function EditTripDialog({ trip, open, onOpenChange, onSuccess }: EditTripDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   type CreateTripFormInput = z.input<typeof createTripSchema>;
   type CreateTripFormOutput = z.output<typeof createTripSchema>;
@@ -78,8 +84,40 @@ export function EditTripDialog({ trip, open, onOpenChange, onSuccess }: EditTrip
         base_currency: (trip.base_currency as SupportedCurrency) || 'BRL',
         transport_type: (trip.transport_type as TransportType) || 'plane',
       });
+      setCoverPreview(trip.cover_url || null);
     }
   }, [trip, form]);
+
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !trip) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Imagem deve ter no máximo 5MB');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const resized = await resizeImage(file);
+      const formData = new FormData();
+      formData.append('file', resized, 'cover.jpg');
+
+      const result = await uploadTripCover(trip.id, formData);
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+
+      setCoverPreview(result.url || null);
+      toast.success('Capa atualizada!');
+    } catch {
+      toast.error('Erro ao enviar imagem');
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   const onSubmit = async (data: CreateTripFormOutput) => {
     if (!trip) return;
@@ -273,6 +311,56 @@ export function EditTripDialog({ trip, open, onOpenChange, onSuccess }: EditTrip
                 </FormItem>
               )}
             />
+
+            {/* Cover image upload */}
+            <div className="space-y-2">
+              <FormLabel>Capa da viagem (opcional)</FormLabel>
+              {coverPreview ? (
+                <div className="relative h-32 w-full overflow-hidden rounded-lg">
+                  <Image
+                    src={coverPreview}
+                    alt="Capa da viagem"
+                    fill
+                    className="object-cover"
+                    unoptimized
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCoverPreview(null);
+                      if (fileInputRef.current) fileInputRef.current.value = '';
+                    }}
+                    className="absolute top-2 right-2 rounded-full bg-black/50 p-1 text-white hover:bg-black/70"
+                    aria-label="Remover capa"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                  className="flex h-32 w-full items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 text-muted-foreground hover:border-muted-foreground/50 transition-colors"
+                >
+                  {isUploading ? (
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  ) : (
+                    <div className="flex flex-col items-center gap-1">
+                      <Upload className="h-6 w-6" aria-hidden="true" />
+                      <span className="text-sm">Escolher imagem</span>
+                    </div>
+                  )}
+                </button>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleCoverUpload}
+              />
+            </div>
 
             <DialogFooter className="pt-4">
               <Button

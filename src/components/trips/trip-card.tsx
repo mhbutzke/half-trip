@@ -1,6 +1,7 @@
 'use client';
 
 import { memo } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { format, differenceInDays, isFuture, isPast, isToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -115,6 +116,13 @@ export const TripCard = memo(function TripCard({
   return (
     <Card className="group relative overflow-hidden transition-all hover:shadow-md">
       <Link href={`/trip/${trip.id}`} className="absolute inset-0 z-0" />
+
+      {trip.cover_url && (
+        <div className="relative h-32 w-full">
+          <Image src={trip.cover_url} alt="" fill className="object-cover" unoptimized />
+          <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
+        </div>
+      )}
 
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">

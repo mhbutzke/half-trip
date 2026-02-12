@@ -6,16 +6,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+import { ResponsiveFormContainer } from '@/components/ui/responsive-form-container';
 import { Form } from '@/components/ui/form';
+import { useMediaQuery } from '@/hooks/use-media-query';
 import { createActivitySchema, type CreateActivityInput } from '@/lib/validation/activity-schemas';
 import { createActivity } from '@/lib/supabase/activities';
 import { ActivityFormFields } from './activity-form-fields';
@@ -27,7 +20,6 @@ interface AddActivityDialogProps {
   defaultDate?: string;
   trigger?: React.ReactNode;
   onSuccess?: () => void;
-  // Controlled mode props
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
@@ -50,6 +42,7 @@ export function AddActivityDialog({
   const [newLinkLabel, setNewLinkLabel] = useState('');
   const [linkError, setLinkError] = useState('');
   const [locationCoords, setLocationCoords] = useState<LocationCoords | null>(null);
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   const form = useForm<CreateActivityInput>({
     resolver: zodResolver(createActivitySchema),
@@ -67,7 +60,6 @@ export function AddActivityDialog({
     },
   });
 
-  // Reset form with new defaultDate when dialog opens in controlled mode
   useEffect(() => {
     if (isControlled && open && defaultDate) {
       form.setValue('date', defaultDate);
@@ -103,7 +95,6 @@ export function AddActivityDialog({
     setIsSubmitting(true);
 
     try {
-      // Build metadata from transport_type and location coords
       const metadata: { [key: string]: Json | undefined } = {};
       if (data.transport_type) {
         metadata.transport_type = data.transport_type;
@@ -169,69 +160,58 @@ export function AddActivityDialog({
     }
   };
 
-  const dialogContent = (
-    <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[550px]">
-      <DialogHeader>
-        <DialogTitle>Adicionar atividade</DialogTitle>
-        <DialogDescription>Adicione uma atividade ao roteiro da viagem.</DialogDescription>
-      </DialogHeader>
-
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <ActivityFormFields
-            form={form}
-            links={links}
-            setLinks={setLinks}
-            newLinkUrl={newLinkUrl}
-            setNewLinkUrl={setNewLinkUrl}
-            newLinkLabel={newLinkLabel}
-            setNewLinkLabel={setNewLinkLabel}
-            linkError={linkError}
-            addLink={addLink}
-            locationCoords={locationCoords}
-            setLocationCoords={setLocationCoords}
-          />
-
-          <DialogFooter className="pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleOpenChange(false)}
-              disabled={isSubmitting}
-            >
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Adicionar
-            </Button>
-          </DialogFooter>
-        </form>
-      </Form>
-    </DialogContent>
-  );
-
-  // Controlled mode without trigger - just render the dialog
-  if (isControlled && !trigger) {
-    return (
-      <Dialog open={open} onOpenChange={handleOpenChange}>
-        {dialogContent}
-      </Dialog>
-    );
-  }
-
-  // Uncontrolled mode or with trigger
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button size="sm">
+    <>
+      {!isControlled &&
+        (trigger ? (
+          <span onClick={() => setOpen(true)}>{trigger}</span>
+        ) : (
+          <Button size="sm" onClick={() => setOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Adicionar atividade
           </Button>
-        )}
-      </DialogTrigger>
-      {dialogContent}
-    </Dialog>
+        ))}
+
+      <ResponsiveFormContainer
+        open={open}
+        onOpenChange={handleOpenChange}
+        title="Adicionar atividade"
+        description="Adicione uma atividade ao roteiro da viagem."
+      >
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <ActivityFormFields
+              form={form}
+              links={links}
+              setLinks={setLinks}
+              newLinkUrl={newLinkUrl}
+              setNewLinkUrl={setNewLinkUrl}
+              newLinkLabel={newLinkLabel}
+              setNewLinkLabel={setNewLinkLabel}
+              linkError={linkError}
+              addLink={addLink}
+              locationCoords={locationCoords}
+              setLocationCoords={setLocationCoords}
+              quickMode={isMobile}
+            />
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => handleOpenChange(false)}
+                disabled={isSubmitting}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Adicionar
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </ResponsiveFormContainer>
+    </>
   );
 }

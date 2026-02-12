@@ -3,7 +3,7 @@ import { calculateBalancesWithSettlements } from '@/lib/balance/calculate-balanc
 import { calculateSettlements } from '@/lib/balance/calculate-settlements';
 import type { ExpenseData, TripMemberData, PersistedSettlement } from '@/lib/balance/types';
 import { getTripExpenses } from './expenses';
-import { getTripMembers } from './trips';
+import { getTripById, getTripMembers } from './trips';
 import { getSettledSettlements } from './settlements';
 
 /**
@@ -34,17 +34,21 @@ export async function getTripExpenseSummary(tripId: string) {
   }
 
   // Get all required data in parallel
-  const [expenses, members, settledSettlements] = await Promise.all([
+  const [trip, expenses, members, settledSettlements] = await Promise.all([
+    getTripById(tripId),
     getTripExpenses(tripId),
     getTripMembers(tripId),
     getSettledSettlements(tripId),
   ]);
+
+  const baseCurrency = trip?.base_currency || 'BRL';
 
   // Transform expenses for balance calculation
   const expenseData: ExpenseData[] = expenses.map((expense) => ({
     id: expense.id,
     amount: expense.amount,
     paidById: expense.paid_by,
+    exchangeRate: expense.exchange_rate ?? 1,
     splits: expense.expense_splits.map((split) => ({
       userId: split.user_id,
       amount: split.amount,
@@ -77,6 +81,7 @@ export async function getTripExpenseSummary(tripId: string) {
 
   return {
     tripId,
+    baseCurrency,
     totalExpenses: balanceResult.totalExpenses,
     expenseCount: expenses.length,
     participants: balanceResult.participants,

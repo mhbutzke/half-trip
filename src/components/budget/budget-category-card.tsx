@@ -51,7 +51,8 @@ export function BudgetCategoryCard({
             <div>
               <p className="font-medium">{label}</p>
               <p className="text-sm text-muted-foreground">
-                {formatCurrency(budget.spent)} de {formatCurrency(budget.amount)}
+                {formatCurrency(budget.spent, budget.currency)} de{' '}
+                {formatCurrency(budget.amount, budget.currency)}
               </p>
             </div>
           </div>
@@ -99,7 +100,7 @@ export function BudgetCategoryCard({
 
         {budget.remaining < 0 && (
           <p className="mt-2 text-sm font-medium text-destructive">
-            Excedido em {formatCurrency(Math.abs(budget.remaining))}
+            Excedido em {formatCurrency(Math.abs(budget.remaining), budget.currency)}
           </p>
         )}
       </CardContent>

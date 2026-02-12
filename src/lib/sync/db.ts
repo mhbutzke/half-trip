@@ -39,6 +39,7 @@ export interface CachedTrip extends SyncMetadata {
   description: string | null;
   cover_url: string | null;
   style: 'adventure' | 'relaxation' | 'cultural' | 'gastronomic' | 'other' | null;
+  base_currency: string;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -87,6 +88,7 @@ export interface CachedExpense extends SyncMetadata {
   description: string;
   amount: number;
   currency: string;
+  exchange_rate: number;
   date: string;
   category: 'accommodation' | 'food' | 'transport' | 'tickets' | 'shopping' | 'other';
   paid_by: string;
@@ -167,7 +169,7 @@ export class HalfTripDB extends Dexie {
   constructor() {
     super('HalfTripDB');
 
-    this.version(2).stores({
+    this.version(3).stores({
       // Users table
       users: 'id, email, name',
 

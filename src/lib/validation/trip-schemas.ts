@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { TripStyle } from '@/types/database';
+import { SUPPORTED_CURRENCIES } from '@/types/currency';
 
 export const tripStyles: { value: TripStyle; label: string }[] = [
   { value: 'adventure', label: 'Aventura' },
@@ -28,6 +29,7 @@ export const createTripSchema = z
       .enum(['adventure', 'relaxation', 'cultural', 'gastronomic', 'other'] as const)
       .optional()
       .nullable(),
+    base_currency: z.enum(SUPPORTED_CURRENCIES),
   })
   .refine(
     (data) => {
@@ -64,6 +66,7 @@ export const updateTripSchema = z
       .enum(['adventure', 'relaxation', 'cultural', 'gastronomic', 'other'] as const)
       .optional()
       .nullable(),
+    base_currency: z.enum(SUPPORTED_CURRENCIES).optional(),
   })
   .refine(
     (data) => {

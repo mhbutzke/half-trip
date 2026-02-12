@@ -26,6 +26,7 @@ export function TripSummary({ summary, currentUserId, isOrganizer }: TripSummary
   const router = useRouter();
   const [markDialogOpen, setMarkDialogOpen] = useState(false);
   const [selectedSettlement, setSelectedSettlement] = useState<Settlement | null>(null);
+  const baseCur = summary.baseCurrency || 'BRL';
 
   const getInitials = (name: string) => {
     return name
@@ -72,7 +73,7 @@ export function TripSummary({ summary, currentUserId, isOrganizer }: TripSummary
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-muted-foreground">Total de despesas</p>
-              <p className="text-2xl font-bold">{formatCurrency(summary.totalExpenses)}</p>
+              <p className="text-2xl font-bold">{formatCurrency(summary.totalExpenses, baseCur)}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Participantes</p>
@@ -100,20 +101,20 @@ export function TripSummary({ summary, currentUserId, isOrganizer }: TripSummary
                   <div className="flex-1">
                     <p className="font-medium">{participant.userName}</p>
                     <p className="text-xs text-muted-foreground">
-                      Pagou {formatCurrency(participant.totalPaid)} • Deve{' '}
-                      {formatCurrency(participant.totalOwed)}
+                      Pagou {formatCurrency(participant.totalPaid, baseCur)} • Deve{' '}
+                      {formatCurrency(participant.totalOwed, baseCur)}
                     </p>
                   </div>
                   <div className="text-right">
                     {participant.netBalance > 0.01 ? (
                       <Badge variant="outline" className="bg-success/10 text-success">
                         <TrendingUp className="mr-1 h-3 w-3" />
-                        {formatCurrency(participant.netBalance)}
+                        {formatCurrency(participant.netBalance, baseCur)}
                       </Badge>
                     ) : participant.netBalance < -0.01 ? (
                       <Badge variant="outline" className="bg-destructive/10 text-destructive">
                         <TrendingDown className="mr-1 h-3 w-3" />
-                        {formatCurrency(Math.abs(participant.netBalance))}
+                        {formatCurrency(Math.abs(participant.netBalance), baseCur)}
                       </Badge>
                     ) : (
                       <Badge variant="outline" className="bg-muted">
@@ -167,7 +168,9 @@ export function TripSummary({ summary, currentUserId, isOrganizer }: TripSummary
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex items-center gap-2">
-                      <Badge className="font-semibold">{formatCurrency(settlement.amount)}</Badge>
+                      <Badge className="font-semibold">
+                        {formatCurrency(settlement.amount, baseCur)}
+                      </Badge>
                       {(settlement.from.userId === currentUserId ||
                         settlement.to.userId === currentUserId ||
                         isOrganizer) && (

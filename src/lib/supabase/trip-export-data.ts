@@ -19,7 +19,7 @@ export async function getTripExportData(tripId: string): Promise<PdfReportData |
 
   const { data: trip } = await supabase
     .from('trips')
-    .select('name, destination, start_date, end_date')
+    .select('name, destination, start_date, end_date, base_currency')
     .eq('id', tripId)
     .single();
 
@@ -43,11 +43,13 @@ export async function getTripExportData(tripId: string): Promise<PdfReportData |
     category: e.category,
     amount: e.amount,
     currency: e.currency,
+    exchange_rate: e.exchange_rate ?? 1,
     paid_by_name: memberNameMap.get(e.paid_by) || 'N/A',
     notes: e.notes,
   }));
 
-  const totalAmount = expenses.reduce((sum, e) => sum + e.amount, 0);
+  const baseCurrency = trip.base_currency || 'BRL';
+  const totalAmount = expenses.reduce((sum, e) => sum + e.amount * (e.exchange_rate ?? 1), 0);
 
   const participants = summary
     ? summary.participants.map((p) => ({
@@ -63,9 +65,10 @@ export async function getTripExportData(tripId: string): Promise<PdfReportData |
     destination: trip.destination,
     startDate: trip.start_date,
     endDate: trip.end_date,
+    baseCurrency,
     expenses: expenseRows,
     totalAmount,
-    currency: 'BRL',
+    currency: baseCurrency,
     participants,
   };
 }

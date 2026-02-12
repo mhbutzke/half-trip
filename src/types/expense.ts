@@ -31,6 +31,7 @@ export type CreateExpenseInput = {
   description: string;
   amount: number;
   currency?: string;
+  exchange_rate?: number;
   date: string;
   category: ExpenseCategory;
   paid_by: string;

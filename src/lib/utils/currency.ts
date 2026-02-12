@@ -35,3 +35,21 @@ export function parseCurrency(value: string): number {
 
   return parseFloat(normalized) || 0;
 }
+
+/**
+ * Formats a converted amount showing original and base currency values
+ * e.g. "US$ 100,00 (R$ 578,00)"
+ */
+export function formatConvertedAmount(
+  amount: number,
+  currency: string,
+  exchangeRate: number,
+  baseCurrency: string
+): string {
+  const original = formatCurrency(amount, currency);
+  if (currency === baseCurrency || exchangeRate === 1) {
+    return original;
+  }
+  const converted = formatCurrency(amount * exchangeRate, baseCurrency);
+  return `${original} (${converted})`;
+}

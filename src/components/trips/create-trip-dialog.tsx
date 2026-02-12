@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/select';
 import { createTripSchema, tripStyles, type CreateTripInput } from '@/lib/validation/trip-schemas';
 import { createTrip } from '@/lib/supabase/trips';
+import { SUPPORTED_CURRENCIES, CURRENCY_LABELS } from '@/types/currency';
 
 interface CreateTripDialogProps {
   trigger?: React.ReactNode;
@@ -65,6 +66,7 @@ export function CreateTripDialog({
       end_date: '',
       description: '',
       style: null,
+      base_currency: 'BRL',
     },
   });
 
@@ -79,6 +81,7 @@ export function CreateTripDialog({
         end_date: data.end_date,
         description: data.description || null,
         style: data.style || null,
+        base_currency: data.base_currency,
       });
 
       if (result.error) {
@@ -205,6 +208,31 @@ export function CreateTripDialog({
                       {tripStyles.map((style) => (
                         <SelectItem key={style.value} value={style.value}>
                           {style.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="base_currency"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Moeda base</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Selecione a moeda" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {SUPPORTED_CURRENCIES.map((code) => (
+                        <SelectItem key={code} value={code}>
+                          {CURRENCY_LABELS[code]}
                         </SelectItem>
                       ))}
                     </SelectContent>

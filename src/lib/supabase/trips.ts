@@ -3,6 +3,7 @@
 import { createClient } from './server';
 import { revalidatePath } from 'next/cache';
 import type { Trip, TripMember, User, TripStyle } from '@/types/database';
+import type { SupportedCurrency } from '@/types/currency';
 
 export type TripResult = {
   error?: string;
@@ -24,6 +25,7 @@ export type CreateTripInput = {
   end_date: string;
   description?: string | null;
   style?: TripStyle | null;
+  base_currency?: SupportedCurrency;
 };
 
 export type UpdateTripInput = Partial<CreateTripInput>;
@@ -55,6 +57,18 @@ export async function createTrip(input: CreateTripInput): Promise<TripResult> {
     return { error: error.message };
   }
 
+  // Update base_currency if provided (RPC creates with default 'BRL')
+  if (input.base_currency && input.base_currency !== 'BRL' && tripId) {
+    const { error: updateError } = await supabase
+      .from('trips')
+      .update({ base_currency: input.base_currency })
+      .eq('id', tripId);
+
+    if (updateError) {
+      return { error: updateError.message };
+    }
+  }
+
   revalidatePath('/trips');
 
   return { success: true, tripId };
@@ -84,6 +98,18 @@ export async function updateTrip(tripId: string, input: UpdateTripInput): Promis
     return { error: 'Apenas organizadores podem editar a viagem' };
   }
 
+  // Block base_currency change if trip has expenses
+  if (input.base_currency !== undefined) {
+    const { count } = await supabase
+      .from('expenses')
+      .select('id', { count: 'exact', head: true })
+      .eq('trip_id', tripId);
+
+    if (count && count > 0) {
+      return { error: 'Não é possível alterar a moeda base após registrar despesas.' };
+    }
+  }
+
   const { error } = await supabase
     .from('trips')
     .update({
@@ -93,6 +119,7 @@ export async function updateTrip(tripId: string, input: UpdateTripInput): Promis
       ...(input.end_date && { end_date: input.end_date }),
       ...(input.description !== undefined && { description: input.description }),
       ...(input.style !== undefined && { style: input.style }),
+      ...(input.base_currency !== undefined && { base_currency: input.base_currency }),
     })
     .eq('id', tripId);
 

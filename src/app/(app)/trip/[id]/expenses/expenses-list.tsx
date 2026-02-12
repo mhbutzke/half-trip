@@ -21,6 +21,7 @@ import type { TripMemberRole, ExpenseCategory } from '@/types/database';
 
 interface ExpensesListProps {
   tripId: string;
+  baseCurrency: string;
   initialExpenses: ExpenseWithDetails[];
   members: TripMemberWithUser[];
   userRole: TripMemberRole | null;
@@ -32,6 +33,7 @@ type FilterPaidBy = string | 'all';
 
 export function ExpensesList({
   tripId,
+  baseCurrency,
   initialExpenses,
   members,
   userRole,
@@ -103,9 +105,12 @@ export function ExpensesList({
     setPaidByFilter('all');
   };
 
-  // Calculate filtered total
+  // Calculate filtered total (converted to base currency)
   const filteredTotal = useMemo(() => {
-    return filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+    return filteredExpenses.reduce(
+      (sum, expense) => sum + expense.amount * (expense.exchange_rate ?? 1),
+      0
+    );
   }, [filteredExpenses]);
 
   return (
@@ -241,7 +246,9 @@ export function ExpensesList({
             : `${filteredExpenses.length} de ${expenses.length} ${expenses.length === 1 ? 'despesa' : 'despesas'}`}
         </span>
         {filteredExpenses.length > 0 && filteredExpenses.length !== expenses.length && (
-          <span className="font-medium text-foreground">{formatAmount(filteredTotal)}</span>
+          <span className="font-medium text-foreground">
+            {formatAmount(filteredTotal, baseCurrency)}
+          </span>
         )}
       </div>
 
@@ -279,6 +286,7 @@ export function ExpensesList({
             <ExpenseCard
               key={expense.id}
               expense={expense}
+              baseCurrency={baseCurrency}
               canEdit={canEditExpense(expense)}
               onEdit={() => {
                 // TODO: Open edit expense sheet

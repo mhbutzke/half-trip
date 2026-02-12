@@ -33,6 +33,7 @@ import {
 import { createTripSchema, tripStyles, type CreateTripInput } from '@/lib/validation/trip-schemas';
 import { updateTrip } from '@/lib/supabase/trips';
 import type { TripWithMembers } from '@/lib/supabase/trips';
+import { SUPPORTED_CURRENCIES, CURRENCY_LABELS, type SupportedCurrency } from '@/types/currency';
 
 interface EditTripDialogProps {
   trip: TripWithMembers | null;
@@ -53,6 +54,7 @@ export function EditTripDialog({ trip, open, onOpenChange, onSuccess }: EditTrip
       end_date: '',
       description: '',
       style: null,
+      base_currency: 'BRL',
     },
   });
 
@@ -66,6 +68,7 @@ export function EditTripDialog({ trip, open, onOpenChange, onSuccess }: EditTrip
         end_date: trip.end_date,
         description: trip.description || '',
         style: trip.style,
+        base_currency: (trip.base_currency as SupportedCurrency) || 'BRL',
       });
     }
   }, [trip, form]);
@@ -83,6 +86,7 @@ export function EditTripDialog({ trip, open, onOpenChange, onSuccess }: EditTrip
         end_date: data.end_date,
         description: data.description || null,
         style: data.style || null,
+        base_currency: data.base_currency,
       });
 
       if (result.error) {
@@ -190,6 +194,31 @@ export function EditTripDialog({ trip, open, onOpenChange, onSuccess }: EditTrip
                       {tripStyles.map((style) => (
                         <SelectItem key={style.value} value={style.value}>
                           {style.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="base_currency"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Moeda base</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Selecione a moeda" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {SUPPORTED_CURRENCIES.map((currency) => (
+                        <SelectItem key={currency} value={currency}>
+                          {CURRENCY_LABELS[currency]}
                         </SelectItem>
                       ))}
                     </SelectContent>

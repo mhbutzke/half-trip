@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { ExpenseCategory } from '@/types/database';
+import { SUPPORTED_CURRENCIES } from '@/types/currency';
 
 export const expenseCategories: { value: ExpenseCategory; label: string }[] = [
   { value: 'accommodation', label: 'Hospedagem' },
@@ -39,7 +40,8 @@ export const createExpenseSchema = z.object({
     .min(2, 'Descrição deve ter pelo menos 2 caracteres')
     .max(200, 'Descrição deve ter no máximo 200 caracteres'),
   amount: z.number({ message: 'Valor é obrigatório' }).positive('Valor deve ser maior que zero'),
-  currency: z.string().length(3, 'Moeda deve ter 3 caracteres').default('BRL'),
+  currency: z.enum(SUPPORTED_CURRENCIES, { message: 'Moeda inválida' }).default('BRL'),
+  exchange_rate: z.number().positive('Taxa de câmbio deve ser maior que zero').default(1),
   date: z.string().min(1, 'Data é obrigatória'),
   category: z
     .enum(['accommodation', 'food', 'transport', 'tickets', 'shopping', 'other'] as const, {
@@ -71,7 +73,8 @@ export const expenseFormSchema = z.object({
     .min(2, 'Descrição deve ter pelo menos 2 caracteres')
     .max(200, 'Descrição deve ter no máximo 200 caracteres'),
   amount: z.string().min(1, 'Valor é obrigatório'),
-  currency: z.string().length(3, 'Moeda deve ter 3 caracteres').default('BRL'),
+  currency: z.enum(SUPPORTED_CURRENCIES, { message: 'Moeda inválida' }),
+  exchange_rate: z.string().optional(),
   date: z.string().min(1, 'Data é obrigatória'),
   category: z.enum(
     ['accommodation', 'food', 'transport', 'tickets', 'shopping', 'other'] as const,
@@ -81,7 +84,7 @@ export const expenseFormSchema = z.object({
   ),
   paid_by: z.string().min(1, 'Quem pagou é obrigatório'),
   notes: z.string().max(500, 'Observações devem ter no máximo 500 caracteres').optional(),
-  split_type: z.enum(['equal', 'by_amount', 'by_percentage'] as const).default('equal'),
+  split_type: z.enum(['equal', 'by_amount', 'by_percentage'] as const),
   selected_members: z.array(z.string()).min(1, 'Selecione pelo menos um participante'),
   // For by_amount: record of user_id -> amount string
   custom_amounts: z.record(z.string(), z.string()).optional(),

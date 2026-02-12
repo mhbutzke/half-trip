@@ -24,6 +24,7 @@ import { PendingIndicator } from '@/components/sync';
 
 interface ExpenseCardProps {
   expense: ExpenseWithDetails;
+  baseCurrency?: string;
   canEdit: boolean;
   onEdit: () => void;
   onDelete: () => void;
@@ -31,10 +32,13 @@ interface ExpenseCardProps {
 
 export const ExpenseCard = memo(function ExpenseCard({
   expense,
+  baseCurrency,
   canEdit,
   onEdit,
   onDelete,
 }: ExpenseCardProps) {
+  const isForeignCurrency = baseCurrency && expense.currency !== baseCurrency;
+  const convertedAmount = expense.amount * (expense.exchange_rate ?? 1);
   const categoryInfo = getCategoryInfo(expense.category);
   const CategoryIcon = categoryInfo.icon;
   const { isPending } = useSyncStatus('expenses', expense.id);
@@ -78,11 +82,15 @@ export const ExpenseCard = memo(function ExpenseCard({
 
           {/* Right: Amount, receipt badge, and menu */}
           <div className="flex items-start gap-2 shrink-0">
-            <div className="flex flex-col items-end gap-1">
+            <div className="flex flex-col items-end gap-0.5">
               <p className="font-semibold text-lg">
                 {formatAmount(expense.amount, expense.currency)}
               </p>
-              {/* <ReceiptBadge hasReceipt={!!expense.receipt_url} /> */}
+              {isForeignCurrency && (
+                <p className="text-xs text-muted-foreground">
+                  {formatAmount(convertedAmount, baseCurrency)}
+                </p>
+              )}
             </div>
             {canEdit && (
               <DropdownMenu>

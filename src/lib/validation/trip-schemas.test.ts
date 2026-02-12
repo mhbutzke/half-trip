@@ -18,6 +18,7 @@ describe('Trip Validation Schemas', () => {
         end_date: '2025-06-10',
         description: 'Uma viagem incrível',
         style: 'cultural' as const,
+        base_currency: 'BRL' as const,
       };
 
       const result = createTripSchema.safeParse(validData);
@@ -30,6 +31,7 @@ describe('Trip Validation Schemas', () => {
         destination: 'Paris, França',
         start_date: '2025-06-01',
         end_date: '2025-06-10',
+        base_currency: 'BRL' as const,
       };
 
       const result = createTripSchema.safeParse(validData);
@@ -42,6 +44,7 @@ describe('Trip Validation Schemas', () => {
         destination: 'Paris, França',
         start_date: '2025-06-01',
         end_date: '2025-06-10',
+        base_currency: 'BRL' as const,
       };
 
       const result = createTripSchema.safeParse(invalidData);
@@ -57,6 +60,7 @@ describe('Trip Validation Schemas', () => {
         destination: 'Paris, França',
         start_date: '2025-06-01',
         end_date: '2025-06-10',
+        base_currency: 'BRL' as const,
       };
 
       const result = createTripSchema.safeParse(invalidData);
@@ -72,6 +76,7 @@ describe('Trip Validation Schemas', () => {
         destination: 'Paris, França',
         start_date: '2025-06-01',
         end_date: '2025-06-10',
+        base_currency: 'BRL' as const,
       };
 
       const result = createTripSchema.safeParse(invalidData);
@@ -87,6 +92,7 @@ describe('Trip Validation Schemas', () => {
         destination: '',
         start_date: '2025-06-01',
         end_date: '2025-06-10',
+        base_currency: 'BRL' as const,
       };
 
       const result = createTripSchema.safeParse(invalidData);
@@ -102,6 +108,7 @@ describe('Trip Validation Schemas', () => {
         destination: 'A'.repeat(201),
         start_date: '2025-06-01',
         end_date: '2025-06-10',
+        base_currency: 'BRL' as const,
       };
 
       const result = createTripSchema.safeParse(invalidData);
@@ -117,6 +124,7 @@ describe('Trip Validation Schemas', () => {
         destination: 'Paris, França',
         start_date: '',
         end_date: '2025-06-10',
+        base_currency: 'BRL' as const,
       };
 
       const result = createTripSchema.safeParse(invalidData);
@@ -132,6 +140,7 @@ describe('Trip Validation Schemas', () => {
         destination: 'Paris, França',
         start_date: '2025-06-01',
         end_date: '',
+        base_currency: 'BRL' as const,
       };
 
       const result = createTripSchema.safeParse(invalidData);
@@ -147,6 +156,7 @@ describe('Trip Validation Schemas', () => {
         destination: 'Paris, França',
         start_date: '2025-06-10',
         end_date: '2025-06-01',
+        base_currency: 'BRL' as const,
       };
 
       const result = createTripSchema.safeParse(invalidData);
@@ -162,6 +172,7 @@ describe('Trip Validation Schemas', () => {
         destination: 'São Paulo',
         start_date: '2025-06-01',
         end_date: '2025-06-01',
+        base_currency: 'BRL' as const,
       };
 
       const result = createTripSchema.safeParse(validData);
@@ -175,6 +186,7 @@ describe('Trip Validation Schemas', () => {
         start_date: '2025-06-01',
         end_date: '2025-06-10',
         description: 'A'.repeat(1001),
+        base_currency: 'BRL' as const,
       };
 
       const result = createTripSchema.safeParse(invalidData);
@@ -194,6 +206,7 @@ describe('Trip Validation Schemas', () => {
           start_date: '2025-06-01',
           end_date: '2025-06-10',
           style,
+          base_currency: 'BRL' as const,
         };
 
         const result = createTripSchema.safeParse(data);
@@ -208,6 +221,7 @@ describe('Trip Validation Schemas', () => {
         start_date: '2025-06-01',
         end_date: '2025-06-10',
         style: null,
+        base_currency: 'BRL' as const,
       };
 
       const result = createTripSchema.safeParse(validData);

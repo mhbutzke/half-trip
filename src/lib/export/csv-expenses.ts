@@ -7,22 +7,39 @@ export interface ExpenseExportRow {
   category: ExpenseCategory;
   amount: number;
   currency: string;
+  exchange_rate?: number;
   paid_by_name: string;
   notes: string | null;
 }
 
 export function generateExpensesCSV(expenses: ExpenseExportRow[]): string {
-  const headers = ['Data', 'Descrição', 'Categoria', 'Valor', 'Moeda', 'Pago por', 'Observações'];
+  const headers = [
+    'Data',
+    'Descrição',
+    'Categoria',
+    'Valor',
+    'Moeda',
+    'Taxa de Câmbio',
+    'Valor Convertido',
+    'Pago por',
+    'Observações',
+  ];
 
-  const rows = expenses.map((e) => [
-    e.date,
-    e.description,
-    getCategoryLabel(e.category),
-    e.amount.toFixed(2).replace('.', ','),
-    e.currency,
-    e.paid_by_name,
-    e.notes || '',
-  ]);
+  const rows = expenses.map((e) => {
+    const rate = e.exchange_rate ?? 1;
+    const converted = e.amount * rate;
+    return [
+      e.date,
+      e.description,
+      getCategoryLabel(e.category),
+      e.amount.toFixed(2).replace('.', ','),
+      e.currency,
+      rate.toFixed(2).replace('.', ','),
+      converted.toFixed(2).replace('.', ','),
+      e.paid_by_name,
+      e.notes || '',
+    ];
+  });
 
   const csvContent = [headers, ...rows]
     .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(';'))

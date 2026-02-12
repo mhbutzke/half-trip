@@ -24,9 +24,11 @@ export function BudgetSummaryCard({ summary }: BudgetSummaryProps) {
       <CardContent className="space-y-3">
         <div className="flex items-end justify-between">
           <div>
-            <p className="text-2xl font-bold">{formatCurrency(summary.totalSpent)}</p>
+            <p className="text-2xl font-bold">
+              {formatCurrency(summary.totalSpent, summary.currency)}
+            </p>
             <p className="text-sm text-muted-foreground">
-              de {formatCurrency(summary.totalBudget)}
+              de {formatCurrency(summary.totalBudget, summary.currency)}
             </p>
           </div>
           <p
@@ -35,8 +37,8 @@ export function BudgetSummaryCard({ summary }: BudgetSummaryProps) {
             }`}
           >
             {remaining >= 0
-              ? `${formatCurrency(remaining)} restante`
-              : `${formatCurrency(Math.abs(remaining))} excedido`}
+              ? `${formatCurrency(remaining, summary.currency)} restante`
+              : `${formatCurrency(Math.abs(remaining), summary.currency)} excedido`}
           </p>
         </div>
 

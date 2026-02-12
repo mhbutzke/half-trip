@@ -51,7 +51,7 @@ export async function getBudgetSummary(tripId: string): Promise<BudgetSummary | 
 
   const [budgetsResult, expensesResult] = await Promise.all([
     supabase.from('trip_budgets').select('*').eq('trip_id', tripId),
-    supabase.from('expenses').select('amount, category').eq('trip_id', tripId),
+    supabase.from('expenses').select('amount, category, exchange_rate').eq('trip_id', tripId),
   ]);
 
   const budgets = (budgetsResult.data as TripBudget[]) || [];
@@ -63,8 +63,9 @@ export async function getBudgetSummary(tripId: string): Promise<BudgetSummary | 
 
   for (const expense of expenses) {
     const cat = expense.category as string;
-    spendingByCategory[cat] = (spendingByCategory[cat] || 0) + expense.amount;
-    totalSpent += expense.amount;
+    const convertedAmount = expense.amount * (expense.exchange_rate ?? 1);
+    spendingByCategory[cat] = (spendingByCategory[cat] || 0) + convertedAmount;
+    totalSpent += convertedAmount;
   }
 
   // Build budget with spending info
@@ -233,7 +234,7 @@ export async function getExpensesByCategory(
 
   const { data: expenses } = await supabase
     .from('expenses')
-    .select('amount, category')
+    .select('amount, category, exchange_rate')
     .eq('trip_id', tripId);
 
   const result: Record<string, number> = {
@@ -247,7 +248,8 @@ export async function getExpensesByCategory(
 
   if (expenses) {
     for (const expense of expenses) {
-      result[expense.category] = (result[expense.category] || 0) + expense.amount;
+      const convertedAmount = expense.amount * (expense.exchange_rate ?? 1);
+      result[expense.category] = (result[expense.category] || 0) + convertedAmount;
     }
   }
 

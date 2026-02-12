@@ -127,6 +127,7 @@ export async function createExpenseOffline(
     description: data.description,
     amount: data.amount,
     currency: data.currency ?? 'BRL',
+    exchange_rate: data.exchange_rate ?? 1,
     category: data.category,
     date: data.date,
     paid_by: data.paid_by,

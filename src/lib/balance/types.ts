@@ -18,6 +18,7 @@ export interface ExpenseData {
   id: string;
   amount: number;
   paidById: string;
+  exchangeRate: number;
   splits: ExpenseSplit[];
 }
 

@@ -54,20 +54,25 @@ export function calculateBalances(
   let totalExpenses = 0;
 
   for (const expense of expenses) {
-    // Add to total expenses
-    totalExpenses += expense.amount;
+    const rate = expense.exchangeRate ?? 1;
+    const convertedAmount = expense.amount * rate;
 
-    // Add expense amount to payer's totalPaid
+    // Add to total expenses (in base currency)
+    totalExpenses += convertedAmount;
+
+    // Add converted expense amount to payer's totalPaid
     const payer = balanceMap.get(expense.paidById);
     if (payer) {
-      payer.totalPaid += expense.amount;
+      payer.totalPaid += convertedAmount;
     }
 
-    // Add split amounts to each participant's totalOwed
+    // Add split amounts converted to base currency
+    // Use ratio to avoid rounding errors from converting each split independently
     for (const split of expense.splits) {
       const participant = balanceMap.get(split.userId);
       if (participant) {
-        participant.totalOwed += split.amount;
+        const splitRatio = expense.amount > 0 ? split.amount / expense.amount : 0;
+        participant.totalOwed += convertedAmount * splitRatio;
       }
     }
   }
@@ -173,9 +178,9 @@ export function validateBalances(balances: ParticipantBalance[]): boolean {
 /**
  * Format currency for display
  */
-export function formatCurrency(amount: number): string {
+export function formatCurrency(amount: number, currency: string = 'BRL'): string {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
-    currency: 'BRL',
+    currency,
   }).format(amount);
 }

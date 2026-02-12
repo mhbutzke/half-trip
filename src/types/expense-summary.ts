@@ -20,6 +20,7 @@ export type PersonExpenseSummary = {
 
 export type TripExpenseSummary = {
   tripId: string;
+  baseCurrency: string;
   totalExpenses: number;
   expenseCount: number;
   participants: ParticipantBalance[];

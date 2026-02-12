@@ -8,14 +8,19 @@ export interface PdfReportData {
   destination: string;
   startDate: string;
   endDate: string;
+  baseCurrency: string;
   expenses: ExpenseExportRow[];
   totalAmount: number;
   currency: string;
   participants: { name: string; paid: number; owes: number; balance: number }[];
 }
 
-function formatCurrencyPdf(amount: number): string {
-  return `R$ ${amount.toFixed(2).replace('.', ',')}`;
+function formatCurrencyPdf(amount: number, currency: string = 'BRL'): string {
+  try {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency }).format(amount);
+  } catch {
+    return `${currency} ${amount.toFixed(2).replace('.', ',')}`;
+  }
 }
 
 function formatDatePdf(dateStr: string): string {
@@ -40,23 +45,40 @@ export function generateExpensePDF(data: PdfReportData): Blob {
   doc.text(`Viagem: ${data.tripName}`, 14, 38);
   doc.text(`Destino: ${data.destination}`, 14, 45);
   doc.text(`Período: ${formatDatePdf(data.startDate)} - ${formatDatePdf(data.endDate)}`, 14, 52);
-  doc.text(`Total: ${formatCurrencyPdf(data.totalAmount)}`, 14, 59);
+  doc.text(`Moeda base: ${data.baseCurrency}`, 14, 59);
+  doc.text(`Total: ${formatCurrencyPdf(data.totalAmount, data.baseCurrency)}`, 14, 66);
 
   // Expenses table
   if (data.expenses.length > 0) {
     doc.setFontSize(14);
-    doc.text('Despesas', 14, 72);
+    doc.text('Despesas', 14, 79);
 
     autoTable(doc, {
-      startY: 76,
-      head: [['Data', 'Descrição', 'Categoria', 'Valor', 'Pago por']],
-      body: data.expenses.map((e) => [
-        formatDatePdf(e.date),
-        e.description,
-        getCategoryLabel(e.category),
-        formatCurrencyPdf(e.amount),
-        e.paid_by_name,
-      ]),
+      startY: 83,
+      head: [
+        [
+          'Data',
+          'Descrição',
+          'Categoria',
+          'Moeda',
+          'Valor',
+          `Valor (${data.baseCurrency})`,
+          'Pago por',
+        ],
+      ],
+      body: data.expenses.map((e) => {
+        const rate = e.exchange_rate ?? 1;
+        const converted = e.amount * rate;
+        return [
+          formatDatePdf(e.date),
+          e.description,
+          getCategoryLabel(e.category),
+          e.currency,
+          formatCurrencyPdf(e.amount, e.currency),
+          e.currency !== data.baseCurrency ? formatCurrencyPdf(converted, data.baseCurrency) : '-',
+          e.paid_by_name,
+        ];
+      }),
       styles: { fontSize: 8, cellPadding: 2 },
       headStyles: { fillColor: [59, 130, 246] },
       alternateRowStyles: { fillColor: [245, 247, 250] },
@@ -80,9 +102,9 @@ export function generateExpensePDF(data: PdfReportData): Blob {
         head: [['Participante', 'Pagou', 'Deve', 'Saldo']],
         body: data.participants.map((p) => [
           p.name,
-          formatCurrencyPdf(p.paid),
-          formatCurrencyPdf(p.owes),
-          formatCurrencyPdf(p.balance),
+          formatCurrencyPdf(p.paid, data.baseCurrency),
+          formatCurrencyPdf(p.owes, data.baseCurrency),
+          formatCurrencyPdf(p.balance, data.baseCurrency),
         ]),
         styles: { fontSize: 8, cellPadding: 2 },
         headStyles: { fillColor: [16, 185, 129] },
@@ -96,9 +118,9 @@ export function generateExpensePDF(data: PdfReportData): Blob {
         head: [['Participante', 'Pagou', 'Deve', 'Saldo']],
         body: data.participants.map((p) => [
           p.name,
-          formatCurrencyPdf(p.paid),
-          formatCurrencyPdf(p.owes),
-          formatCurrencyPdf(p.balance),
+          formatCurrencyPdf(p.paid, data.baseCurrency),
+          formatCurrencyPdf(p.owes, data.baseCurrency),
+          formatCurrencyPdf(p.balance, data.baseCurrency),
         ]),
         styles: { fontSize: 8, cellPadding: 2 },
         headStyles: { fillColor: [16, 185, 129] },

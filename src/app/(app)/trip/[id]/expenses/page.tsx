@@ -38,6 +38,7 @@ async function ExpensesContent({ tripId }: { tripId: string }) {
       <ExpensesHeader tripId={tripId} tripName={trip.name} />
       <ExpensesList
         tripId={tripId}
+        baseCurrency={trip.base_currency}
         initialExpenses={expenses}
         members={members}
         userRole={userRole}

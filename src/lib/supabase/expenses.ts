@@ -8,6 +8,7 @@ import type {
   CreateExpenseInput,
   UpdateExpenseInput,
 } from '@/types/expense';
+import { SUPPORTED_CURRENCIES, type SupportedCurrency } from '@/types/currency';
 
 /**
  * Creates a new expense for a trip with splits
@@ -54,6 +55,29 @@ export async function createExpense(input: CreateExpenseInput): Promise<ExpenseR
     return { error: 'A soma das divisões deve ser igual ao valor total' };
   }
 
+  // Validate currency
+  const currency = (input.currency || 'BRL') as SupportedCurrency;
+  if (!SUPPORTED_CURRENCIES.includes(currency)) {
+    return { error: 'Moeda inválida' };
+  }
+
+  // Get trip base_currency to determine exchange_rate
+  const { data: trip } = await supabase
+    .from('trips')
+    .select('base_currency')
+    .eq('id', input.trip_id)
+    .single();
+
+  if (!trip) {
+    return { error: 'Viagem não encontrada' };
+  }
+
+  // Force exchange_rate = 1 when currency matches base, otherwise require > 0
+  const exchangeRate = currency === trip.base_currency ? 1 : (input.exchange_rate ?? 1);
+  if (exchangeRate <= 0) {
+    return { error: 'Taxa de câmbio deve ser maior que zero' };
+  }
+
   // Create the expense
   const { data: expense, error: expenseError } = await supabase
     .from('expenses')
@@ -61,7 +85,8 @@ export async function createExpense(input: CreateExpenseInput): Promise<ExpenseR
       trip_id: input.trip_id,
       description: input.description,
       amount: input.amount,
-      currency: input.currency || 'BRL',
+      currency,
+      exchange_rate: exchangeRate,
       date: input.date,
       category: input.category,
       paid_by: input.paid_by,
@@ -166,6 +191,33 @@ export async function updateExpense(
     }
   }
 
+  // Validate currency if provided
+  if (input.currency !== undefined) {
+    const currency = input.currency as SupportedCurrency;
+    if (!SUPPORTED_CURRENCIES.includes(currency)) {
+      return { error: 'Moeda inválida' };
+    }
+
+    // Get trip base_currency
+    const { data: trip } = await supabase
+      .from('trips')
+      .select('base_currency')
+      .eq('id', expense.trip_id)
+      .single();
+
+    if (trip) {
+      // Force exchange_rate = 1 when currency matches base
+      if (currency === trip.base_currency) {
+        input.exchange_rate = 1;
+      }
+    }
+  }
+
+  // Validate exchange_rate if provided
+  if (input.exchange_rate !== undefined && input.exchange_rate <= 0) {
+    return { error: 'Taxa de câmbio deve ser maior que zero' };
+  }
+
   // Update the expense
   const { error: updateError } = await supabase
     .from('expenses')
@@ -173,6 +225,7 @@ export async function updateExpense(
       ...(input.description !== undefined && { description: input.description }),
       ...(input.amount !== undefined && { amount: input.amount }),
       ...(input.currency !== undefined && { currency: input.currency }),
+      ...(input.exchange_rate !== undefined && { exchange_rate: input.exchange_rate }),
       ...(input.date !== undefined && { date: input.date }),
       ...(input.category !== undefined && { category: input.category }),
       ...(input.paid_by !== undefined && { paid_by: input.paid_by }),

@@ -19,14 +19,8 @@ const DeleteTripDialog = dynamic(() =>
 import { useRealtimeSubscription } from '@/hooks/use-realtime-subscription';
 import { useOnlineStatus } from '@/hooks/use-online-status';
 import { cacheTrips, getCachedUserTrips } from '@/lib/sync';
-import { getUser } from '@/lib/supabase/auth';
-import {
-  getUserTrips,
-  getArchivedTrips,
-  archiveTrip,
-  unarchiveTrip,
-  type TripWithMembers,
-} from '@/lib/supabase/trips';
+import { getCurrentAuthUserId, getTripsForCurrentUser } from '@/lib/supabase/trips-client';
+import { archiveTrip, unarchiveTrip, type TripWithMembers } from '@/lib/supabase/trips';
 
 interface TripsListProps {
   emptyState: ReactNode;
@@ -45,21 +39,21 @@ export function TripsList({ emptyState }: TripsListProps) {
     setIsLoading(true);
     try {
       if (isOnline) {
-        // Fetch from server when online
-        const [activeTrips, archived] = await Promise.all([getUserTrips(), getArchivedTrips()]);
+        // Fetch from client-safe readers when online
+        const { userId, activeTrips, archivedTrips: archived } = await getTripsForCurrentUser();
         setTrips(activeTrips);
         setArchivedTrips(archived);
 
         // Cache trips for offline use
         const allTrips = [...activeTrips, ...archived];
-        if (allTrips.length > 0) {
+        if (userId && allTrips.length > 0) {
           await cacheTrips(allTrips);
         }
       } else {
         // Load from cache when offline
-        const user = await getUser();
-        if (user) {
-          const cachedTrips = await getCachedUserTrips(user.id);
+        const userId = await getCurrentAuthUserId();
+        if (userId) {
+          const cachedTrips = await getCachedUserTrips(userId);
 
           // Convert CachedTrip to TripWithMembers format
           const tripsWithMembers: TripWithMembers[] = cachedTrips.map((trip) => ({

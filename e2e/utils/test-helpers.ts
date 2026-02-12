@@ -13,7 +13,7 @@ export function generateTestUser() {
 
   return {
     name: `Test User ${timestamp}`,
-    email: `test-${timestamp}-${random}@halftrip.test`,
+    email: `halftrip.test+${timestamp}${random}@gmail.com`,
     password: 'Test123456!',
   };
 }

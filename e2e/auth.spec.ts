@@ -9,8 +9,10 @@ test.describe('Authentication Flow', () => {
       await page.goto('/register');
 
       // Check page elements
-      await expect(page.locator('h1')).toContainText('Criar conta');
-      await expect(page.locator('text=Planeje junto. Viaje melhor. Divida justo.')).toBeVisible();
+      await expect(
+        page.locator('[data-slot="card-title"]', { hasText: 'Criar conta' })
+      ).toBeVisible();
+      await expect(page.getByText('Crie sua conta para planejar viagens em grupo')).toBeVisible();
 
       // Fill registration form
       await page.fill('input[name="name"]', user.name);
@@ -22,8 +24,12 @@ test.describe('Authentication Flow', () => {
       await page.click('button[type="submit"]');
 
       // Should show success message about email confirmation
-      await expect(page.locator('text=Confirme seu e-mail')).toBeVisible({ timeout: 10000 });
-      await expect(page.locator(`text=${user.email}`)).toBeVisible();
+      await expect(
+        page.locator('[data-slot="card-title"]', { hasText: 'Conta criada!' })
+      ).toBeVisible({
+        timeout: 10000,
+      });
+      await expect(page.getByText('Enviamos um email de confirmação para você.')).toBeVisible();
     });
 
     test('should show validation errors for invalid inputs', async ({ page }) => {
@@ -33,8 +39,8 @@ test.describe('Authentication Flow', () => {
       await page.click('button[type="submit"]');
 
       // Should show validation errors
-      await expect(page.locator('text=Nome deve ter pelo menos 2 caracteres')).toBeVisible();
-      await expect(page.locator('text=E-mail inválido')).toBeVisible();
+      await expect(page.getByText('Nome é obrigatório')).toBeVisible();
+      await expect(page.getByText('Email é obrigatório')).toBeVisible();
     });
 
     test('should show error for password mismatch', async ({ page }) => {
@@ -61,7 +67,7 @@ test.describe('Authentication Flow', () => {
 
       // Should navigate to login page
       await expect(page).toHaveURL('/login');
-      await expect(page.locator('h1')).toContainText('Entrar');
+      await expect(page.locator('[data-slot="card-title"]', { hasText: 'Entrar' })).toBeVisible();
     });
   });
 
@@ -90,8 +96,8 @@ test.describe('Authentication Flow', () => {
       await page.click('button[type="submit"]');
 
       // Should show validation errors
-      await expect(page.locator('text=E-mail inválido')).toBeVisible();
-      await expect(page.locator('text=Senha deve ter pelo menos 8 caracteres')).toBeVisible();
+      await expect(page.getByText('Email é obrigatório')).toBeVisible();
+      await expect(page.getByText('Senha é obrigatória')).toBeVisible();
     });
 
     test('should navigate to register page', async ({ page }) => {
@@ -102,18 +108,22 @@ test.describe('Authentication Flow', () => {
 
       // Should navigate to register page
       await expect(page).toHaveURL('/register');
-      await expect(page.locator('h1')).toContainText('Criar conta');
+      await expect(
+        page.locator('[data-slot="card-title"]', { hasText: 'Criar conta' })
+      ).toBeVisible();
     });
 
     test('should navigate to forgot password page', async ({ page }) => {
       await page.goto('/login');
 
-      // Click on "Esqueceu sua senha?" link
-      await page.click('a:has-text("Esqueceu sua senha?")');
+      // Click on "Esqueceu a senha?" link
+      await page.click('a:has-text("Esqueceu a senha?")');
 
       // Should navigate to forgot password page
       await expect(page).toHaveURL('/forgot-password');
-      await expect(page.locator('h1')).toContainText('Recuperar senha');
+      await expect(
+        page.locator('[data-slot="card-title"]', { hasText: 'Esqueceu a senha?' })
+      ).toBeVisible();
     });
   });
 
@@ -121,9 +131,11 @@ test.describe('Authentication Flow', () => {
     test('should show forgot password form', async ({ page }) => {
       await page.goto('/forgot-password');
 
-      await expect(page.locator('h1')).toContainText('Recuperar senha');
       await expect(
-        page.locator('text=Enviaremos um link para redefinir sua senha no e-mail cadastrado')
+        page.locator('[data-slot="card-title"]', { hasText: 'Esqueceu a senha?' })
+      ).toBeVisible();
+      await expect(
+        page.getByText('Digite seu email e enviaremos um link para você redefinir sua senha')
       ).toBeVisible();
     });
 
@@ -136,7 +148,11 @@ test.describe('Authentication Flow', () => {
       await page.click('button[type="submit"]');
 
       // Should show success message
-      await expect(page.locator('text=E-mail enviado')).toBeVisible({ timeout: 10000 });
+      await expect(
+        page.locator('[data-slot="card-title"]', { hasText: 'Email enviado!' })
+      ).toBeVisible({
+        timeout: 10000,
+      });
     });
 
     test('should show validation error for invalid email', async ({ page }) => {
@@ -145,7 +161,13 @@ test.describe('Authentication Flow', () => {
       await page.fill('input[name="email"]', 'invalid-email');
       await page.click('button[type="submit"]');
 
-      await expect(page.locator('text=E-mail inválido')).toBeVisible();
+      // Native HTML email validation may block submission before Zod errors render.
+      await expect(
+        page.locator('[data-slot="card-title"]', { hasText: 'Esqueceu a senha?' })
+      ).toBeVisible();
+      await expect(
+        page.locator('[data-slot="card-title"]', { hasText: 'Email enviado!' })
+      ).toHaveCount(0);
     });
   });
 

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { Plus, Search, Receipt, Filter, X } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -15,8 +16,10 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { FAB } from '@/components/ui/fab';
+import { SwipeAction } from '@/components/ui/swipe-action';
 import { ExpenseCard, DeleteExpenseDialog } from '@/components/expenses';
 import { expenseCategoryList, getCategoryInfo } from '@/lib/utils/expense-categories';
+import { deleteExpense } from '@/lib/supabase/expenses';
 import { formatAmount } from '@/lib/validation/expense-schemas';
 import type { TripMemberWithUser } from '@/lib/supabase/trips';
 import type { ExpenseWithDetails } from '@/types/expense';
@@ -78,6 +81,16 @@ export function ExpensesList({
   const handleExpenseDeleted = (expenseId: string) => {
     setExpenses((prev) => prev.filter((expense) => expense.id !== expenseId));
     setDeletingExpense(null);
+  };
+
+  const handleSwipeDelete = async (expense: ExpenseWithDetails) => {
+    const result = await deleteExpense(expense.id);
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success('Despesa excluída');
+    handleExpenseDeleted(expense.id);
   };
 
   // Filter expenses
@@ -314,17 +327,23 @@ export function ExpensesList({
       ) : (
         <div className="space-y-3">
           {filteredExpenses.map((expense) => (
-            <ExpenseCard
+            <SwipeAction
               key={expense.id}
-              expense={expense}
-              baseCurrency={baseCurrency}
-              canEdit={canEditExpense(expense)}
-              onEdit={() => {
-                // TODO: Open edit expense sheet
-                window.location.href = `/trip/${tripId}/expenses/${expense.id}/edit`;
-              }}
-              onDelete={() => setDeletingExpense(expense)}
-            />
+              onDelete={() => handleSwipeDelete(expense)}
+              confirmMessage={`Excluir despesa "${expense.description}"?`}
+              disabled={!canEditExpense(expense)}
+            >
+              <ExpenseCard
+                expense={expense}
+                baseCurrency={baseCurrency}
+                canEdit={canEditExpense(expense)}
+                onEdit={() => {
+                  // TODO: Open edit expense sheet
+                  window.location.href = `/trip/${tripId}/expenses/${expense.id}/edit`;
+                }}
+                onDelete={() => setDeletingExpense(expense)}
+              />
+            </SwipeAction>
           ))}
         </div>
       )}

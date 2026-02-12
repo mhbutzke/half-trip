@@ -28,6 +28,7 @@ import {
   type BudgetFormValues,
 } from '@/lib/validation/budget-schemas';
 import { parseAmount } from '@/lib/validation/expense-schemas';
+import { useCurrencyInput } from '@/hooks/use-currency-input';
 import { createBudget, updateBudget } from '@/lib/supabase/budgets';
 import { toast } from 'sonner';
 import type { BudgetWithSpending, TripBudget } from '@/types/budget';
@@ -58,6 +59,11 @@ export function BudgetFormDialog({
       category: editBudget?.category || 'total',
       amount: editBudget ? String(editBudget.amount).replace('.', ',') : '',
     },
+  });
+
+  const budgetAmountInput = useCurrencyInput({
+    value: form.watch('amount'),
+    onChange: (v) => form.setValue('amount', v),
   });
 
   const availableCategories = budgetCategories.filter(
@@ -143,13 +149,7 @@ export function BudgetFormDialog({
 
           <div className="space-y-2">
             <Label htmlFor="budget-amount">Valor (R$)</Label>
-            <Input
-              id="budget-amount"
-              type="text"
-              inputMode="decimal"
-              placeholder="0,00"
-              {...form.register('amount')}
-            />
+            <Input id="budget-amount" {...budgetAmountInput} />
             {form.formState.errors.amount && (
               <p className="text-sm text-destructive">{form.formState.errors.amount.message}</p>
             )}

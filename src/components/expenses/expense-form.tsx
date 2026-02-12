@@ -40,10 +40,10 @@ import {
   validateSplitsTotal,
   validatePercentagesTotal,
   formatAmount,
-  formatCurrencyInput,
   formatAmountInput,
 } from '@/lib/validation/expense-schemas';
 import { createExpense, updateExpense } from '@/lib/supabase/expenses';
+import { useCurrencyInput, formatCurrencyWithCursor } from '@/hooks/use-currency-input';
 import { SUPPORTED_CURRENCIES, type SupportedCurrency } from '@/types/currency';
 import type { TripMemberWithUser } from '@/lib/supabase/trips';
 import type { ExpenseWithDetails } from '@/types/expense';
@@ -98,6 +98,17 @@ export function ExpenseForm({
 
   const isForeignCurrency = watchCurrency !== baseCurrency;
   const parsedAmount = parseAmount(watchAmount || '0');
+
+  const amountInput = useCurrencyInput({
+    value: watchAmount,
+    onChange: (v) => form.setValue('amount', v),
+  });
+
+  const exchangeRateValue = form.watch('exchange_rate');
+  const exchangeRateInput = useCurrencyInput({
+    value: exchangeRateValue,
+    onChange: (v) => form.setValue('exchange_rate', v),
+  });
 
   const onSubmit = async (data: ExpenseFormValues) => {
     const amount = parseAmount(data.amount);
@@ -244,16 +255,11 @@ export function ExpenseForm({
                 <FormField
                   control={form.control}
                   name="amount"
-                  render={({ field }) => (
+                  render={() => (
                     <FormItem className="col-span-2">
                       <FormLabel>Valor</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="0,00"
-                          inputMode="numeric"
-                          {...field}
-                          onChange={(e) => field.onChange(formatCurrencyInput(e.target.value))}
-                        />
+                        <Input {...amountInput} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -291,26 +297,26 @@ export function ExpenseForm({
                 <FormField
                   control={form.control}
                   name="exchange_rate"
-                  render={({ field }) => (
+                  render={() => (
                     <FormItem>
                       <FormLabel>Taxa de câmbio</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="Ex: 5,78"
-                          inputMode="numeric"
-                          {...field}
-                          onChange={(e) => field.onChange(formatCurrencyInput(e.target.value))}
-                        />
+                        <Input {...exchangeRateInput} placeholder="Ex: 5,78" />
                       </FormControl>
                       <FormDescription>
                         1 {watchCurrency} = ? {baseCurrency}
                       </FormDescription>
-                      {parsedAmount > 0 && field.value && parseAmount(field.value) > 0 && (
-                        <p className="text-sm text-muted-foreground">
-                          {formatAmount(parsedAmount, watchCurrency)} ={' '}
-                          {formatAmount(parsedAmount * parseAmount(field.value), baseCurrency)}
-                        </p>
-                      )}
+                      {parsedAmount > 0 &&
+                        exchangeRateValue &&
+                        parseAmount(exchangeRateValue) > 0 && (
+                          <p className="text-sm text-muted-foreground">
+                            {formatAmount(parsedAmount, watchCurrency)} ={' '}
+                            {formatAmount(
+                              parsedAmount * parseAmount(exchangeRateValue),
+                              baseCurrency
+                            )}
+                          </p>
+                        )}
                       <FormMessage />
                     </FormItem>
                   )}
@@ -469,12 +475,13 @@ export function ExpenseForm({
                                 placeholder="0,00"
                                 inputMode="numeric"
                                 value={form.watch(`custom_amounts.${member.user_id}`) || ''}
-                                onChange={(e) =>
-                                  form.setValue(
-                                    `custom_amounts.${member.user_id}`,
-                                    formatCurrencyInput(e.target.value)
-                                  )
-                                }
+                                onChange={(e) => {
+                                  const { value } = formatCurrencyWithCursor(
+                                    e.target.value,
+                                    e.target.selectionStart || 0
+                                  );
+                                  form.setValue(`custom_amounts.${member.user_id}`, value);
+                                }}
                               />
                             )}
 

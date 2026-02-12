@@ -2,7 +2,7 @@
 
 import { createClient } from './server';
 import { revalidatePath } from 'next/cache';
-import type { Trip, TripMember, User, TripStyle } from '@/types/database';
+import type { Trip, TripMember, User, TripStyle, TransportType } from '@/types/database';
 import type { SupportedCurrency } from '@/types/currency';
 
 export type TripResult = {
@@ -26,6 +26,7 @@ export type CreateTripInput = {
   description?: string | null;
   style?: TripStyle | null;
   base_currency?: SupportedCurrency;
+  transport_type?: TransportType;
 };
 
 export type UpdateTripInput = Partial<CreateTripInput>;
@@ -66,6 +67,18 @@ export async function createTrip(input: CreateTripInput): Promise<TripResult> {
 
     if (updateError) {
       return { error: updateError.message };
+    }
+  }
+
+  // Update transport_type if provided (RPC creates with default 'plane')
+  if (input.transport_type && input.transport_type !== 'plane' && tripId) {
+    const { error: transportError } = await supabase
+      .from('trips')
+      .update({ transport_type: input.transport_type })
+      .eq('id', tripId);
+
+    if (transportError) {
+      return { error: transportError.message };
     }
   }
 
@@ -120,6 +133,7 @@ export async function updateTrip(tripId: string, input: UpdateTripInput): Promis
       ...(input.description !== undefined && { description: input.description }),
       ...(input.style !== undefined && { style: input.style }),
       ...(input.base_currency !== undefined && { base_currency: input.base_currency }),
+      ...(input.transport_type !== undefined && { transport_type: input.transport_type }),
     })
     .eq('id', tripId);
 

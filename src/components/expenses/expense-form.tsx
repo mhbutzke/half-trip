@@ -40,9 +40,11 @@ import {
   validateSplitsTotal,
   validatePercentagesTotal,
   formatAmount,
+  formatCurrencyInput,
+  formatAmountInput,
 } from '@/lib/validation/expense-schemas';
 import { createExpense, updateExpense } from '@/lib/supabase/expenses';
-import { SUPPORTED_CURRENCIES, CURRENCY_LABELS, type SupportedCurrency } from '@/types/currency';
+import { SUPPORTED_CURRENCIES, type SupportedCurrency } from '@/types/currency';
 import type { TripMemberWithUser } from '@/lib/supabase/trips';
 import type { ExpenseWithDetails } from '@/types/expense';
 import Link from 'next/link';
@@ -70,12 +72,12 @@ export function ExpenseForm({
     resolver: zodResolver(expenseFormSchema),
     defaultValues: {
       description: expense?.description || '',
-      amount: expense ? String(expense.amount).replace('.', ',') : '',
+      amount: expense ? formatAmountInput(expense.amount) : '',
       currency:
         (expense?.currency as SupportedCurrency) || (baseCurrency as SupportedCurrency) || 'BRL',
       exchange_rate:
         expense?.exchange_rate && expense.exchange_rate !== 1
-          ? String(expense.exchange_rate).replace('.', ',')
+          ? formatAmountInput(expense.exchange_rate)
           : '',
       date: expense?.date || new Date().toISOString().split('T')[0],
       category: expense?.category || 'other',
@@ -246,7 +248,12 @@ export function ExpenseForm({
                     <FormItem className="col-span-2">
                       <FormLabel>Valor</FormLabel>
                       <FormControl>
-                        <Input placeholder="0,00" inputMode="decimal" {...field} />
+                        <Input
+                          placeholder="0,00"
+                          inputMode="numeric"
+                          {...field}
+                          onChange={(e) => field.onChange(formatCurrencyInput(e.target.value))}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -288,7 +295,12 @@ export function ExpenseForm({
                     <FormItem>
                       <FormLabel>Taxa de câmbio</FormLabel>
                       <FormControl>
-                        <Input placeholder="Ex: 5,78" inputMode="decimal" {...field} />
+                        <Input
+                          placeholder="Ex: 5,78"
+                          inputMode="numeric"
+                          {...field}
+                          onChange={(e) => field.onChange(formatCurrencyInput(e.target.value))}
+                        />
                       </FormControl>
                       <FormDescription>
                         1 {watchCurrency} = ? {baseCurrency}
@@ -455,10 +467,13 @@ export function ExpenseForm({
                               <Input
                                 className="ml-auto w-28"
                                 placeholder="0,00"
-                                inputMode="decimal"
+                                inputMode="numeric"
                                 value={form.watch(`custom_amounts.${member.user_id}`) || ''}
                                 onChange={(e) =>
-                                  form.setValue(`custom_amounts.${member.user_id}`, e.target.value)
+                                  form.setValue(
+                                    `custom_amounts.${member.user_id}`,
+                                    formatCurrencyInput(e.target.value)
+                                  )
                                 }
                               />
                             )}

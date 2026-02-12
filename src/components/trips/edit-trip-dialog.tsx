@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -30,10 +31,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { createTripSchema, tripStyles, type CreateTripInput } from '@/lib/validation/trip-schemas';
+import { createTripSchema, tripStyles, transportTypes } from '@/lib/validation/trip-schemas';
 import { updateTrip } from '@/lib/supabase/trips';
 import type { TripWithMembers } from '@/lib/supabase/trips';
 import { SUPPORTED_CURRENCIES, CURRENCY_LABELS, type SupportedCurrency } from '@/types/currency';
+import type { TransportType } from '@/types/database';
+import { buildTripUpdatePayload } from './edit-trip-dialog.utils';
 
 interface EditTripDialogProps {
   trip: TripWithMembers | null;
@@ -45,7 +48,10 @@ interface EditTripDialogProps {
 export function EditTripDialog({ trip, open, onOpenChange, onSuccess }: EditTripDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<CreateTripInput>({
+  type CreateTripFormInput = z.input<typeof createTripSchema>;
+  type CreateTripFormOutput = z.output<typeof createTripSchema>;
+
+  const form = useForm<CreateTripFormInput, unknown, CreateTripFormOutput>({
     resolver: zodResolver(createTripSchema),
     defaultValues: {
       name: '',
@@ -55,6 +61,7 @@ export function EditTripDialog({ trip, open, onOpenChange, onSuccess }: EditTrip
       description: '',
       style: null,
       base_currency: 'BRL',
+      transport_type: 'plane',
     },
   });
 
@@ -69,25 +76,25 @@ export function EditTripDialog({ trip, open, onOpenChange, onSuccess }: EditTrip
         description: trip.description || '',
         style: trip.style,
         base_currency: (trip.base_currency as SupportedCurrency) || 'BRL',
+        transport_type: (trip.transport_type as TransportType) || 'plane',
       });
     }
   }, [trip, form]);
 
-  const onSubmit = async (data: CreateTripInput) => {
+  const onSubmit = async (data: CreateTripFormOutput) => {
     if (!trip) return;
 
     setIsSubmitting(true);
 
     try {
-      const result = await updateTrip(trip.id, {
-        name: data.name,
-        destination: data.destination,
-        start_date: data.start_date,
-        end_date: data.end_date,
-        description: data.description || null,
-        style: data.style || null,
-        base_currency: data.base_currency,
-      });
+      const updatePayload = buildTripUpdatePayload(trip, data);
+
+      if (Object.keys(updatePayload).length === 0) {
+        toast.info('Nenhuma alteração para salvar');
+        return;
+      }
+
+      const result = await updateTrip(trip.id, updatePayload);
 
       if (result.error) {
         toast.error(result.error);
@@ -219,6 +226,31 @@ export function EditTripDialog({ trip, open, onOpenChange, onSuccess }: EditTrip
                       {SUPPORTED_CURRENCIES.map((currency) => (
                         <SelectItem key={currency} value={currency}>
                           {CURRENCY_LABELS[currency]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="transport_type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tipo de transporte</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Selecione o transporte" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {transportTypes.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.label}
                         </SelectItem>
                       ))}
                     </SelectContent>

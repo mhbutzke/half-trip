@@ -10,6 +10,8 @@ interface DraggableActivityCardProps {
   activity: ActivityWithCreator;
   onEdit: (activity: ActivityWithCreator) => void;
   onDelete: (activity: ActivityWithCreator) => void;
+  onSync: (activity: ActivityWithCreator) => void;
+  isSyncing?: boolean;
   isDragOverlay?: boolean;
 }
 
@@ -17,6 +19,8 @@ export function DraggableActivityCard({
   activity,
   onEdit,
   onDelete,
+  onSync,
+  isSyncing = false,
   isDragOverlay = false,
 }: DraggableActivityCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -41,7 +45,13 @@ export function DraggableActivityCard({
           <div className="absolute -left-8 top-1/2 flex -translate-y-1/2 items-center">
             <GripVertical className="h-5 w-5 text-muted-foreground" />
           </div>
-          <ActivityCard activity={activity} onEdit={onEdit} onDelete={onDelete} />
+          <ActivityCard
+            activity={activity}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onSync={onSync}
+            isSyncing={isSyncing}
+          />
         </div>
       </div>
     );
@@ -59,7 +69,13 @@ export function DraggableActivityCard({
         <GripVertical className="h-5 w-5 text-muted-foreground" />
       </button>
 
-      <ActivityCard activity={activity} onEdit={onEdit} onDelete={onDelete} />
+      <ActivityCard
+        activity={activity}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onSync={onSync}
+        isSyncing={isSyncing}
+      />
     </div>
   );
 }

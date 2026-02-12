@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { TripStyle } from '@/types/database';
+import type { TripStyle, TransportType } from '@/types/database';
 import { SUPPORTED_CURRENCIES } from '@/types/currency';
 
 export const tripStyles: { value: TripStyle; label: string }[] = [
@@ -8,6 +8,13 @@ export const tripStyles: { value: TripStyle; label: string }[] = [
   { value: 'cultural', label: 'Cultural' },
   { value: 'gastronomic', label: 'Gastronômica' },
   { value: 'other', label: 'Outro' },
+];
+
+export const transportTypes: { value: TransportType; label: string }[] = [
+  { value: 'plane', label: 'Avião' },
+  { value: 'car', label: 'Carro' },
+  { value: 'bus', label: 'Ônibus' },
+  { value: 'mixed', label: 'Misto' },
 ];
 
 export const createTripSchema = z
@@ -30,6 +37,7 @@ export const createTripSchema = z
       .optional()
       .nullable(),
     base_currency: z.enum(SUPPORTED_CURRENCIES),
+    transport_type: z.enum(['car', 'plane', 'bus', 'mixed'] as const).default('plane'),
   })
   .refine(
     (data) => {
@@ -67,6 +75,7 @@ export const updateTripSchema = z
       .optional()
       .nullable(),
     base_currency: z.enum(SUPPORTED_CURRENCIES).optional(),
+    transport_type: z.enum(['car', 'plane', 'bus', 'mixed'] as const).optional(),
   })
   .refine(
     (data) => {

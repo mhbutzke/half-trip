@@ -122,6 +122,19 @@ export function formatAmountInput(value: number): string {
 }
 
 /**
+ * Format a raw input string as currency (auto-insert comma).
+ * Strips non-digits, treats as centavos, returns formatted string.
+ * "95" → "0,95", "9500" → "95,00", "15000" → "150,00"
+ */
+export function formatCurrencyInput(raw: string): string {
+  const digits = raw.replace(/\D/g, '');
+  if (!digits) return '';
+  const centavos = parseInt(digits, 10);
+  const formatted = (centavos / 100).toFixed(2).replace('.', ',');
+  return formatted;
+}
+
+/**
  * Calculate equal splits for selected members
  * Handles rounding by assigning the remainder to the first member
  */

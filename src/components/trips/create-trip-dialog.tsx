@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
@@ -32,7 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { createTripSchema, tripStyles, type CreateTripInput } from '@/lib/validation/trip-schemas';
+import { createTripSchema, tripStyles, transportTypes } from '@/lib/validation/trip-schemas';
 import { createTrip } from '@/lib/supabase/trips';
 import { SUPPORTED_CURRENCIES, CURRENCY_LABELS } from '@/types/currency';
 
@@ -57,7 +58,10 @@ export function CreateTripDialog({
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
   const setOpen = onOpenChange || setInternalOpen;
 
-  const form = useForm<CreateTripInput>({
+  type CreateTripFormInput = z.input<typeof createTripSchema>;
+  type CreateTripFormOutput = z.output<typeof createTripSchema>;
+
+  const form = useForm<CreateTripFormInput, unknown, CreateTripFormOutput>({
     resolver: zodResolver(createTripSchema),
     defaultValues: {
       name: '',
@@ -67,10 +71,11 @@ export function CreateTripDialog({
       description: '',
       style: null,
       base_currency: 'BRL',
+      transport_type: 'plane',
     },
   });
 
-  const onSubmit = async (data: CreateTripInput) => {
+  const onSubmit = async (data: CreateTripFormOutput) => {
     setIsSubmitting(true);
 
     try {
@@ -82,6 +87,7 @@ export function CreateTripDialog({
         description: data.description || null,
         style: data.style || null,
         base_currency: data.base_currency,
+        transport_type: data.transport_type,
       });
 
       if (result.error) {
@@ -233,6 +239,31 @@ export function CreateTripDialog({
                       {SUPPORTED_CURRENCIES.map((code) => (
                         <SelectItem key={code} value={code}>
                           {CURRENCY_LABELS[code]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="transport_type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tipo de transporte</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Selecione o transporte" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {transportTypes.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.label}
                         </SelectItem>
                       ))}
                     </SelectContent>

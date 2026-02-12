@@ -16,6 +16,8 @@ interface DaySectionProps {
   onAddActivity: (date: string) => void;
   onEditActivity: (activity: ActivityWithCreator) => void;
   onDeleteActivity: (activity: ActivityWithCreator) => void;
+  onSyncActivity: (activity: ActivityWithCreator) => void;
+  syncingActivityId?: string | null;
 }
 
 function getRelativeDayLabel(date: Date): string | null {
@@ -32,6 +34,8 @@ export function DaySection({
   onAddActivity,
   onEditActivity,
   onDeleteActivity,
+  onSyncActivity,
+  syncingActivityId = null,
 }: DaySectionProps) {
   const dateObj = new Date(date + 'T00:00:00');
   const relativeLabel = getRelativeDayLabel(dateObj);
@@ -97,6 +101,8 @@ export function DaySection({
                 activity={activity}
                 onEdit={onEditActivity}
                 onDelete={onDeleteActivity}
+                onSync={onSyncActivity}
+                isSyncing={syncingActivityId === activity.id}
               />
             ))
           ) : (

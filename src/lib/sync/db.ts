@@ -40,6 +40,7 @@ export interface CachedTrip extends SyncMetadata {
   cover_url: string | null;
   style: 'adventure' | 'relaxation' | 'cultural' | 'gastronomic' | 'other' | null;
   base_currency: string;
+  transport_type: 'car' | 'plane' | 'bus' | 'mixed';
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -169,7 +170,7 @@ export class HalfTripDB extends Dexie {
   constructor() {
     super('HalfTripDB');
 
-    this.version(3).stores({
+    this.version(4).stores({
       // Users table
       users: 'id, email, name',
 

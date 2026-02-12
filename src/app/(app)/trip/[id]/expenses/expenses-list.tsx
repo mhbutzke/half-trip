@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { Plus, Search, Receipt, Filter, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +20,14 @@ import { formatAmount } from '@/lib/validation/expense-schemas';
 import type { TripMemberWithUser } from '@/lib/supabase/trips';
 import type { ExpenseWithDetails } from '@/types/expense';
 import type { TripMemberRole, ExpenseCategory } from '@/types/database';
+
+const AddExpenseDialog = dynamic(
+  () =>
+    import('@/components/expenses/add-expense-dialog').then((mod) => ({
+      default: mod.AddExpenseDialog,
+    })),
+  { ssr: false }
+);
 
 interface ExpensesListProps {
   tripId: string;
@@ -39,8 +49,13 @@ export function ExpensesList({
   userRole,
   currentUserId,
 }: ExpensesListProps) {
+  const router = useRouter();
   const [expenses, setExpenses] = useState<ExpenseWithDetails[]>(initialExpenses);
   const [deletingExpense, setDeletingExpense] = useState<ExpenseWithDetails | null>(null);
+
+  const handleExpenseAdded = () => {
+    router.refresh();
+  };
 
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
@@ -147,13 +162,20 @@ export function ExpensesList({
             )}
           </Button>
 
-          {/* Add expense button - will link to add expense sheet when implemented */}
-          <Button asChild className="hidden sm:flex">
-            <a href={`/trip/${tripId}/expenses/add`}>
-              <Plus className="mr-2 h-4 w-4" />
-              Adicionar
-            </a>
-          </Button>
+          {/* Add expense dialog */}
+          <AddExpenseDialog
+            tripId={tripId}
+            members={members}
+            currentUserId={currentUserId}
+            baseCurrency={baseCurrency}
+            onSuccess={handleExpenseAdded}
+            trigger={
+              <Button className="hidden sm:flex">
+                <Plus className="mr-2 h-4 w-4" />
+                Adicionar
+              </Button>
+            }
+          />
         </div>
 
         {/* Filter dropdowns */}
@@ -267,12 +289,19 @@ export function ExpensesList({
               : 'Tente ajustar os filtros de busca'}
           </p>
           {expenses.length === 0 && (
-            <Button className="mt-4" asChild>
-              <a href={`/trip/${tripId}/expenses/add`}>
-                <Plus className="mr-2 h-4 w-4" />
-                Adicionar primeira despesa
-              </a>
-            </Button>
+            <AddExpenseDialog
+              tripId={tripId}
+              members={members}
+              currentUserId={currentUserId}
+              baseCurrency={baseCurrency}
+              onSuccess={handleExpenseAdded}
+              trigger={
+                <Button className="mt-4">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Adicionar primeira despesa
+                </Button>
+              }
+            />
           )}
           {expenses.length > 0 && (
             <Button variant="outline" className="mt-4" onClick={clearFilters}>
@@ -300,12 +329,19 @@ export function ExpensesList({
 
       {/* Mobile FAB for adding expense */}
       <div className="fixed bottom-20 right-4 sm:hidden">
-        <Button size="lg" className="h-14 w-14 rounded-full shadow-lg" asChild>
-          <a href={`/trip/${tripId}/expenses/add`}>
-            <Plus className="h-6 w-6" />
-            <span className="sr-only">Adicionar despesa</span>
-          </a>
-        </Button>
+        <AddExpenseDialog
+          tripId={tripId}
+          members={members}
+          currentUserId={currentUserId}
+          baseCurrency={baseCurrency}
+          onSuccess={handleExpenseAdded}
+          trigger={
+            <Button size="lg" className="h-14 w-14 rounded-full shadow-lg">
+              <Plus className="h-6 w-6" />
+              <span className="sr-only">Adicionar despesa</span>
+            </Button>
+          }
+        />
       </div>
 
       {/* Delete confirmation dialog */}

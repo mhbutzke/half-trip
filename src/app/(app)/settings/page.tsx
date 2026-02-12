@@ -3,7 +3,9 @@ import { PageContainer } from '@/components/layout/page-container';
 import { ProfileForm } from '@/components/profile/profile-form';
 import { PasswordChangeForm } from '@/components/settings/password-change-form';
 import { DangerZone } from '@/components/settings/danger-zone';
+import { GoogleCalendarSettings } from '@/components/settings/google-calendar-settings';
 import { getUserProfile } from '@/lib/supabase/profile';
+import { getGoogleCalendarConnectionStatus } from '@/lib/supabase/google-calendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 
@@ -12,8 +14,15 @@ export const metadata = {
   description: 'Gerencie suas configurações de perfil',
 };
 
-export default async function SettingsPage() {
-  const user = await getUserProfile();
+interface SettingsPageProps {
+  searchParams: Promise<{
+    google_calendar?: string;
+  }>;
+}
+
+export default async function SettingsPage({ searchParams }: SettingsPageProps) {
+  const [{ google_calendar: googleCalendarStatus }, user, googleCalendarConnection] =
+    await Promise.all([searchParams, getUserProfile(), getGoogleCalendarConnectionStatus()]);
 
   if (!user) {
     redirect('/login');
@@ -27,6 +36,19 @@ export default async function SettingsPage() {
           <p className="text-muted-foreground">
             Gerencie suas informações de perfil e preferências.
           </p>
+          {googleCalendarStatus === 'connected' && (
+            <p className="mt-2 text-sm text-emerald-600">Google Agenda conectado com sucesso.</p>
+          )}
+          {googleCalendarStatus === 'error' && (
+            <p className="mt-2 text-sm text-destructive">
+              Não foi possível conectar com o Google Agenda. Tente novamente.
+            </p>
+          )}
+          {googleCalendarStatus === 'missing_env' && (
+            <p className="mt-2 text-sm text-destructive">
+              Integração indisponível: faltam variáveis Google OAuth no ambiente.
+            </p>
+          )}
         </div>
 
         <Card>
@@ -38,6 +60,21 @@ export default async function SettingsPage() {
           </CardHeader>
           <CardContent>
             <ProfileForm user={user} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Integrações</CardTitle>
+            <CardDescription>
+              Conecte serviços externos para automatizar seu roteiro.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <GoogleCalendarSettings
+              connected={googleCalendarConnection.connected}
+              googleEmail={googleCalendarConnection.googleEmail}
+            />
           </CardContent>
         </Card>
 

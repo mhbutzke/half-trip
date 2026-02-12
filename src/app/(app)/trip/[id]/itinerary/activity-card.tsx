@@ -7,6 +7,7 @@ import {
   MoreVertical,
   Pencil,
   Trash2,
+  CalendarSync,
   ExternalLink,
   ChevronDown,
   ChevronUp,
@@ -33,12 +34,16 @@ interface ActivityCardProps {
   activity: ActivityWithCreator;
   onEdit: (activity: ActivityWithCreator) => void;
   onDelete: (activity: ActivityWithCreator) => void;
+  onSync: (activity: ActivityWithCreator) => void;
+  isSyncing?: boolean;
 }
 
 export const ActivityCard = memo(function ActivityCard({
   activity,
   onEdit,
   onDelete,
+  onSync,
+  isSyncing = false,
 }: ActivityCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [attachmentsCount, setAttachmentsCount] = useState(0);
@@ -173,6 +178,10 @@ export const ActivityCard = memo(function ActivityCard({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => onSync(activity)} disabled={isSyncing}>
+                    <CalendarSync className="mr-2 h-4 w-4" aria-hidden="true" />
+                    {isSyncing ? 'Sincronizando...' : 'Sincronizar na agenda'}
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => onEdit(activity)}>
                     <Pencil className="mr-2 h-4 w-4" aria-hidden="true" />
                     Editar

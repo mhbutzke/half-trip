@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Calendar,
   DollarSign,
@@ -17,6 +19,36 @@ import { Button } from '@/components/ui/button';
 import { InviteDialog } from '@/components/invites/invite-dialog';
 import { useTripRealtime } from '@/hooks/use-trip-realtime';
 import type { TripWithMembers } from '@/lib/supabase/trips';
+
+// Lazy load dialogs - only needed when user clicks a CTA button
+const AddActivityDialog = dynamic(
+  () =>
+    import('@/components/activities/add-activity-dialog').then((mod) => ({
+      default: mod.AddActivityDialog,
+    })),
+  { ssr: false }
+);
+const AddNoteDialog = dynamic(
+  () =>
+    import('@/components/notes/add-note-dialog').then((mod) => ({
+      default: mod.AddNoteDialog,
+    })),
+  { ssr: false }
+);
+const BudgetFormDialog = dynamic(
+  () =>
+    import('@/components/budget/budget-form-dialog').then((mod) => ({
+      default: mod.BudgetFormDialog,
+    })),
+  { ssr: false }
+);
+const ChecklistFormDialog = dynamic(
+  () =>
+    import('@/components/checklists/checklist-form-dialog').then((mod) => ({
+      default: mod.ChecklistFormDialog,
+    })),
+  { ssr: false }
+);
 
 interface TripOverviewProps {
   trip: TripWithMembers;
@@ -82,10 +114,40 @@ const sections = [
 ];
 
 export function TripOverview({ trip, userRole, currentUserId }: TripOverviewProps) {
+  const router = useRouter();
   const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [isActivityOpen, setIsActivityOpen] = useState(false);
+  const [isBudgetOpen, setIsBudgetOpen] = useState(false);
+  const [isChecklistOpen, setIsChecklistOpen] = useState(false);
+  const [isNoteOpen, setIsNoteOpen] = useState(false);
 
   // Enable real-time updates for this trip
   useTripRealtime({ tripId: trip.id });
+
+  const handleCtaClick = (sectionId: string, href: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    switch (sectionId) {
+      case 'participants':
+        setIsInviteOpen(true);
+        break;
+      case 'itinerary':
+        setIsActivityOpen(true);
+        break;
+      case 'budget':
+        setIsBudgetOpen(true);
+        break;
+      case 'checklists':
+        setIsChecklistOpen(true);
+        break;
+      case 'notes':
+        setIsNoteOpen(true);
+        break;
+      case 'expenses':
+        // Expenses use a dedicated page (full form with splits)
+        router.push(`/trip/${trip.id}/expenses/add`);
+        break;
+    }
+  };
 
   return (
     <>
@@ -123,10 +185,7 @@ export function TripOverview({ trip, userRole, currentUserId }: TripOverviewProp
                       variant="outline"
                       size="sm"
                       className="relative z-10"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setIsInviteOpen(true);
-                      }}
+                      onClick={(e) => handleCtaClick(section.id, href, e)}
                     >
                       <Plus className="mr-2 h-4 w-4" />
                       {section.cta}
@@ -139,10 +198,7 @@ export function TripOverview({ trip, userRole, currentUserId }: TripOverviewProp
                       variant="outline"
                       size="sm"
                       className="relative z-10"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        // TODO: Open add dialog
-                      }}
+                      onClick={(e) => handleCtaClick(section.id, href, e)}
                     >
                       <Plus className="mr-2 h-4 w-4" />
                       {section.cta}
@@ -155,6 +211,7 @@ export function TripOverview({ trip, userRole, currentUserId }: TripOverviewProp
         })}
       </div>
 
+      {/* Invite Dialog */}
       <InviteDialog
         tripId={trip.id}
         tripName={trip.name}
@@ -162,6 +219,52 @@ export function TripOverview({ trip, userRole, currentUserId }: TripOverviewProp
         onOpenChange={setIsInviteOpen}
         userRole={userRole}
         currentUserId={currentUserId}
+      />
+
+      {/* Add Activity Dialog */}
+      <AddActivityDialog
+        tripId={trip.id}
+        defaultDate={trip.start_date}
+        open={isActivityOpen}
+        onOpenChange={setIsActivityOpen}
+        onSuccess={() => {
+          setIsActivityOpen(false);
+          router.refresh();
+        }}
+      />
+
+      {/* Budget Form Dialog */}
+      <BudgetFormDialog
+        tripId={trip.id}
+        open={isBudgetOpen}
+        onOpenChange={setIsBudgetOpen}
+        existingCategories={[]}
+        onSuccess={() => {
+          setIsBudgetOpen(false);
+          router.refresh();
+        }}
+      />
+
+      {/* Checklist Form Dialog */}
+      <ChecklistFormDialog
+        tripId={trip.id}
+        open={isChecklistOpen}
+        onOpenChange={setIsChecklistOpen}
+        onSuccess={() => {
+          setIsChecklistOpen(false);
+          router.refresh();
+        }}
+      />
+
+      {/* Add Note Dialog */}
+      <AddNoteDialog
+        tripId={trip.id}
+        open={isNoteOpen}
+        onOpenChange={setIsNoteOpen}
+        onNoteCreated={() => {
+          setIsNoteOpen(false);
+          router.refresh();
+        }}
       />
     </>
   );

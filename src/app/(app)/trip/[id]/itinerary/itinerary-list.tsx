@@ -63,7 +63,9 @@ interface ItineraryListProps {
   endDate: string;
   initialActivities: ActivityWithCreator[];
   userRole: 'organizer' | 'participant' | null;
+  googleCalendarConnected: boolean;
   currentUserId?: string;
+  transportType?: string;
 }
 
 export function ItineraryList({
@@ -71,6 +73,8 @@ export function ItineraryList({
   startDate,
   endDate,
   initialActivities,
+  googleCalendarConnected,
+  transportType = 'plane',
 }: ItineraryListProps) {
   const router = useRouter();
   const [activities, setActivities] = useState<ActivityWithCreator[]>(initialActivities);
@@ -81,6 +85,7 @@ export function ItineraryList({
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [syncingActivityId, setSyncingActivityId] = useState<string | null>(null);
 
   // Enable real-time updates for this trip
   useTripRealtime({ tripId });
@@ -360,6 +365,70 @@ export function ItineraryList({
     router.refresh();
   };
 
+  const syncActivitiesToGoogle = useCallback(
+    async (activityIds?: string[]) => {
+      const response = await fetch('/api/google-calendar/sync', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ tripId, activityIds }),
+      });
+
+      const payload = (await response.json().catch(() => null)) as {
+        error?: string;
+        reconnectRequired?: boolean;
+        created?: number;
+        updated?: number;
+        failed?: number;
+      } | null;
+
+      if (!response.ok) {
+        if (payload?.reconnectRequired) {
+          toast.error(payload.error || 'Reconecte sua conta Google para sincronizar.');
+          router.push('/settings');
+          return;
+        }
+        toast.error(payload?.error || 'Erro ao sincronizar Google Agenda');
+        return;
+      }
+
+      const totalSynced = (payload?.created || 0) + (payload?.updated || 0);
+      if (activityIds && activityIds.length === 1) {
+        if (totalSynced > 0) {
+          toast.success('Atividade sincronizada na agenda');
+        } else {
+          toast.error('Não foi possível sincronizar a atividade');
+        }
+        return;
+      }
+
+      toast.success('Sincronização concluída', {
+        description: `${payload?.created || 0} criadas, ${payload?.updated || 0} atualizadas${payload?.failed ? `, ${payload.failed} falhas` : ''}.`,
+      });
+    },
+    [tripId, router]
+  );
+
+  const handleSyncActivity = useCallback(
+    async (activity: ActivityWithCreator) => {
+      if (!googleCalendarConnected) {
+        window.location.assign(
+          `/api/google-calendar/connect?redirect=${encodeURIComponent(`/trip/${tripId}/itinerary`)}`
+        );
+        return;
+      }
+
+      setSyncingActivityId(activity.id);
+      try {
+        await syncActivitiesToGoogle([activity.id]);
+      } finally {
+        setSyncingActivityId(null);
+      }
+    },
+    [googleCalendarConnected, tripId, syncActivitiesToGoogle]
+  );
+
   const totalActivities = activities.length;
 
   if (tripDays.length === 0) {
@@ -386,16 +455,18 @@ export function ItineraryList({
         </div>
 
         <div className="flex items-center gap-2">
-          <FlightSearchDialog
-            tripId={tripId}
-            onSuccess={handleAddSuccess}
-            trigger={
-              <Button variant="outline" size="sm">
-                <Plane className="mr-2 h-4 w-4" />
-                Adicionar Voo
-              </Button>
-            }
-          />
+          {(transportType === 'plane' || transportType === 'mixed') && (
+            <FlightSearchDialog
+              tripId={tripId}
+              onSuccess={handleAddSuccess}
+              trigger={
+                <Button variant="outline" size="sm">
+                  <Plane className="mr-2 h-4 w-4" />
+                  Adicionar Voo
+                </Button>
+              }
+            />
+          )}
           <AddActivityDialog
             tripId={tripId}
             defaultDate={tripDays[0]}
@@ -432,6 +503,8 @@ export function ItineraryList({
                 onAddActivity={handleAddActivity}
                 onEditActivity={handleEditActivity}
                 onDeleteActivity={handleDeleteActivity}
+                onSyncActivity={handleSyncActivity}
+                syncingActivityId={syncingActivityId}
               />
             );
           })}
@@ -445,6 +518,7 @@ export function ItineraryList({
                 activity={activeActivity}
                 onEdit={() => {}}
                 onDelete={() => {}}
+                onSync={() => {}}
                 isDragOverlay
               />
             </div>

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LogOut, Menu, Moon, Plane, Settings, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -33,6 +33,10 @@ export function Header({ user, onSignOut }: HeaderProps) {
   const { setTheme, theme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notificationSettingsOpen, setNotificationSettingsOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    queueMicrotask(() => setMounted(true));
+  }, []);
 
   const navigation = user
     ? [
@@ -84,7 +88,13 @@ export function Header({ user, onSignOut }: HeaderProps) {
             size="icon"
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             className="h-11 w-11"
-            aria-label={theme === 'dark' ? 'Ativar modo claro' : 'Ativar modo escuro'}
+            aria-label={
+              mounted
+                ? theme === 'dark'
+                  ? 'Ativar modo claro'
+                  : 'Ativar modo escuro'
+                : 'Alternar tema'
+            }
           >
             <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
             <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />

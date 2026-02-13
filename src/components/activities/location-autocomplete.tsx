@@ -5,6 +5,7 @@ import { useJsApiLoader } from '@react-google-maps/api';
 import { MapPin, ExternalLink, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 const LIBRARIES: 'places'[] = ['places'];
 
@@ -43,6 +44,7 @@ export function LocationAutocomplete({
 
   const [suggestions, setSuggestions] = useState<google.maps.places.AutocompletePrediction[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [selectedCoords, setSelectedCoords] = useState<LocationCoords | null>(
     initialCoords || null
   );
@@ -83,6 +85,7 @@ export function LocationAutocomplete({
     (input: string) => {
       if (!autocompleteServiceRef.current || !input.trim()) {
         setSuggestions([]);
+        setHighlightedIndex(-1);
         return;
       }
 
@@ -95,9 +98,11 @@ export function LocationAutocomplete({
         (predictions, status) => {
           if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
             setSuggestions(predictions);
+            setHighlightedIndex(-1);
             setShowSuggestions(true);
           } else {
             setSuggestions([]);
+            setHighlightedIndex(-1);
           }
         }
       );
@@ -130,6 +135,7 @@ export function LocationAutocomplete({
       onChange(prediction.description);
       setShowSuggestions(false);
       setSuggestions([]);
+      setHighlightedIndex(-1);
 
       // Only fetch place details if coords are needed
       if (!onPlaceSelect) {
@@ -164,11 +170,41 @@ export function LocationAutocomplete({
     [onChange, onPlaceSelect]
   );
 
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (!showSuggestions || suggestions.length === 0) return;
+
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          setHighlightedIndex((prev) => (prev < suggestions.length - 1 ? prev + 1 : 0));
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : suggestions.length - 1));
+          break;
+        case 'Enter':
+          e.preventDefault();
+          if (highlightedIndex >= 0 && highlightedIndex < suggestions.length) {
+            handleSelectPlace(suggestions[highlightedIndex]);
+          }
+          break;
+        case 'Escape':
+          e.preventDefault();
+          setShowSuggestions(false);
+          setHighlightedIndex(-1);
+          break;
+      }
+    },
+    [showSuggestions, suggestions, highlightedIndex, handleSelectPlace]
+  );
+
   const clearLocation = useCallback(() => {
     onChange('');
     setSelectedCoords(null);
     onPlaceSelect?.(null);
     setSuggestions([]);
+    setHighlightedIndex(-1);
     setShowSuggestions(false);
   }, [onChange, onPlaceSelect]);
 
@@ -197,11 +233,20 @@ export function LocationAutocomplete({
           placeholder={placeholder}
           value={value}
           onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
           onFocus={() => {
             if (suggestions.length > 0) setShowSuggestions(true);
           }}
           className={className}
           autoComplete="off"
+          role="combobox"
+          aria-expanded={showSuggestions && suggestions.length > 0}
+          aria-controls="location-suggestions-listbox"
+          aria-activedescendant={
+            highlightedIndex >= 0 && showSuggestions && suggestions[highlightedIndex]
+              ? `location-option-${suggestions[highlightedIndex].place_id}`
+              : undefined
+          }
         />
         {value && (
           <Button
@@ -220,13 +265,21 @@ export function LocationAutocomplete({
       {/* Suggestions dropdown */}
       {showSuggestions && suggestions.length > 0 && (
         <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover shadow-md">
-          <ul className="max-h-60 overflow-auto py-1" role="listbox">
-            {suggestions.map((prediction) => (
+          <ul
+            className="max-h-60 overflow-auto py-1"
+            role="listbox"
+            id="location-suggestions-listbox"
+          >
+            {suggestions.map((prediction, index) => (
               <li
                 key={prediction.place_id}
+                id={`location-option-${prediction.place_id}`}
                 role="option"
-                aria-selected={false}
-                className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm hover:bg-accent"
+                aria-selected={index === highlightedIndex}
+                className={cn(
+                  'flex cursor-pointer items-center gap-2 px-3 py-2 text-sm hover:bg-accent',
+                  index === highlightedIndex && 'bg-accent'
+                )}
                 onClick={() => handleSelectPlace(prediction)}
               >
                 <MapPin

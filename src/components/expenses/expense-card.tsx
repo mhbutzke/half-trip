@@ -127,7 +127,7 @@ export const ExpenseCard = memo(function ExpenseCard({
                   </DropdownMenuItem>
                   {onEdit && (
                     <DropdownMenuItem onClick={onEdit}>
-                      <Pencil className="mr-2 h-4 w-4" />
+                      <Pencil className="mr-2 h-4 w-4" aria-hidden="true" />
                       Editar
                     </DropdownMenuItem>
                   )}

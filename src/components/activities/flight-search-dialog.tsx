@@ -33,10 +33,10 @@ import type { Json } from '@/types/database';
 
 const formSchema = z.object({
   flightNumber: z.string().min(2, {
-    message: 'Flight number required (e.g. AA123)',
+    message: 'Número do voo obrigatório (ex: AA123)',
   }),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
-    message: 'Date must be YYYY-MM-DD',
+    message: 'Data deve ser AAAA-MM-DD',
   }),
 });
 
@@ -131,14 +131,13 @@ export function FlightSearchDialog({
       }
 
       if (data.found === false) {
-        setError('Flight not found. Please check the number and date.');
+        setError('Voo não encontrado. Verifique o número e a data.');
       } else {
         setFlightData(data as FlightData);
       }
     } catch (err: unknown) {
       console.error(err);
-      const message =
-        err instanceof Error ? err.message : 'An error occurred while searching for the flight.';
+      const message = err instanceof Error ? err.message : 'Erro ao buscar informações do voo.';
       setError(message);
     } finally {
       setLoading(false);
@@ -158,7 +157,7 @@ export function FlightSearchDialog({
       const duration = flightData.duration || 0;
 
       // Calculate Activity Title
-      const title = `Flight ${flightData.carrier} ${flightData.flight_number}: ${flightData.departure.iata} -> ${flightData.arrival.iata}`;
+      const title = `Voo ${flightData.carrier} ${flightData.flight_number}: ${flightData.departure.iata} → ${flightData.arrival.iata}`;
 
       const result = await createActivity({
         trip_id: tripId,
@@ -167,20 +166,20 @@ export function FlightSearchDialog({
         category: 'transport',
         start_time: departureTime ? format(departureTime, 'HH:mm') : undefined,
         duration_minutes: duration,
-        description: `Flight from ${flightData.departure.airport} (${flightData.departure.iata}) to ${flightData.arrival.airport} (${flightData.arrival.iata}).`,
+        description: `Voo de ${flightData.departure.airport} (${flightData.departure.iata}) para ${flightData.arrival.airport} (${flightData.arrival.iata}).`,
         location: `${flightData.departure.airport}`,
         metadata: flightData as Json,
       });
 
       if (result.error) {
-        toast.error('Error adding flight', { description: result.error });
+        toast.error('Erro ao adicionar voo', { description: result.error });
       } else {
-        toast.success('Flight added to itinerary');
+        toast.success('Voo adicionado ao roteiro');
         handleOpenChange(false);
         if (onSuccess) onSuccess();
       }
     } catch {
-      toast.error('Failed to create activity');
+      toast.error('Erro ao criar atividade');
     } finally {
       setLoading(false);
     }
@@ -191,9 +190,9 @@ export function FlightSearchDialog({
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Add Flight</DialogTitle>
+          <DialogTitle>Buscar voo</DialogTitle>
           <DialogDescription>
-            Search for a flight to automatically add it to your itinerary.
+            Busque um voo para adicioná-lo automaticamente ao roteiro.
           </DialogDescription>
         </DialogHeader>
 
@@ -205,7 +204,7 @@ export function FlightSearchDialog({
                 name="flightNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Flight Number</FormLabel>
+                    <FormLabel>Número do voo</FormLabel>
                     <FormControl>
                       <Input placeholder="AA100" {...field} />
                     </FormControl>
@@ -218,7 +217,7 @@ export function FlightSearchDialog({
                 name="date"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Date</FormLabel>
+                    <FormLabel>Data</FormLabel>
                     <FormControl>
                       <Input type="date" {...field} />
                     </FormControl>
@@ -235,7 +234,7 @@ export function FlightSearchDialog({
                 ) : (
                   <Plane className="mr-2 h-4 w-4" />
                 )}
-                Search Flight
+                Buscar voo
               </Button>
             )}
           </form>
@@ -244,7 +243,7 @@ export function FlightSearchDialog({
         {error && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
+            <AlertTitle>Erro</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
@@ -268,7 +267,7 @@ export function FlightSearchDialog({
                     : '--:--'}
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">
-                  Term: {flightData.departure.terminal || '-'} Gate:{' '}
+                  Terminal: {flightData.departure.terminal || '-'} Portão:{' '}
                   {flightData.departure.gate || '-'}
                 </div>
               </div>
@@ -289,7 +288,8 @@ export function FlightSearchDialog({
                     : '--:--'}
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">
-                  Term: {flightData.arrival.terminal || '-'} Gate: {flightData.arrival.gate || '-'}
+                  Terminal: {flightData.arrival.terminal || '-'} Portão:{' '}
+                  {flightData.arrival.gate || '-'}
                 </div>
               </div>
             </div>
@@ -307,10 +307,14 @@ export function FlightSearchDialog({
                 }}
                 disabled={loading}
               >
-                Cancel
+                Cancelar
               </Button>
               <Button onClick={onAddFlight} disabled={loading}>
-                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Add to Itinerary'}
+                {loading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  'Adicionar ao roteiro'
+                )}
               </Button>
             </>
           )}

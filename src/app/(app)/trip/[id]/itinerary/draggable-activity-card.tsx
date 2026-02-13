@@ -63,7 +63,7 @@ export function DraggableActivityCard({
       <button
         {...attributes}
         {...listeners}
-        className="absolute -left-8 top-1/2 z-10 flex -translate-y-1/2 cursor-grab items-center rounded p-1 opacity-0 transition-opacity hover:bg-muted focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group-hover/draggable:opacity-100 active:cursor-grabbing sm:-left-10"
+        className="absolute -left-8 top-1/2 z-10 flex -translate-y-1/2 cursor-grab items-center rounded p-1 opacity-100 transition-opacity hover:bg-muted focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:-left-10 sm:opacity-0 sm:group-hover/draggable:opacity-100 active:cursor-grabbing"
         aria-label="Arrastar atividade"
       >
         <GripVertical className="h-5 w-5 text-muted-foreground" />

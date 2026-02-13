@@ -18,7 +18,8 @@ export type ActivityLogEntityType =
   | 'checklist_item'
   | 'settlement'
   | 'participant'
-  | 'trip';
+  | 'trip'
+  | 'poll';
 
 export interface ActivityLogEntry extends TripActivityLog {
   users: {

@@ -11,7 +11,9 @@ type TableName =
   | 'trip_members'
   | 'trip_notes'
   | 'settlements'
-  | 'trip_activity_log';
+  | 'trip_activity_log'
+  | 'trip_polls'
+  | 'poll_votes';
 
 type RealtimePayload<T extends Record<string, unknown> = Record<string, unknown>> =
   RealtimePostgresChangesPayload<T>;

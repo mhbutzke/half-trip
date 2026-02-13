@@ -9,6 +9,7 @@ const entityLabels: Record<ActivityLogEntityType, string> = {
   settlement: 'acerto',
   participant: 'participante',
   trip: 'viagem',
+  poll: 'votação',
 };
 
 const actionLabels: Record<ActivityLogAction, string> = {
@@ -51,6 +52,7 @@ export function getLogIcon(entityType: string): string {
     settlement: 'ArrowLeftRight',
     participant: 'Users',
     trip: 'Plane',
+    poll: 'BarChart3',
   };
   return icons[entityType] || 'Activity';
 }

@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Calendar, DollarSign, Plus, Scale, ChevronRight, Receipt } from 'lucide-react';
+import { Calendar, DollarSign, Plus, Scale, ChevronRight, Receipt, BarChart3 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -13,10 +13,13 @@ import { InviteDialog } from '@/components/invites/invite-dialog';
 import { StatWidget } from '@/components/ui/stat-widget';
 import { MoneyDisplay } from '@/components/ui/money-display';
 import { ActivityLogFeed } from '@/components/activity-log/activity-log-feed';
+import { PollCard } from '@/components/polls/poll-card';
+import { CreatePollDialog } from '@/components/polls/create-poll-dialog';
 import { useTripRealtime } from '@/hooks/use-trip-realtime';
 import type { TripWithMembers } from '@/lib/supabase/trips';
 import type { DashboardData } from '@/lib/supabase/dashboard';
 import type { ActivityLogEntry } from '@/types/activity-log';
+import type { PollWithVotes } from '@/types/poll';
 
 // Lazy load dialogs - only needed when user clicks a CTA button
 const AddActivityDialog = dynamic(
@@ -41,6 +44,7 @@ interface TripOverviewProps {
   dashboard?: DashboardData | null;
   initialActivityLog?: ActivityLogEntry[];
   activityLogHasMore?: boolean;
+  initialPolls?: PollWithVotes[];
 }
 
 export function TripOverview({
@@ -50,11 +54,13 @@ export function TripOverview({
   dashboard,
   initialActivityLog,
   activityLogHasMore,
+  initialPolls,
 }: TripOverviewProps) {
   const router = useRouter();
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [isActivityOpen, setIsActivityOpen] = useState(false);
   const [isNoteOpen, setIsNoteOpen] = useState(false);
+  const [createPollOpen, setCreatePollOpen] = useState(false);
 
   // Enable real-time updates for this trip
   useTripRealtime({ tripId: trip.id });
@@ -281,6 +287,28 @@ export function TripOverview({
           </Card>
         )}
 
+        {/* Polls Section */}
+        {initialPolls && initialPolls.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-semibold">Votações</h2>
+              <Button variant="ghost" size="sm" onClick={() => setCreatePollOpen(true)}>
+                <Plus className="mr-1 h-4 w-4" aria-hidden="true" />
+                Nova
+              </Button>
+            </div>
+            {initialPolls.map((poll) => (
+              <PollCard
+                key={poll.id}
+                poll={poll}
+                currentUserId={currentUserId || ''}
+                isOrganizer={userRole === 'organizer'}
+                onUpdate={() => router.refresh()}
+              />
+            ))}
+          </div>
+        )}
+
         {/* Activity Feed */}
         {initialActivityLog && (
           <ActivityLogFeed
@@ -312,6 +340,10 @@ export function TripOverview({
               <Button variant="outline" size="sm" onClick={() => setIsNoteOpen(true)}>
                 <Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />
                 Nota
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setCreatePollOpen(true)}>
+                <BarChart3 className="mr-1.5 h-4 w-4" aria-hidden="true" />
+                Votação
               </Button>
               <Button variant="outline" size="sm" onClick={() => setIsInviteOpen(true)}>
                 <Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />
@@ -351,6 +383,17 @@ export function TripOverview({
         onOpenChange={setIsNoteOpen}
         onNoteCreated={() => {
           setIsNoteOpen(false);
+          router.refresh();
+        }}
+      />
+
+      {/* Create Poll Dialog */}
+      <CreatePollDialog
+        tripId={trip.id}
+        open={createPollOpen}
+        onOpenChange={setCreatePollOpen}
+        onSuccess={() => {
+          setCreatePollOpen(false);
           router.refresh();
         }}
       />

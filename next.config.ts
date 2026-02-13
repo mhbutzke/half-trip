@@ -19,6 +19,7 @@ const withAnalyzer = withBundleAnalyzer({
 
 const nextConfig: NextConfig = {
   turbopack: {},
+  allowedDevOrigins: ['127.0.0.1'],
   async headers() {
     return [
       {

@@ -7,6 +7,7 @@ import { ptBR } from 'date-fns/locale';
 import { Plus, Sunrise, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DraggableActivityCard } from './draggable-activity-card';
+import { ActivityCard } from './activity-card';
 import type { ActivityWithCreator } from '@/lib/supabase/activities';
 
 interface DaySectionProps {
@@ -18,6 +19,7 @@ interface DaySectionProps {
   onDeleteActivity: (activity: ActivityWithCreator) => void;
   onSyncActivity: (activity: ActivityWithCreator) => void;
   syncingActivityId?: string | null;
+  draggable?: boolean;
 }
 
 function getRelativeDayLabel(date: Date): string | null {
@@ -36,10 +38,13 @@ export function DaySection({
   onDeleteActivity,
   onSyncActivity,
   syncingActivityId = null,
+  draggable = true,
 }: DaySectionProps) {
   const dateObj = new Date(date + 'T00:00:00');
   const relativeLabel = getRelativeDayLabel(dateObj);
   const hasActivities = activities.length > 0;
+  const isOutOfRange = dayNumber <= 0;
+  const dayLabel = isOutOfRange ? 'Extra' : `Dia ${dayNumber}`;
 
   // Make the day a droppable container
   const { setNodeRef, isOver } = useDroppable({
@@ -54,13 +59,13 @@ export function DaySection({
   const activityIds = activities.map((a) => a.id);
 
   return (
-    <div className="relative">
+    <section id={`day-${date}`} className="relative scroll-mt-20">
       {/* Day Header */}
-      <div className="sticky top-0 z-10 -mx-4 bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60 sm:-mx-0 sm:px-0">
+      <div className="sticky top-14 z-10 -mx-4 bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60 sm:-mx-0 sm:px-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <span className="text-lg font-bold">{dayNumber}</span>
+              <span className="text-sm font-bold uppercase">{isOutOfRange ? '+' : dayNumber}</span>
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -75,6 +80,10 @@ export function DaySection({
               </div>
               <p className="text-sm text-muted-foreground">
                 {format(dateObj, "d 'de' MMMM", { locale: ptBR })}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {dayLabel} • {activities.length}{' '}
+                {activities.length === 1 ? 'atividade' : 'atividades'}
               </p>
             </div>
           </div>
@@ -95,16 +104,27 @@ export function DaySection({
       >
         <SortableContext items={activityIds} strategy={verticalListSortingStrategy}>
           {hasActivities ? (
-            activities.map((activity) => (
-              <DraggableActivityCard
-                key={activity.id}
-                activity={activity}
-                onEdit={onEditActivity}
-                onDelete={onDeleteActivity}
-                onSync={onSyncActivity}
-                isSyncing={syncingActivityId === activity.id}
-              />
-            ))
+            activities.map((activity) =>
+              draggable ? (
+                <DraggableActivityCard
+                  key={activity.id}
+                  activity={activity}
+                  onEdit={onEditActivity}
+                  onDelete={onDeleteActivity}
+                  onSync={onSyncActivity}
+                  isSyncing={syncingActivityId === activity.id}
+                />
+              ) : (
+                <ActivityCard
+                  key={activity.id}
+                  activity={activity}
+                  onEdit={onEditActivity}
+                  onDelete={onDeleteActivity}
+                  onSync={onSyncActivity}
+                  isSyncing={syncingActivityId === activity.id}
+                />
+              )
+            )
           ) : (
             <div className="-ml-8 flex flex-col items-center justify-center rounded-lg border border-dashed py-8 text-center sm:-ml-10">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
@@ -131,6 +151,6 @@ export function DaySection({
           )}
         </SortableContext>
       </div>
-    </div>
+    </section>
   );
 }

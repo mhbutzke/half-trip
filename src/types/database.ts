@@ -836,6 +836,96 @@ export type Database = {
           },
         ];
       };
+      trip_polls: {
+        Row: {
+          id: string;
+          trip_id: string;
+          question: string;
+          options: Json;
+          allow_multiple: boolean;
+          closes_at: string | null;
+          created_by: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          trip_id: string;
+          question: string;
+          options?: Json;
+          allow_multiple?: boolean;
+          closes_at?: string | null;
+          created_by: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          trip_id?: string;
+          question?: string;
+          options?: Json;
+          allow_multiple?: boolean;
+          closes_at?: string | null;
+          created_by?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'trip_polls_trip_id_fkey';
+            columns: ['trip_id'];
+            isOneToOne: false;
+            referencedRelation: 'trips';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'trip_polls_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      poll_votes: {
+        Row: {
+          id: string;
+          poll_id: string;
+          user_id: string;
+          option_index: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          poll_id: string;
+          user_id: string;
+          option_index: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          poll_id?: string;
+          user_id?: string;
+          option_index?: number;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'poll_votes_poll_id_fkey';
+            columns: ['poll_id'];
+            isOneToOne: false;
+            referencedRelation: 'trip_polls';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'poll_votes_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -970,3 +1060,11 @@ export type ActivityLink = {
 export type TripActivityLog = Tables<'trip_activity_log'>;
 export type InsertTripActivityLog = InsertTables<'trip_activity_log'>;
 export type UpdateTripActivityLog = UpdateTables<'trip_activity_log'>;
+
+export type TripPoll = Tables<'trip_polls'>;
+export type InsertTripPoll = InsertTables<'trip_polls'>;
+export type UpdateTripPoll = UpdateTables<'trip_polls'>;
+
+export type PollVote = Tables<'poll_votes'>;
+export type InsertPollVote = InsertTables<'poll_votes'>;
+export type UpdatePollVote = UpdateTables<'poll_votes'>;

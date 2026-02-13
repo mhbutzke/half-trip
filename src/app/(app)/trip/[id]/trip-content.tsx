@@ -9,6 +9,7 @@ import type { TripWithMembers } from '@/lib/supabase/trips';
 import type { Trip, TripMemberRole } from '@/types/database';
 import type { DashboardData } from '@/lib/supabase/dashboard';
 import type { ActivityLogEntry } from '@/types/activity-log';
+import type { PollWithVotes } from '@/types/poll';
 
 interface TripContentProps {
   tripId: string;
@@ -23,6 +24,7 @@ interface TripContentProps {
   initialDashboard?: DashboardData | null;
   initialActivityLog?: ActivityLogEntry[];
   activityLogHasMore?: boolean;
+  initialPolls?: PollWithVotes[];
 }
 
 export function TripContent({
@@ -33,6 +35,7 @@ export function TripContent({
   initialDashboard,
   initialActivityLog,
   activityLogHasMore,
+  initialPolls,
 }: TripContentProps) {
   const { data: cachedData, isOffline, cacheData } = useTripOffline(tripId);
 
@@ -154,6 +157,7 @@ export function TripContent({
           dashboard={initialDashboard}
           initialActivityLog={initialActivityLog}
           activityLogHasMore={activityLogHasMore}
+          initialPolls={initialPolls}
         />
       </div>
     </PageContainer>

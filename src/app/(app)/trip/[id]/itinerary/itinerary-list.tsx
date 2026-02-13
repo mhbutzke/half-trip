@@ -17,17 +17,19 @@ import {
   type UniqueIdentifier,
 } from '@dnd-kit/core';
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import { format, parseISO, eachDayOfInterval } from 'date-fns';
-import { MapPin, Plus, Plane } from 'lucide-react';
+import { format, parseISO, eachDayOfInterval, isToday } from 'date-fns';
+import { CalendarDays, MapPin, Plus, Plane, Search, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { FAB } from '@/components/ui/fab';
 import { DaySection } from './day-section';
 import { DraggableActivityCard } from './draggable-activity-card';
 import { reorderActivities } from '@/lib/supabase/activities';
 import { useTripRealtime } from '@/hooks/use-trip-realtime';
+import { activityCategoryList } from '@/lib/utils/activity-categories';
 import type { ActivityWithCreator } from '@/lib/supabase/activities';
-import type { Activity } from '@/types/database';
+import type { Activity, ActivityCategory } from '@/types/database';
 
 // Lazy load activity dialogs - only needed when user interacts
 // Using ssr: false to prevent hydration mismatch with Radix Dialog IDs
@@ -87,6 +89,8 @@ export function ItineraryList({
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [syncingActivityId, setSyncingActivityId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<ActivityCategory | 'all'>('all');
 
   // Enable real-time updates for this trip
   useTripRealtime({ tripId });
@@ -103,6 +107,27 @@ export function ItineraryList({
     return eachDayOfInterval({ start, end }).map((date) => format(date, 'yyyy-MM-dd'));
   }, [startDate, endDate]);
 
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const isFilteredView = normalizedSearch.length > 0 || categoryFilter !== 'all';
+
+  const visibleActivities = useMemo(() => {
+    return activities.filter((activity) => {
+      if (categoryFilter !== 'all' && activity.category !== categoryFilter) {
+        return false;
+      }
+
+      if (!normalizedSearch) {
+        return true;
+      }
+
+      const fields = [activity.title, activity.location || '', activity.description || ''].map(
+        (value) => value.toLowerCase()
+      );
+
+      return fields.some((value) => value.includes(normalizedSearch));
+    });
+  }, [activities, categoryFilter, normalizedSearch]);
+
   // Group activities by date
   const activitiesByDate = useMemo(() => {
     const grouped: Record<string, ActivityWithCreator[]> = {};
@@ -113,7 +138,7 @@ export function ItineraryList({
     });
 
     // Group activities into their respective days
-    activities.forEach((activity) => {
+    visibleActivities.forEach((activity) => {
       if (grouped[activity.date]) {
         grouped[activity.date].push(activity);
       } else {
@@ -141,25 +166,31 @@ export function ItineraryList({
     });
 
     return grouped;
-  }, [activities, tripDays]);
+  }, [visibleActivities, tripDays]);
 
   // Get all dates that have activities or are within trip range
   const allDates = useMemo(() => {
-    const dates = new Set<string>([...tripDays]);
+    const dates = new Set<string>();
 
-    // Add any dates from activities that might be outside trip range
-    activities.forEach((activity) => {
-      dates.add(activity.date);
-    });
+    if (!isFilteredView) {
+      tripDays.forEach((date) => dates.add(date));
+      activities.forEach((activity) => {
+        dates.add(activity.date);
+      });
+    } else {
+      visibleActivities.forEach((activity) => {
+        dates.add(activity.date);
+      });
+    }
 
     return Array.from(dates).sort();
-  }, [tripDays, activities]);
+  }, [tripDays, activities, visibleActivities, isFilteredView]);
 
   // Find the active activity for the drag overlay
   const activeActivity = useMemo(() => {
     if (!activeId) return null;
-    return activities.find((a) => a.id === activeId) || null;
-  }, [activeId, activities]);
+    return visibleActivities.find((a) => a.id === activeId) || null;
+  }, [activeId, visibleActivities]);
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -431,6 +462,34 @@ export function ItineraryList({
   );
 
   const totalActivities = activities.length;
+  const visibleActivitiesCount = visibleActivities.length;
+  const plannedDays = useMemo(
+    () => tripDays.filter((date) => (activitiesByDate[date] || []).length > 0).length,
+    [tripDays, activitiesByDate]
+  );
+  const defaultActivityDate = useMemo(() => {
+    const today = format(new Date(), 'yyyy-MM-dd');
+    return tripDays.includes(today) ? today : tripDays[0];
+  }, [tripDays]);
+  const busiestDay = useMemo(() => {
+    let topDate: string | null = null;
+    let maxCount = 0;
+
+    for (const date of allDates) {
+      const count = (activitiesByDate[date] || []).length;
+      if (count > maxCount) {
+        maxCount = count;
+        topDate = date;
+      }
+    }
+
+    return topDate ? { date: topDate, count: maxCount } : null;
+  }, [allDates, activitiesByDate]);
+
+  const jumpToDay = useCallback((date: string) => {
+    const target = document.getElementById(`day-${date}`);
+    target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
 
   if (tripDays.length === 0) {
     return (
@@ -448,14 +507,77 @@ export function ItineraryList({
 
   return (
     <>
-      {/* Summary */}
-      <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-4">
-        <div>
-          <p className="text-sm text-muted-foreground">Total de atividades</p>
-          <p className="text-2xl font-bold">{totalActivities}</p>
+      {/* Summary + Actions */}
+      <div className="space-y-3 rounded-lg border bg-muted/20 p-4">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="rounded-lg border bg-background p-3">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">
+              Total de atividades
+            </p>
+            <p className="mt-1 text-2xl font-bold">{visibleActivitiesCount}</p>
+            {isFilteredView && (
+              <p className="mt-1 text-xs text-muted-foreground">de {totalActivities} no total</p>
+            )}
+          </div>
+          <div className="rounded-lg border bg-background p-3">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Dias planejados</p>
+            <p className="mt-1 text-2xl font-bold">
+              {plannedDays}/{tripDays.length}
+            </p>
+          </div>
+          <div className="rounded-lg border bg-background p-3">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Dia mais cheio</p>
+            <p className="mt-1 text-sm font-semibold">
+              {busiestDay
+                ? `${format(parseISO(busiestDay.date), 'd/MM')} (${busiestDay.count})`
+                : 'Sem atividades'}
+            </p>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative min-w-[220px] flex-1">
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden="true"
+            />
+            <Input
+              placeholder="Buscar no roteiro..."
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              className="pl-9 pr-9"
+            />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label="Limpar busca"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+          <Button
+            variant={categoryFilter === 'all' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setCategoryFilter('all')}
+          >
+            Todas
+          </Button>
+          {activityCategoryList.map((category) => (
+            <Button
+              key={category.value}
+              variant={categoryFilter === category.value ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setCategoryFilter(category.value)}
+            >
+              {category.label}
+            </Button>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
           {(transportType === 'plane' || transportType === 'mixed') && (
             <FlightSearchDialog
               tripId={tripId}
@@ -463,14 +585,14 @@ export function ItineraryList({
               trigger={
                 <Button variant="outline" size="sm">
                   <Plane className="mr-2 h-4 w-4" />
-                  Adicionar Voo
+                  Voo
                 </Button>
               }
             />
           )}
           <AddActivityDialog
             tripId={tripId}
-            defaultDate={tripDays[0]}
+            defaultDate={defaultActivityDate}
             trigger={
               <Button size="sm">
                 <Plus className="mr-2 h-4 w-4" />
@@ -482,55 +604,114 @@ export function ItineraryList({
         </div>
       </div>
 
-      {/* Day Sections with Drag and Drop */}
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCorners}
-        onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
-        onDragEnd={handleDragEnd}
-      >
-        <div className="space-y-8">
+      <div className="rounded-lg border bg-background p-3">
+        <div className="mb-2 flex items-center gap-2 text-sm font-medium">
+          <CalendarDays className="h-4 w-4 text-muted-foreground" />
+          Navegação por dia
+        </div>
+        <div className="flex gap-2 overflow-x-auto pb-1">
           {allDates.map((date) => {
+            const count = (activitiesByDate[date] || []).length;
             const dayNumber = tripDays.indexOf(date) + 1;
-            const isOutOfRange = !tripDays.includes(date);
+            const label = dayNumber > 0 ? `Dia ${dayNumber}` : format(parseISO(date), 'd/MM');
+            const isCurrentDate = isToday(parseISO(date));
 
             return (
-              <DaySection
+              <button
                 key={date}
-                date={date}
-                dayNumber={isOutOfRange ? 0 : dayNumber}
-                activities={activitiesByDate[date] || []}
-                onAddActivity={handleAddActivity}
-                onEditActivity={handleEditActivity}
-                onDeleteActivity={handleDeleteActivity}
-                onSyncActivity={handleSyncActivity}
-                syncingActivityId={syncingActivityId}
-              />
+                type="button"
+                onClick={() => jumpToDay(date)}
+                className={`flex shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors ${
+                  isCurrentDate
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'bg-background text-foreground hover:bg-accent'
+                }`}
+              >
+                <span>{label}</span>
+                <span className="rounded-full bg-muted px-1.5 text-xs text-muted-foreground">
+                  {count}
+                </span>
+              </button>
             );
           })}
         </div>
+      </div>
 
-        {/* Drag Overlay - Shows a preview of the dragged item */}
-        <DragOverlay>
-          {activeActivity ? (
-            <div className="w-full max-w-md">
-              <DraggableActivityCard
-                activity={activeActivity}
-                onEdit={() => {}}
-                onDelete={() => {}}
-                onSync={() => {}}
-                isDragOverlay
-              />
-            </div>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
+      {isFilteredView && (
+        <div className="rounded-lg border border-dashed bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+          Reordenação por arrastar está desativada enquanto filtros/busca estiverem ativos.
+        </div>
+      )}
+
+      {allDates.length === 0 && isFilteredView && (
+        <div className="rounded-lg border border-dashed py-10 text-center">
+          <p className="text-sm font-medium">Nenhuma atividade encontrada para o filtro atual.</p>
+          <Button
+            className="mt-3"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setSearchTerm('');
+              setCategoryFilter('all');
+            }}
+          >
+            Limpar filtros
+          </Button>
+        </div>
+      )}
+
+      {/* Day Sections with Drag and Drop */}
+      {allDates.length > 0 && (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="space-y-8">
+            {allDates.map((date) => {
+              const dayNumber = tripDays.indexOf(date) + 1;
+              const isOutOfRange = !tripDays.includes(date);
+
+              return (
+                <DaySection
+                  key={date}
+                  date={date}
+                  dayNumber={isOutOfRange ? 0 : dayNumber}
+                  activities={activitiesByDate[date] || []}
+                  onAddActivity={handleAddActivity}
+                  onEditActivity={handleEditActivity}
+                  onDeleteActivity={handleDeleteActivity}
+                  onSyncActivity={handleSyncActivity}
+                  syncingActivityId={syncingActivityId}
+                  draggable={!isFilteredView}
+                />
+              );
+            })}
+          </div>
+
+          {/* Drag Overlay - Shows a preview of the dragged item */}
+          <DragOverlay>
+            {!isFilteredView && activeActivity ? (
+              <div className="w-full max-w-md">
+                <DraggableActivityCard
+                  activity={activeActivity}
+                  onEdit={() => {}}
+                  onDelete={() => {}}
+                  onSync={() => {}}
+                  isDragOverlay
+                />
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
+      )}
 
       {/* Add Activity Dialog - Triggered by selecting a date */}
       <AddActivityDialog
         tripId={tripId}
-        defaultDate={selectedDate || tripDays[0]}
+        defaultDate={selectedDate || defaultActivityDate}
         open={isAddDialogOpen}
         onOpenChange={handleAddDialogChange}
         onSuccess={handleAddSuccess}
@@ -557,7 +738,7 @@ export function ItineraryList({
         icon={Plus}
         label="Adicionar atividade"
         onClick={() => {
-          setSelectedDate(tripDays[0]);
+          setSelectedDate(defaultActivityDate);
           setIsAddDialogOpen(true);
         }}
       />

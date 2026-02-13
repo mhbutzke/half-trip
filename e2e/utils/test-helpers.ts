@@ -38,6 +38,11 @@ export async function registerUser(
   await page.waitForTimeout(2000);
 }
 
+async function isOnLoginScreen(page: Page): Promise<boolean> {
+  if (page.url().includes('/login')) return true;
+  return (await page.locator('[data-slot="card-title"]', { hasText: 'Entrar' }).count()) > 0;
+}
+
 /**
  * Fill and submit login form
  */
@@ -51,6 +56,55 @@ export async function loginUser(page: Page, credentials: { email: string; passwo
 
   // Wait for redirect to trips page
   await page.waitForURL('/trips', { timeout: 10000 });
+}
+
+export function getE2EAuthCredentials(): {
+  email: string;
+  password: string;
+} | null {
+  const email = process.env.PLAYWRIGHT_E2E_EMAIL?.trim();
+  const password = process.env.PLAYWRIGHT_E2E_PASSWORD?.trim();
+
+  if (!email || !password) {
+    return null;
+  }
+
+  return { email, password };
+}
+
+/**
+ * Creates (or logs into) an authenticated session to cover private routes.
+ * Preference order:
+ * 1) PLAYWRIGHT_E2E_EMAIL / PLAYWRIGHT_E2E_PASSWORD
+ * 2) Create disposable user + login (when environment allows immediate login)
+ */
+export async function ensureAuthenticatedSession(page: Page): Promise<boolean> {
+  await page.goto('/trips');
+  if (!(await isOnLoginScreen(page))) {
+    return true;
+  }
+
+  const envCredentials = getE2EAuthCredentials();
+  if (envCredentials) {
+    try {
+      await loginUser(page, envCredentials);
+      return true;
+    } catch {
+      // Fallback to disposable account flow.
+    }
+  }
+
+  const disposableUser = generateTestUser();
+  await registerUser(page, disposableUser);
+
+  try {
+    await loginUser(page, { email: disposableUser.email, password: disposableUser.password });
+  } catch {
+    // Some environments require e-mail confirmation before login.
+  }
+
+  await page.goto('/trips');
+  return !(await isOnLoginScreen(page));
 }
 
 /**
@@ -68,7 +122,10 @@ export async function createTrip(
   }
 ) {
   // Open create trip dialog
-  await page.click('button:has-text("Nova viagem")');
+  const createButton = page
+    .locator('button:has-text("Nova viagem")')
+    .or(page.locator('button:has-text("Criar primeira viagem")'));
+  await createButton.first().click();
 
   // Wait for dialog to open
   await page.waitForSelector('[role="dialog"]');

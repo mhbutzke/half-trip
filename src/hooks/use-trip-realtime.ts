@@ -90,4 +90,23 @@ export function useTripRealtime({ tripId }: UseTripRealtimeOptions) {
       queryClient.invalidateQueries({ queryKey: ['expense-summary', tripId] });
     },
   });
+
+  // Subscribe to poll changes
+  useRealtimeSubscription({
+    table: 'trip_polls',
+    filter: `trip_id=eq.${tripId}`,
+    onChange: (payload) => {
+      console.log('🔄 Poll changed, invalidating cache', payload.eventType);
+      queryClient.invalidateQueries({ queryKey: ['polls', tripId] });
+    },
+  });
+
+  // Subscribe to poll vote changes
+  useRealtimeSubscription({
+    table: 'poll_votes',
+    onChange: (payload) => {
+      console.log('🔄 Poll vote changed, invalidating cache', payload.eventType);
+      queryClient.invalidateQueries({ queryKey: ['polls', tripId] });
+    },
+  });
 }

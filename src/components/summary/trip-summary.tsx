@@ -7,10 +7,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ArrowRight, TrendingUp, TrendingDown, Check } from 'lucide-react';
+import { ArrowRight, TrendingUp, TrendingDown, Check, QrCode } from 'lucide-react';
 import { MarkSettledDialog } from '@/components/settlements/mark-settled-dialog';
 import { SettlementHistory } from '@/components/settlements/settlement-history';
 import { createSettlement } from '@/lib/supabase/settlements';
+import { PixQrDialog } from '@/components/settlements/pix-qr-dialog';
 import { formatCurrency } from '@/lib/utils/currency';
 import { toast } from 'sonner';
 import type { TripExpenseSummary } from '@/types/expense-summary';
@@ -26,6 +27,7 @@ export function TripSummary({ summary, currentUserId, isOrganizer }: TripSummary
   const router = useRouter();
   const [markDialogOpen, setMarkDialogOpen] = useState(false);
   const [selectedSettlement, setSelectedSettlement] = useState<Settlement | null>(null);
+  const [pixSettlement, setPixSettlement] = useState<Settlement | null>(null);
   const baseCur = summary.baseCurrency || 'BRL';
 
   const getInitials = (name: string) => {
@@ -174,13 +176,23 @@ export function TripSummary({ summary, currentUserId, isOrganizer }: TripSummary
                       {(settlement.from.userId === currentUserId ||
                         settlement.to.userId === currentUserId ||
                         isOrganizer) && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleMarkSettlement(settlement)}
-                        >
-                          Marcar pago
-                        </Button>
+                        <>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setPixSettlement(settlement)}
+                            aria-label="Pagar via Pix"
+                          >
+                            <QrCode className="h-4 w-4" aria-hidden="true" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleMarkSettlement(settlement)}
+                          >
+                            Marcar pago
+                          </Button>
+                        </>
                       )}
                     </div>
                   </div>
@@ -211,6 +223,17 @@ export function TripSummary({ summary, currentUserId, isOrganizer }: TripSummary
           open={markDialogOpen}
           onOpenChange={setMarkDialogOpen}
           onSuccess={handleRefresh}
+        />
+      )}
+
+      {/* Pix QR Dialog */}
+      {pixSettlement && (
+        <PixQrDialog
+          open={!!pixSettlement}
+          onOpenChange={(open) => !open && setPixSettlement(null)}
+          toUserName={pixSettlement.to.userName}
+          amount={pixSettlement.amount}
+          currency={baseCur}
         />
       )}
     </div>

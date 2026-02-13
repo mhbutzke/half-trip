@@ -4,27 +4,49 @@ import { useRef, useState, useCallback, useEffect } from 'react';
 
 interface UsePullToRefreshOptions {
   onRefresh: () => Promise<void>;
-  threshold?: number;
+  threshold?: number; // px to pull before triggering (default: 80)
   maxPull?: number;
+  disabled?: boolean;
+}
+
+interface UsePullToRefreshReturn {
+  containerRef: React.RefObject<HTMLDivElement | null>;
+  isRefreshing: boolean;
+  pullDistance: number;
+  pulling: boolean;
 }
 
 export function usePullToRefresh({
   onRefresh,
-  threshold = 60,
-  maxPull = 120,
-}: UsePullToRefreshOptions) {
+  threshold = 80,
+  maxPull = 140,
+  disabled = false,
+}: UsePullToRefreshOptions): UsePullToRefreshReturn {
   const [pulling, setPulling] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
-  const [refreshing, setRefreshing] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const startYRef = useRef(0);
   const startXRef = useRef(0);
   const isPullingRef = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Check for prefers-reduced-motion
+  const prefersReducedMotionRef = useRef(false);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mql = window.matchMedia('(prefers-reduced-motion: reduce)');
+    prefersReducedMotionRef.current = mql.matches;
+    const handler = (e: MediaQueryListEvent) => {
+      prefersReducedMotionRef.current = e.matches;
+    };
+    mql.addEventListener('change', handler);
+    return () => mql.removeEventListener('change', handler);
+  }, []);
+
   const handleTouchStart = useCallback(
     (e: TouchEvent) => {
-      if (refreshing) return;
+      if (disabled || isRefreshing) return;
       const scrollTop = containerRef.current?.scrollTop ?? window.scrollY;
       if (scrollTop > 0) return;
 
@@ -32,16 +54,16 @@ export function usePullToRefresh({
       startXRef.current = e.touches[0].clientX;
       isPullingRef.current = false;
     },
-    [refreshing]
+    [disabled, isRefreshing]
   );
 
   const handleTouchMove = useCallback(
     (e: TouchEvent) => {
-      if (refreshing) return;
+      if (disabled || isRefreshing) return;
       const deltaY = e.touches[0].clientY - startYRef.current;
       const deltaX = e.touches[0].clientX - startXRef.current;
 
-      // Only start pulling if vertical > horizontal
+      // Only start pulling if vertical movement > horizontal (avoid interfering with swipes)
       if (!isPullingRef.current && deltaY > 0 && Math.abs(deltaY) > Math.abs(deltaX)) {
         isPullingRef.current = true;
         setPulling(true);
@@ -53,28 +75,35 @@ export function usePullToRefresh({
       const damped = deltaY > threshold ? threshold + (deltaY - threshold) * 0.4 : deltaY;
       setPullDistance(Math.min(Math.max(0, damped), maxPull));
     },
-    [refreshing, threshold, maxPull]
+    [disabled, isRefreshing, threshold, maxPull]
   );
 
   const handleTouchEnd = useCallback(async () => {
     if (!isPullingRef.current) return;
     isPullingRef.current = false;
 
-    if (pullDistance >= threshold) {
-      setRefreshing(true);
-      setPullDistance(threshold);
+    if (pullDistance >= threshold && !disabled) {
+      setIsRefreshing(true);
+      // When reduced motion is preferred, snap immediately
+      if (prefersReducedMotionRef.current) {
+        setPullDistance(threshold);
+      } else {
+        setPullDistance(threshold);
+      }
       try {
         await onRefresh();
       } finally {
-        setRefreshing(false);
+        setIsRefreshing(false);
       }
     }
 
     setPulling(false);
     setPullDistance(0);
-  }, [pullDistance, threshold, onRefresh]);
+  }, [pullDistance, threshold, disabled, onRefresh]);
 
   useEffect(() => {
+    if (disabled) return;
+
     const el = containerRef.current ?? document;
     el.addEventListener('touchstart', handleTouchStart as EventListener, { passive: true });
     el.addEventListener('touchmove', handleTouchMove as EventListener, { passive: true });
@@ -85,7 +114,7 @@ export function usePullToRefresh({
       el.removeEventListener('touchmove', handleTouchMove as EventListener);
       el.removeEventListener('touchend', handleTouchEnd as EventListener);
     };
-  }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
+  }, [disabled, handleTouchStart, handleTouchMove, handleTouchEnd]);
 
-  return { containerRef, pulling, pullDistance, refreshing };
+  return { containerRef, pulling, pullDistance, isRefreshing };
 }

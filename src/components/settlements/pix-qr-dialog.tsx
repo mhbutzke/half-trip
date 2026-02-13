@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { generatePixPayload, isValidPixKey, detectPixKeyType } from '@/lib/utils/pix';
-import { formatCurrency } from '@/lib/utils/currency';
+import { MoneyDisplay } from '@/components/ui/money-display';
 
 interface PixQrDialogProps {
   open: boolean;
@@ -112,8 +112,11 @@ export function PixQrDialog({
             Pagar via Pix
           </DialogTitle>
           <DialogDescription>
-            Gere um QR Code Pix para pagar <strong>{formatCurrency(amount, currency)}</strong> para{' '}
-            <strong>{toUserName}</strong>
+            Gere um QR Code Pix para pagar{' '}
+            <strong>
+              <MoneyDisplay amount={amount} currency={currency} size="sm" />
+            </strong>{' '}
+            para <strong>{toUserName}</strong>
           </DialogDescription>
         </DialogHeader>
 

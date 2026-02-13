@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { BudgetProgress } from './budget-progress';
 import { getCategoryInfo } from '@/lib/utils/expense-categories';
-import { formatCurrency } from '@/lib/utils/currency';
+import { MoneyDisplay } from '@/components/ui/money-display';
 import { budgetCategoryLabels } from '@/lib/validation/budget-schemas';
 import type { BudgetWithSpending } from '@/types/budget';
 import type { ExpenseCategory } from '@/types/database';
@@ -51,8 +51,8 @@ export function BudgetCategoryCard({
             <div>
               <p className="font-medium">{label}</p>
               <p className="text-sm text-muted-foreground">
-                {formatCurrency(budget.spent, budget.currency)} de{' '}
-                {formatCurrency(budget.amount, budget.currency)}
+                <MoneyDisplay amount={budget.spent} currency={budget.currency} size="sm" /> de{' '}
+                <MoneyDisplay amount={budget.amount} currency={budget.currency} size="sm" />
               </p>
             </div>
           </div>
@@ -100,7 +100,12 @@ export function BudgetCategoryCard({
 
         {budget.remaining < 0 && (
           <p className="mt-2 text-sm font-medium text-destructive">
-            Excedido em {formatCurrency(Math.abs(budget.remaining), budget.currency)}
+            Excedido em{' '}
+            <MoneyDisplay
+              amount={Math.abs(budget.remaining)}
+              currency={budget.currency}
+              size="sm"
+            />
           </p>
         )}
       </CardContent>

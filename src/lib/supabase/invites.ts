@@ -7,6 +7,7 @@ import { ptBR } from 'date-fns/locale';
 import type { TripInvite, User } from '@/types/database';
 import { getResendClient } from '@/lib/email/resend';
 import { InviteEmail } from '@/lib/email/invite-email';
+import { parseDateOnly } from '@/lib/utils/date-only';
 
 // Default invite expiration: 7 days
 const DEFAULT_INVITE_EXPIRATION_DAYS = 7;
@@ -602,7 +603,7 @@ export async function sendEmailInvite(tripId: string, email: string): Promise<Em
   const inviteUrl = `${appUrl}/invite/${inviteCode}`;
 
   const formatDate = (dateString: string) => {
-    return format(new Date(dateString), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+    return format(parseDateOnly(dateString), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
   };
 
   try {

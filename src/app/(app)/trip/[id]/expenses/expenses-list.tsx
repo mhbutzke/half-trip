@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { FAB } from '@/components/ui/fab';
+import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { SwipeAction } from '@/components/ui/swipe-action';
 import { ExpenseCard, DeleteExpenseDialog } from '@/components/expenses';
 import { expenseCategoryList, getCategoryInfo } from '@/lib/utils/expense-categories';
@@ -60,6 +61,12 @@ export function ExpensesList({
 
   const handleExpenseAdded = () => {
     router.refresh();
+  };
+
+  const handlePullRefresh = async () => {
+    router.refresh();
+    // Small delay to let server re-fetch
+    await new Promise((resolve) => setTimeout(resolve, 500));
   };
 
   // Filter states
@@ -144,7 +151,7 @@ export function ExpensesList({
   }, [filteredExpenses]);
 
   return (
-    <>
+    <PullToRefresh onRefresh={handlePullRefresh}>
       {/* Controls */}
       <div className="space-y-3">
         <div className="flex items-center gap-2">
@@ -368,6 +375,6 @@ export function ExpensesList({
         onOpenChange={(open) => !open && setDeletingExpense(null)}
         onExpenseDeleted={handleExpenseDeleted}
       />
-    </>
+    </PullToRefresh>
   );
 }

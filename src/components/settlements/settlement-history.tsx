@@ -29,7 +29,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import type { SettlementWithUsers } from '@/lib/supabase/settlements';
 import { markSettlementAsUnpaid, deleteSettlement } from '@/lib/supabase/settlements';
-import { formatCurrency } from '@/lib/utils/currency';
+import { MoneyDisplay } from '@/components/ui/money-display';
 
 interface SettlementHistoryProps {
   settlements: SettlementWithUsers[];
@@ -168,7 +168,7 @@ export function SettlementHistory({
                         </div>
                         <Badge variant="outline" className="bg-success/10 text-success">
                           <Check className="mr-1 h-3 w-3" />
-                          {formatCurrency(settlement.amount)}
+                          <MoneyDisplay amount={settlement.amount} size="sm" />
                         </Badge>
                       </div>
                     </div>

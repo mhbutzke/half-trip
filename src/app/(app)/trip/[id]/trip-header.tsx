@@ -39,6 +39,7 @@ import { ShareButton } from '@/components/ui/share-button';
 import { archiveTrip, unarchiveTrip, type TripWithMembers } from '@/lib/supabase/trips';
 import { can } from '@/lib/permissions';
 import { useTripPresence, type PresenceUser } from '@/hooks/use-trip-presence';
+import { parseDateOnly } from '@/lib/utils/date-only';
 import type { TripStyle, TripMemberRole } from '@/types/database';
 import Link from 'next/link';
 
@@ -70,8 +71,8 @@ const styleLabels: Record<TripStyle, string> = {
 };
 
 function getTripStatus(startDate: string, endDate: string) {
-  const start = new Date(startDate);
-  const end = new Date(endDate);
+  const start = parseDateOnly(startDate);
+  const end = parseDateOnly(endDate);
   const today = new Date();
 
   if (isFuture(start)) {
@@ -124,10 +125,11 @@ export function TripHeader({ trip, userRole, currentUserId, currentUser }: TripH
   const { otherUsers } = useTripPresence(trip.id, presenceUser);
 
   const formatDate = (date: string) => {
-    return format(new Date(date), "d 'de' MMMM 'de' yyyy", { locale: ptBR });
+    return format(parseDateOnly(date), "d 'de' MMMM 'de' yyyy", { locale: ptBR });
   };
 
-  const tripDuration = differenceInDays(new Date(trip.end_date), new Date(trip.start_date)) + 1;
+  const tripDuration =
+    differenceInDays(parseDateOnly(trip.end_date), parseDateOnly(trip.start_date)) + 1;
 
   const handleArchive = async () => {
     setIsArchiving(true);

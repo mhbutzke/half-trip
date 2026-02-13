@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BudgetProgress } from './budget-progress';
-import { formatCurrency } from '@/lib/utils/currency';
+import { MoneyDisplay } from '@/components/ui/money-display';
 import type { BudgetSummary as BudgetSummaryType } from '@/types/budget';
 
 interface BudgetSummaryProps {
@@ -24,11 +24,9 @@ export function BudgetSummaryCard({ summary }: BudgetSummaryProps) {
       <CardContent className="space-y-3">
         <div className="flex items-end justify-between">
           <div>
-            <p className="text-2xl font-bold">
-              {formatCurrency(summary.totalSpent, summary.currency)}
-            </p>
+            <MoneyDisplay amount={summary.totalSpent} currency={summary.currency} size="xl" />
             <p className="text-sm text-muted-foreground">
-              de {formatCurrency(summary.totalBudget, summary.currency)}
+              de <MoneyDisplay amount={summary.totalBudget} currency={summary.currency} size="sm" />
             </p>
           </div>
           <p
@@ -36,9 +34,8 @@ export function BudgetSummaryCard({ summary }: BudgetSummaryProps) {
               remaining < 0 ? 'text-destructive' : 'text-muted-foreground'
             }`}
           >
-            {remaining >= 0
-              ? `${formatCurrency(remaining, summary.currency)} restante`
-              : `${formatCurrency(Math.abs(remaining), summary.currency)} excedido`}
+            <MoneyDisplay amount={Math.abs(remaining)} currency={summary.currency} size="sm" />{' '}
+            {remaining >= 0 ? 'restante' : 'excedido'}
           </p>
         </div>
 

@@ -16,7 +16,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { markSettlementAsPaid } from '@/lib/supabase/settlements';
 import { Button } from '@/components/ui/button';
-import { formatCurrency } from '@/lib/utils/currency';
+import { MoneyDisplay } from '@/components/ui/money-display';
 import { PixQrDialog } from './pix-qr-dialog';
 
 interface MarkSettledDialogProps {
@@ -100,7 +100,7 @@ export function MarkSettledDialog({
 
             <div className="my-3 flex items-center justify-center">
               <div className="rounded-md bg-primary/10 px-3 py-1.5">
-                <p className="text-lg font-bold text-primary">{formatCurrency(amount)}</p>
+                <MoneyDisplay amount={amount} size="lg" className="text-primary" />
               </div>
             </div>
 

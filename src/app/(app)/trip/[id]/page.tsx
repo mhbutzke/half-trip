@@ -3,6 +3,7 @@ import { getUserProfile } from '@/lib/supabase/profile';
 import { getDashboardData } from '@/lib/supabase/dashboard';
 import { getTripActivityLog } from '@/lib/supabase/activity-log';
 import { getTripPolls } from '@/lib/supabase/polls';
+import { getTripRecapData } from '@/lib/supabase/trip-recap-data';
 import { TripContent } from './trip-content';
 
 interface TripPageProps {
@@ -24,6 +25,10 @@ export default async function TripPage({ params }: TripPageProps) {
     getTripPolls(id),
   ]);
 
+  // Only fetch recap data if trip has ended
+  const tripEnded = trip ? new Date(trip.end_date) < new Date() : false;
+  const recapData = tripEnded ? await getTripRecapData(id) : null;
+
   return (
     <TripContent
       tripId={id}
@@ -34,6 +39,7 @@ export default async function TripPage({ params }: TripPageProps) {
       initialActivityLog={activityLog.entries}
       activityLogHasMore={activityLog.hasMore}
       initialPolls={polls}
+      initialRecapData={recapData}
     />
   );
 }

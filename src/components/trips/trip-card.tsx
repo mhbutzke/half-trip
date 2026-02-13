@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import type { TripWithMembers } from '@/lib/supabase/trips';
 import { can } from '@/lib/permissions';
+import { parseDateOnly } from '@/lib/utils/date-only';
 import type { TripMemberRole, TripStyle } from '@/types/database';
 
 interface TripCardProps {
@@ -60,8 +61,8 @@ const styleLabels: Record<TripStyle, string> = {
 };
 
 function getTripStatus(startDate: string, endDate: string) {
-  const start = new Date(startDate);
-  const end = new Date(endDate);
+  const start = parseDateOnly(startDate);
+  const end = parseDateOnly(endDate);
   const today = new Date();
 
   if (isFuture(start)) {
@@ -104,10 +105,11 @@ export const TripCard = memo(function TripCard({
   const showActionsMenu = canEditTrip || canArchiveTrip || canDeleteTrip;
 
   const formatDate = (date: string) => {
-    return format(new Date(date), "d 'de' MMM", { locale: ptBR });
+    return format(parseDateOnly(date), "d 'de' MMM", { locale: ptBR });
   };
 
-  const tripDuration = differenceInDays(new Date(trip.end_date), new Date(trip.start_date)) + 1;
+  const tripDuration =
+    differenceInDays(parseDateOnly(trip.end_date), parseDateOnly(trip.start_date)) + 1;
 
   // Get up to 4 member avatars
   const displayMembers = trip.trip_members?.slice(0, 4) || [];

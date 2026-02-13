@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { acceptInvite, type InviteDetailsResult } from '@/lib/supabase/invites';
+import { parseDateOnly } from '@/lib/utils/date-only';
 
 interface InviteContentProps {
   code: string;
@@ -63,8 +64,8 @@ export function InviteContent({
   }
 
   // Format dates
-  const startDate = format(new Date(trip.start_date), "d 'de' MMMM", { locale: ptBR });
-  const endDate = format(new Date(trip.end_date), "d 'de' MMMM 'de' yyyy", { locale: ptBR });
+  const startDate = format(parseDateOnly(trip.start_date), "d 'de' MMMM", { locale: ptBR });
+  const endDate = format(parseDateOnly(trip.end_date), "d 'de' MMMM 'de' yyyy", { locale: ptBR });
 
   // Handle accept invite
   async function handleAccept() {

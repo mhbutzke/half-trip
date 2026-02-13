@@ -15,11 +15,16 @@ import { MoneyDisplay } from '@/components/ui/money-display';
 import { ActivityLogFeed } from '@/components/activity-log/activity-log-feed';
 import { PollCard } from '@/components/polls/poll-card';
 import { CreatePollDialog } from '@/components/polls/create-poll-dialog';
+import { TripRecapCard } from '@/components/recap/trip-recap-card';
+import { BadgeDisplay } from '@/components/badges/badge-display';
+import { computeBadges } from '@/lib/utils/travel-badges';
 import { useTripRealtime } from '@/hooks/use-trip-realtime';
+import { parseDateOnly } from '@/lib/utils/date-only';
 import type { TripWithMembers } from '@/lib/supabase/trips';
 import type { DashboardData } from '@/lib/supabase/dashboard';
 import type { ActivityLogEntry } from '@/types/activity-log';
 import type { PollWithVotes } from '@/types/poll';
+import type { TripRecapData } from '@/lib/utils/trip-recap';
 
 // Lazy load dialogs - only needed when user clicks a CTA button
 const AddActivityDialog = dynamic(
@@ -45,6 +50,7 @@ interface TripOverviewProps {
   initialActivityLog?: ActivityLogEntry[];
   activityLogHasMore?: boolean;
   initialPolls?: PollWithVotes[];
+  initialRecapData?: TripRecapData | null;
 }
 
 export function TripOverview({
@@ -55,6 +61,7 @@ export function TripOverview({
   initialActivityLog,
   activityLogHasMore,
   initialPolls,
+  initialRecapData,
 }: TripOverviewProps) {
   const router = useRouter();
   const [isInviteOpen, setIsInviteOpen] = useState(false);
@@ -95,6 +102,21 @@ export function TripOverview({
     dashboard?.budgetTotal && dashboard.budgetUsed != null
       ? Math.min(100, Math.round((dashboard.budgetUsed / dashboard.budgetTotal) * 100))
       : null;
+
+  // Compute badges from available data
+  const tripEnded = new Date(trip.end_date) < new Date();
+  const earnedBadges = tripEnded
+    ? computeBadges({
+        tripCount: 1,
+        totalExpenses: dashboard?.expenseCount ?? 0,
+        hasReceipt: false,
+        budgetKept: budgetPercentage != null ? budgetPercentage <= 100 : true,
+        checklistComplete: initialRecapData?.checklistCompletionPercent === 100,
+        participantCount: initialRecapData?.participantCount ?? trip.trip_members.length,
+        activitiesCount: initialRecapData?.activitiesCount ?? 0,
+        daysCount: initialRecapData?.durationDays ?? 0,
+      })
+    : [];
 
   return (
     <>
@@ -236,7 +258,7 @@ export function TripOverview({
               {dashboard && dashboard.tripProgress.currentDay <= 0 && budgetPercentage == null && (
                 <p className="text-sm text-muted-foreground">
                   A viagem começa em{' '}
-                  {new Date(trip.start_date).toLocaleDateString('pt-BR', {
+                  {parseDateOnly(trip.start_date).toLocaleDateString('pt-BR', {
                     day: 'numeric',
                     month: 'long',
                   })}
@@ -308,6 +330,17 @@ export function TripOverview({
             ))}
           </div>
         )}
+
+        {/* Trip Recap (only shown after trip ends) */}
+        {tripEnded && initialRecapData && (
+          <div className="space-y-3">
+            <h2 className="text-base font-semibold">Trip Recap</h2>
+            <TripRecapCard recap={initialRecapData} />
+          </div>
+        )}
+
+        {/* Travel Badges */}
+        {earnedBadges.length > 0 && <BadgeDisplay earned={earnedBadges} />}
 
         {/* Activity Feed */}
         {initialActivityLog && (

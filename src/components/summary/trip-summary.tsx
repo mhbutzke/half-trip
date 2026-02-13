@@ -12,7 +12,7 @@ import { MarkSettledDialog } from '@/components/settlements/mark-settled-dialog'
 import { SettlementHistory } from '@/components/settlements/settlement-history';
 import { createSettlement } from '@/lib/supabase/settlements';
 import { PixQrDialog } from '@/components/settlements/pix-qr-dialog';
-import { formatCurrency } from '@/lib/utils/currency';
+import { MoneyDisplay } from '@/components/ui/money-display';
 import { toast } from 'sonner';
 import type { TripExpenseSummary } from '@/types/expense-summary';
 import type { Settlement } from '@/lib/balance';
@@ -75,7 +75,7 @@ export function TripSummary({ summary, currentUserId, isOrganizer }: TripSummary
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-muted-foreground">Total de despesas</p>
-              <p className="text-2xl font-bold">{formatCurrency(summary.totalExpenses, baseCur)}</p>
+              <MoneyDisplay amount={summary.totalExpenses} currency={baseCur} size="xl" />
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Participantes</p>
@@ -103,20 +103,30 @@ export function TripSummary({ summary, currentUserId, isOrganizer }: TripSummary
                   <div className="flex-1">
                     <p className="font-medium">{participant.userName}</p>
                     <p className="text-xs text-muted-foreground">
-                      Pagou {formatCurrency(participant.totalPaid, baseCur)} • Deve{' '}
-                      {formatCurrency(participant.totalOwed, baseCur)}
+                      Pagou{' '}
+                      <MoneyDisplay amount={participant.totalPaid} currency={baseCur} size="sm" /> •
+                      Deve{' '}
+                      <MoneyDisplay amount={participant.totalOwed} currency={baseCur} size="sm" />
                     </p>
                   </div>
                   <div className="text-right">
                     {participant.netBalance > 0.01 ? (
                       <Badge variant="outline" className="bg-success/10 text-success">
                         <TrendingUp className="mr-1 h-3 w-3" />
-                        {formatCurrency(participant.netBalance, baseCur)}
+                        <MoneyDisplay
+                          amount={participant.netBalance}
+                          currency={baseCur}
+                          size="sm"
+                        />
                       </Badge>
                     ) : participant.netBalance < -0.01 ? (
                       <Badge variant="outline" className="bg-destructive/10 text-destructive">
                         <TrendingDown className="mr-1 h-3 w-3" />
-                        {formatCurrency(Math.abs(participant.netBalance), baseCur)}
+                        <MoneyDisplay
+                          amount={Math.abs(participant.netBalance)}
+                          currency={baseCur}
+                          size="sm"
+                        />
                       </Badge>
                     ) : (
                       <Badge variant="outline" className="bg-muted">
@@ -171,7 +181,7 @@ export function TripSummary({ summary, currentUserId, isOrganizer }: TripSummary
                     </Avatar>
                     <div className="flex items-center gap-2">
                       <Badge className="font-semibold">
-                        {formatCurrency(settlement.amount, baseCur)}
+                        <MoneyDisplay amount={settlement.amount} currency={baseCur} size="sm" />
                       </Badge>
                       {(settlement.from.userId === currentUserId ||
                         settlement.to.userId === currentUserId ||

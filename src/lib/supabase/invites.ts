@@ -1,7 +1,7 @@
 'use server';
 
 import { createClient } from './server';
-import { revalidatePath } from 'next/cache';
+import { revalidate } from '@/lib/utils/revalidation';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { TripInvite, User } from '@/types/database';
@@ -11,6 +11,8 @@ import { sendEmail } from '@/lib/email/service';
 import { getUnsubscribeFooterUrl } from '@/lib/email/unsubscribe-token';
 import { render } from '@react-email/components';
 import { routes } from '@/lib/routes';
+import { canRevokeInvite } from '@/lib/permissions/trip-permissions';
+import { logActivity } from '@/lib/supabase/activity-log';
 
 // Default invite expiration: 7 days
 const DEFAULT_INVITE_EXPIRATION_DAYS = 7;
@@ -118,7 +120,15 @@ export async function createInviteLink(
     return { error: insertError.message };
   }
 
-  revalidatePath(`/trip/${tripId}`);
+  revalidate.trip(tripId);
+
+  logActivity({
+    tripId,
+    action: 'created',
+    entityType: 'invite',
+    entityId: invite.id,
+    metadata: { code },
+  });
 
   // Build the invite URL (will be prepended with base URL on client)
   const inviteUrl = routes.invite(code);
@@ -209,7 +219,7 @@ export async function revokeInvite(inviteId: string): Promise<InviteResult> {
     return { error: 'Você não é membro desta viagem' };
   }
 
-  if (member.role !== 'organizer' && invite.invited_by !== authUser.id) {
+  if (!canRevokeInvite(member.role, invite.invited_by === authUser.id)) {
     return { error: 'Apenas organizadores ou o criador do convite podem revogá-lo' };
   }
 
@@ -219,7 +229,14 @@ export async function revokeInvite(inviteId: string): Promise<InviteResult> {
     return { error: deleteError.message };
   }
 
-  revalidatePath(`/trip/${invite.trip_id}`);
+  revalidate.trip(invite.trip_id);
+
+  logActivity({
+    tripId: invite.trip_id,
+    action: 'revoked',
+    entityType: 'invite',
+    entityId: inviteId,
+  });
 
   return { success: true };
 }
@@ -455,8 +472,14 @@ export async function acceptInvite(code: string): Promise<AcceptInviteResult> {
     console.error('Failed to mark invite as accepted:', updateError);
   }
 
-  revalidatePath(`/trip/${invite.trip_id}`);
-  revalidatePath('/trips');
+  revalidate.tripParticipants(invite.trip_id);
+
+  logActivity({
+    tripId: invite.trip_id,
+    action: 'accepted',
+    entityType: 'invite',
+    entityId: invite.id,
+  });
 
   return { success: true, tripId: invite.trip_id };
 }
@@ -622,7 +645,7 @@ export async function sendEmailInvite(tripId: string, email: string): Promise<Em
 
   if (!result.success) {
     console.error('Failed to send invite email:', result.error);
-    revalidatePath(`/trip/${tripId}`);
+    revalidate.trip(tripId);
     return {
       success: true,
       invite,
@@ -630,7 +653,7 @@ export async function sendEmailInvite(tripId: string, email: string): Promise<Em
     };
   }
 
-  revalidatePath(`/trip/${tripId}`);
+  revalidate.trip(tripId);
 
   return { success: true, invite };
 }

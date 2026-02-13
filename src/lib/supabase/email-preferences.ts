@@ -2,7 +2,7 @@
 
 import { createClient } from './server';
 import { createAdminClient } from './admin';
-import { revalidatePath } from 'next/cache';
+import { revalidate } from '@/lib/utils/revalidation';
 import type { UserEmailPreferences } from '@/types/email';
 import type { UnsubscribeTokenPayload } from '@/lib/email/unsubscribe-token';
 
@@ -91,7 +91,7 @@ export async function updateUserEmailPreferences(updates: {
     }
   }
 
-  revalidatePath('/settings');
+  revalidate.settings();
   return { success: true };
 }
 

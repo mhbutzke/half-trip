@@ -8,7 +8,13 @@ export type ActivityLogAction =
   | 'left'
   | 'completed'
   | 'marked_paid'
-  | 'marked_unpaid';
+  | 'marked_unpaid'
+  | 'archived'
+  | 'unarchived'
+  | 'removed'
+  | 'promoted'
+  | 'revoked'
+  | 'accepted';
 
 export type ActivityLogEntityType =
   | 'expense'
@@ -19,7 +25,12 @@ export type ActivityLogEntityType =
   | 'settlement'
   | 'participant'
   | 'trip'
-  | 'poll';
+  | 'poll'
+  | 'budget'
+  | 'attachment'
+  | 'receipt'
+  | 'invite'
+  | 'trip_member';
 
 export interface ActivityLogEntry extends TripActivityLog {
   users: {

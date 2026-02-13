@@ -1,8 +1,9 @@
 'use server';
 
 import { createClient } from './server';
-import { revalidatePath } from 'next/cache';
+import { revalidate } from '@/lib/utils/revalidation';
 import { logActivity } from './activity-log';
+import { canOnOwn } from '@/lib/permissions/trip-permissions';
 import type {
   ExpenseResult,
   ExpenseWithDetails,
@@ -117,9 +118,7 @@ export async function createExpense(input: CreateExpenseInput): Promise<ExpenseR
     return { error: splitsError.message };
   }
 
-  revalidatePath(`/trip/${input.trip_id}`);
-  revalidatePath(`/trip/${input.trip_id}/expenses`);
-  revalidatePath(`/trip/${input.trip_id}/balance`);
+  revalidate.tripExpenses(input.trip_id);
 
   logActivity({
     tripId: input.trip_id,
@@ -174,7 +173,7 @@ export async function updateExpense(
   }
 
   // Only the creator or organizers can edit an expense
-  if (expense.created_by !== authUser.id && member.role !== 'organizer') {
+  if (!canOnOwn('EDIT', member.role, expense.created_by === authUser.id)) {
     return { error: 'Você não tem permissão para editar esta despesa' };
   }
 
@@ -273,9 +272,7 @@ export async function updateExpense(
     }
   }
 
-  revalidatePath(`/trip/${expense.trip_id}`);
-  revalidatePath(`/trip/${expense.trip_id}/expenses`);
-  revalidatePath(`/trip/${expense.trip_id}/balance`);
+  revalidate.tripExpenses(expense.trip_id);
 
   logActivity({
     tripId: expense.trip_id,
@@ -327,7 +324,7 @@ export async function deleteExpense(expenseId: string): Promise<ExpenseResult> {
   }
 
   // Only the creator or organizers can delete an expense
-  if (expense.created_by !== authUser.id && member.role !== 'organizer') {
+  if (!canOnOwn('DELETE', member.role, expense.created_by === authUser.id)) {
     return { error: 'Você não tem permissão para excluir esta despesa' };
   }
 
@@ -345,9 +342,7 @@ export async function deleteExpense(expenseId: string): Promise<ExpenseResult> {
     return { error: error.message };
   }
 
-  revalidatePath(`/trip/${expense.trip_id}`);
-  revalidatePath(`/trip/${expense.trip_id}/expenses`);
-  revalidatePath(`/trip/${expense.trip_id}/balance`);
+  revalidate.tripExpenses(expense.trip_id);
 
   logActivity({
     tripId: expense.trip_id,

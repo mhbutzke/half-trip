@@ -1,9 +1,10 @@
 'use server';
 
 import { createClient } from './server';
-import { revalidatePath } from 'next/cache';
+import { revalidate } from '@/lib/utils/revalidation';
 import type { TripBudget, BudgetWithSpending, BudgetSummary } from '@/types/budget';
 import type { ExpenseCategory } from '@/types/database';
+import { logActivity } from '@/lib/supabase/activity-log';
 
 export type BudgetResult = {
   error?: string;
@@ -150,9 +151,15 @@ export async function createBudget(input: {
     return { error: error.message };
   }
 
-  revalidatePath(`/trip/${input.trip_id}`);
-  revalidatePath(`/trip/${input.trip_id}/budget`);
-  revalidatePath(`/trip/${input.trip_id}/expenses`);
+  revalidate.tripBudget(input.trip_id);
+
+  logActivity({
+    tripId: input.trip_id,
+    action: 'created',
+    entityType: 'budget',
+    entityId: budget.id,
+    metadata: { category: input.category, amount: input.amount },
+  });
 
   return { success: true, budgetId: budget.id };
 }
@@ -185,9 +192,15 @@ export async function updateBudget(budgetId: string, amount: number): Promise<Bu
     return { error: error.message };
   }
 
-  revalidatePath(`/trip/${budget.trip_id}`);
-  revalidatePath(`/trip/${budget.trip_id}/budget`);
-  revalidatePath(`/trip/${budget.trip_id}/expenses`);
+  revalidate.tripBudget(budget.trip_id);
+
+  logActivity({
+    tripId: budget.trip_id,
+    action: 'updated',
+    entityType: 'budget',
+    entityId: budgetId,
+    metadata: { amount },
+  });
 
   return { success: true, budgetId };
 }
@@ -220,9 +233,14 @@ export async function deleteBudget(budgetId: string): Promise<BudgetResult> {
     return { error: error.message };
   }
 
-  revalidatePath(`/trip/${budget.trip_id}`);
-  revalidatePath(`/trip/${budget.trip_id}/budget`);
-  revalidatePath(`/trip/${budget.trip_id}/expenses`);
+  revalidate.tripBudget(budget.trip_id);
+
+  logActivity({
+    tripId: budget.trip_id,
+    action: 'deleted',
+    entityType: 'budget',
+    entityId: budgetId,
+  });
 
   return { success: true };
 }

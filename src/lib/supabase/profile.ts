@@ -1,7 +1,7 @@
 'use server';
 
 import { createClient } from './server';
-import { revalidatePath } from 'next/cache';
+import { revalidate } from '@/lib/utils/revalidation';
 
 export type ProfileResult = {
   error?: string;
@@ -32,8 +32,7 @@ export async function updateProfile(name: string): Promise<ProfileResult> {
     data: { name },
   });
 
-  revalidatePath('/settings');
-  revalidatePath('/trips');
+  revalidate.settings();
 
   return { success: true };
 }
@@ -98,8 +97,7 @@ export async function uploadAvatar(formData: FormData): Promise<ProfileResult> {
     data: { avatar_url: publicUrl },
   });
 
-  revalidatePath('/settings');
-  revalidatePath('/trips');
+  revalidate.settings();
 
   return { success: true, avatarUrl: publicUrl };
 }
@@ -139,8 +137,7 @@ export async function removeAvatar(): Promise<ProfileResult> {
     data: { avatar_url: null },
   });
 
-  revalidatePath('/settings');
-  revalidatePath('/trips');
+  revalidate.settings();
 
   return { success: true };
 }

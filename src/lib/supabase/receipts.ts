@@ -1,8 +1,10 @@
 'use server';
 
 import { createClient } from './server';
-import { revalidatePath } from 'next/cache';
+import { revalidate } from '@/lib/utils/revalidation';
 import { isValidReceiptType, MAX_RECEIPT_SIZE } from '@/lib/utils/receipt-helpers';
+import { canOnOwn } from '@/lib/permissions/trip-permissions';
+import { logActivity } from '@/lib/supabase/activity-log';
 
 export type ReceiptResult = {
   error?: string;
@@ -105,8 +107,14 @@ export async function uploadReceipt(
     return { error: 'Erro ao salvar comprovante' };
   }
 
-  revalidatePath(`/trip/${tripId}`);
-  revalidatePath(`/trip/${tripId}/expenses`);
+  revalidate.tripExpenses(tripId);
+
+  logActivity({
+    tripId,
+    action: 'created',
+    entityType: 'receipt',
+    metadata: { expenseId, fileName: file.name },
+  });
 
   return { success: true, receiptUrl: filePath };
 }
@@ -155,7 +163,7 @@ export async function deleteReceipt(tripId: string, expenseId: string): Promise<
   }
 
   // Only creator or organizers can delete receipt
-  if (expense.created_by !== authUser.id && member.role !== 'organizer') {
+  if (!canOnOwn('DELETE', member.role, expense.created_by === authUser.id)) {
     return { error: 'Você não tem permissão para excluir este comprovante' };
   }
 
@@ -180,8 +188,14 @@ export async function deleteReceipt(tripId: string, expenseId: string): Promise<
     return { error: 'Erro ao excluir comprovante' };
   }
 
-  revalidatePath(`/trip/${tripId}`);
-  revalidatePath(`/trip/${tripId}/expenses`);
+  revalidate.tripExpenses(tripId);
+
+  logActivity({
+    tripId,
+    action: 'deleted',
+    entityType: 'receipt',
+    metadata: { expenseId },
+  });
 
   return { success: true };
 }

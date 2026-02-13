@@ -1,7 +1,7 @@
 'use server';
 
 import { createClient } from './server';
-import { revalidatePath } from 'next/cache';
+import { revalidate } from '@/lib/utils/revalidation';
 import { logActivity } from './activity-log';
 import type { Settlement } from '@/types/database';
 
@@ -95,7 +95,7 @@ export async function createSettlement(input: CreateSettlementInput): Promise<Se
     return { error: settlementError.message };
   }
 
-  revalidatePath(`/trip/${input.trip_id}/balance`);
+  revalidate.tripBalance(input.trip_id);
 
   logActivity({
     tripId: input.trip_id,
@@ -169,7 +169,7 @@ export async function markSettlementAsPaid(settlementId: string): Promise<Settle
     return { error: updateError.message };
   }
 
-  revalidatePath(`/trip/${settlement.trip_id}/balance`);
+  revalidate.tripBalance(settlement.trip_id);
 
   logActivity({
     tripId: settlement.trip_id,
@@ -244,7 +244,7 @@ export async function markSettlementAsUnpaid(settlementId: string): Promise<Sett
     return { error: updateError.message };
   }
 
-  revalidatePath(`/trip/${settlement.trip_id}/balance`);
+  revalidate.tripBalance(settlement.trip_id);
 
   logActivity({
     tripId: settlement.trip_id,
@@ -301,7 +301,7 @@ export async function deleteSettlement(settlementId: string): Promise<Settlement
     return { error: error.message };
   }
 
-  revalidatePath(`/trip/${settlement.trip_id}/balance`);
+  revalidate.tripBalance(settlement.trip_id);
 
   return { success: true };
 }

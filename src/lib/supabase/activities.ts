@@ -1,7 +1,7 @@
 'use server';
 
 import { createClient } from './server';
-import { revalidatePath } from 'next/cache';
+import { revalidate } from '@/lib/utils/revalidation';
 import { logActivity } from './activity-log';
 import type { Activity, ActivityCategory, ActivityLink, Json } from '@/types/database';
 
@@ -97,8 +97,7 @@ export async function createActivity(input: CreateActivityInput): Promise<Activi
     return { error: error.message };
   }
 
-  revalidatePath(`/trip/${input.trip_id}`);
-  revalidatePath(`/trip/${input.trip_id}/itinerary`);
+  revalidate.tripItinerary(input.trip_id);
 
   logActivity({
     tripId: input.trip_id,
@@ -171,8 +170,7 @@ export async function updateActivity(
     return { error: error.message };
   }
 
-  revalidatePath(`/trip/${activity.trip_id}`);
-  revalidatePath(`/trip/${activity.trip_id}/itinerary`);
+  revalidate.tripItinerary(activity.trip_id);
 
   logActivity({
     tripId: activity.trip_id,
@@ -229,8 +227,7 @@ export async function deleteActivity(activityId: string): Promise<ActivityResult
     return { error: error.message };
   }
 
-  revalidatePath(`/trip/${activity.trip_id}`);
-  revalidatePath(`/trip/${activity.trip_id}/itinerary`);
+  revalidate.tripItinerary(activity.trip_id);
 
   logActivity({
     tripId: activity.trip_id,
@@ -405,8 +402,7 @@ export async function reorderActivities(
     }
   }
 
-  revalidatePath(`/trip/${tripId}`);
-  revalidatePath(`/trip/${tripId}/itinerary`);
+  revalidate.tripItinerary(tripId);
 
   return { success: true };
 }

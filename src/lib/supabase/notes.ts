@@ -1,8 +1,9 @@
 'use server';
 
 import { createClient } from './server';
-import { revalidatePath } from 'next/cache';
+import { revalidate } from '@/lib/utils/revalidation';
 import { logActivity } from './activity-log';
+import { canOnOwn } from '@/lib/permissions/trip-permissions';
 import type { TripNote } from '@/types/database';
 
 export type NoteResult = {
@@ -69,8 +70,7 @@ export async function createNote(input: CreateNoteInput): Promise<NoteResult> {
     return { error: error.message };
   }
 
-  revalidatePath(`/trip/${input.trip_id}`);
-  revalidatePath(`/trip/${input.trip_id}/notes`);
+  revalidate.tripNotes(input.trip_id);
 
   logActivity({
     tripId: input.trip_id,
@@ -122,7 +122,7 @@ export async function updateNote(noteId: string, input: UpdateNoteInput): Promis
   }
 
   // Only the creator or organizers can edit a note
-  if (note.created_by !== authUser.id && member.role !== 'organizer') {
+  if (!canOnOwn('EDIT', member.role, note.created_by === authUser.id)) {
     return { error: 'Você não tem permissão para editar esta nota' };
   }
 
@@ -137,8 +137,7 @@ export async function updateNote(noteId: string, input: UpdateNoteInput): Promis
     return { error: error.message };
   }
 
-  revalidatePath(`/trip/${note.trip_id}`);
-  revalidatePath(`/trip/${note.trip_id}/notes`);
+  revalidate.tripNotes(note.trip_id);
 
   logActivity({
     tripId: note.trip_id,
@@ -190,7 +189,7 @@ export async function deleteNote(noteId: string): Promise<NoteResult> {
   }
 
   // Only the creator or organizers can delete a note
-  if (note.created_by !== authUser.id && member.role !== 'organizer') {
+  if (!canOnOwn('DELETE', member.role, note.created_by === authUser.id)) {
     return { error: 'Você não tem permissão para excluir esta nota' };
   }
 
@@ -200,8 +199,7 @@ export async function deleteNote(noteId: string): Promise<NoteResult> {
     return { error: error.message };
   }
 
-  revalidatePath(`/trip/${note.trip_id}`);
-  revalidatePath(`/trip/${note.trip_id}/notes`);
+  revalidate.tripNotes(note.trip_id);
 
   logActivity({
     tripId: note.trip_id,

@@ -1,9 +1,10 @@
 'use server';
 
 import { createClient } from './server';
-import { revalidatePath } from 'next/cache';
+import { revalidate } from '@/lib/utils/revalidation';
 import type { ActivityAttachment } from '@/types/database';
 import { MAX_ATTACHMENT_SIZE, isValidAttachmentType } from '@/lib/utils/attachment-helpers';
+import { logActivity } from '@/lib/supabase/activity-log';
 
 export type AttachmentResult = {
   error?: string;
@@ -110,8 +111,15 @@ export async function uploadAttachment(activityId: string, file: File): Promise<
     return { error: 'Erro ao salvar anexo' };
   }
 
-  revalidatePath(`/trip/${activity.trip_id}`);
-  revalidatePath(`/trip/${activity.trip_id}/itinerary`);
+  revalidate.tripItinerary(activity.trip_id);
+
+  logActivity({
+    tripId: activity.trip_id,
+    action: 'created',
+    entityType: 'attachment',
+    entityId: attachment.id,
+    metadata: { fileName: file.name, fileType: file.type, activityId },
+  });
 
   return { success: true, attachmentId: attachment.id };
 }
@@ -185,8 +193,14 @@ export async function deleteAttachment(attachmentId: string): Promise<Attachment
     return { error: 'Erro ao excluir anexo' };
   }
 
-  revalidatePath(`/trip/${tripId}`);
-  revalidatePath(`/trip/${tripId}/itinerary`);
+  revalidate.tripItinerary(tripId);
+
+  logActivity({
+    tripId,
+    action: 'deleted',
+    entityType: 'attachment',
+    entityId: attachmentId,
+  });
 
   return { success: true };
 }

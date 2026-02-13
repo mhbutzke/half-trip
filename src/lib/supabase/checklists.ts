@@ -1,7 +1,7 @@
 'use server';
 
 import { createClient } from './server';
-import { revalidatePath } from 'next/cache';
+import { revalidate } from '@/lib/utils/revalidation';
 import { logActivity } from './activity-log';
 import type { TripChecklist, ChecklistItem, ChecklistWithItems } from '@/types/checklist';
 
@@ -113,7 +113,7 @@ export async function createChecklist(input: {
     return { error: error.message };
   }
 
-  revalidatePath(`/trip/${input.trip_id}/checklists`);
+  revalidate.tripChecklists(input.trip_id);
 
   logActivity({
     tripId: input.trip_id,
@@ -154,7 +154,7 @@ export async function deleteChecklist(checklistId: string): Promise<ChecklistRes
     return { error: error.message };
   }
 
-  revalidatePath(`/trip/${checklist.trip_id}/checklists`);
+  revalidate.tripChecklists(checklist.trip_id);
   return { success: true };
 }
 
@@ -213,7 +213,7 @@ export async function addChecklistItem(input: {
     return { error: error.message };
   }
 
-  revalidatePath(`/trip/${checklist.trip_id}/checklists`);
+  revalidate.tripChecklists(checklist.trip_id);
   return { success: true, itemId: item.id };
 }
 
@@ -263,7 +263,7 @@ export async function toggleChecklistItem(itemId: string): Promise<ChecklistItem
     .single();
 
   if (checklist) {
-    revalidatePath(`/trip/${checklist.trip_id}/checklists`);
+    revalidate.tripChecklists(checklist.trip_id);
 
     if (nowCompleted) {
       logActivity({
@@ -315,7 +315,7 @@ export async function deleteChecklistItem(itemId: string): Promise<ChecklistItem
   }
 
   if (checklist) {
-    revalidatePath(`/trip/${checklist.trip_id}/checklists`);
+    revalidate.tripChecklists(checklist.trip_id);
   }
 
   return { success: true };

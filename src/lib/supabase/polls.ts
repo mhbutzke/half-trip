@@ -1,7 +1,7 @@
 'use server';
 
 import { createClient } from './server';
-import { revalidatePath } from 'next/cache';
+import { revalidate } from '@/lib/utils/revalidation';
 import { logActivity } from './activity-log';
 import type { PollWithVotes, CreatePollInput } from '@/types/poll';
 import type { Json } from '@/types/database';
@@ -43,7 +43,7 @@ export async function createPoll(input: CreatePollInput): Promise<PollResult> {
 
   if (error) return { error: error.message };
 
-  revalidatePath(`/trip/${input.trip_id}`);
+  revalidate.trip(input.trip_id);
 
   logActivity({
     tripId: input.trip_id,
@@ -177,7 +177,7 @@ export async function votePoll(pollId: string, optionIndex: number): Promise<Pol
     if (error) return { error: error.message };
   }
 
-  revalidatePath(`/trip/${poll.trip_id}`);
+  revalidate.trip(poll.trip_id);
   return { success: true };
 }
 

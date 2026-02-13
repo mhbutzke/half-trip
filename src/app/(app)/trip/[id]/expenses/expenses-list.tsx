@@ -26,6 +26,7 @@ import type { TripMemberWithUser } from '@/lib/supabase/trips';
 import type { ExpenseWithDetails } from '@/types/expense';
 import { routes } from '@/lib/routes';
 import type { TripMemberRole, ExpenseCategory } from '@/types/database';
+import { usePermissions } from '@/hooks/use-permissions';
 
 const AddExpenseDialog = dynamic(
   () =>
@@ -56,6 +57,7 @@ export function ExpensesList({
   currentUserId,
 }: ExpensesListProps) {
   const router = useRouter();
+  const permissions = usePermissions({ userRole, currentUserId });
   const [expenses, setExpenses] = useState<ExpenseWithDetails[]>(initialExpenses);
   const [deletingExpense, setDeletingExpense] = useState<ExpenseWithDetails | null>(null);
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -82,7 +84,7 @@ export function ExpensesList({
 
   // Check if user can edit an expense
   const canEditExpense = (expense: ExpenseWithDetails) => {
-    return userRole === 'organizer' || expense.created_by === currentUserId;
+    return permissions.canOnOwn('EDIT', expense.created_by);
   };
 
   // Handle edit expense

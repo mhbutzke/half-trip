@@ -10,6 +10,7 @@ import { NoteCard } from '@/components/notes/note-card';
 import { useTripRealtime } from '@/hooks/use-trip-realtime';
 import type { NoteWithCreator } from '@/lib/supabase/notes';
 import type { TripMemberRole } from '@/types/database';
+import { usePermissions } from '@/hooks/use-permissions';
 
 // Lazy load note dialogs - only needed when user interacts
 const AddNoteDialog = dynamic(() =>
@@ -30,6 +31,7 @@ interface NotesListProps {
 }
 
 export function NotesList({ tripId, initialNotes, userRole, currentUserId }: NotesListProps) {
+  const permissions = usePermissions({ userRole, currentUserId });
   const [notes, setNotes] = useState<NoteWithCreator[]>(initialNotes);
   const [editingNote, setEditingNote] = useState<NoteWithCreator | null>(null);
   const [deletingNote, setDeletingNote] = useState<NoteWithCreator | null>(null);
@@ -58,7 +60,7 @@ export function NotesList({ tripId, initialNotes, userRole, currentUserId }: Not
   };
 
   const canEditNote = (note: NoteWithCreator) => {
-    return userRole === 'organizer' || note.created_by === currentUserId;
+    return permissions.canOnOwn('EDIT', note.created_by);
   };
 
   return (

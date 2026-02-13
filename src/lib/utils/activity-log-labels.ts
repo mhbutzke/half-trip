@@ -10,6 +10,11 @@ const entityLabels: Record<ActivityLogEntityType, string> = {
   participant: 'participante',
   trip: 'viagem',
   poll: 'votação',
+  invite: 'convite',
+  budget: 'orçamento',
+  attachment: 'anexo',
+  receipt: 'comprovante',
+  trip_member: 'membro da viagem',
 };
 
 const actionLabels: Record<ActivityLogAction, string> = {
@@ -21,6 +26,12 @@ const actionLabels: Record<ActivityLogAction, string> = {
   completed: 'completou',
   marked_paid: 'marcou como pago',
   marked_unpaid: 'desmarcou pagamento de',
+  archived: 'arquivou',
+  unarchived: 'desarquivou',
+  removed: 'removeu',
+  promoted: 'promoveu',
+  revoked: 'revogou',
+  accepted: 'aceitou',
 };
 
 export function getLogMessage(

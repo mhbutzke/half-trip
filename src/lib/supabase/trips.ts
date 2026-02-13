@@ -1,9 +1,11 @@
 'use server';
 
 import { createClient } from './server';
-import { revalidatePath } from 'next/cache';
+import { revalidate } from '@/lib/utils/revalidation';
 import type { Trip, TripMember, User, TripStyle, TransportType } from '@/types/database';
 import type { SupportedCurrency } from '@/types/currency';
+import { logActivity } from '@/lib/supabase/activity-log';
+import { can, isOrganizer } from '@/lib/permissions/trip-permissions';
 
 export type TripResult = {
   error?: string;
@@ -82,7 +84,17 @@ export async function createTrip(input: CreateTripInput): Promise<TripResult> {
     }
   }
 
-  revalidatePath('/trips');
+  revalidate.trips();
+
+  if (tripId) {
+    logActivity({
+      tripId,
+      action: 'created',
+      entityType: 'trip',
+      entityId: tripId,
+      metadata: { name: input.name, destination: input.destination },
+    });
+  }
 
   return { success: true, tripId };
 }
@@ -107,7 +119,7 @@ export async function updateTrip(tripId: string, input: UpdateTripInput): Promis
     .eq('user_id', authUser.id)
     .single();
 
-  if (!member || member.role !== 'organizer') {
+  if (!member || !can('EDIT_TRIP', member.role)) {
     return { error: 'Apenas organizadores podem editar a viagem' };
   }
 
@@ -141,8 +153,15 @@ export async function updateTrip(tripId: string, input: UpdateTripInput): Promis
     return { error: error.message };
   }
 
-  revalidatePath('/trips');
-  revalidatePath(`/trip/${tripId}`);
+  revalidate.trip(tripId);
+
+  logActivity({
+    tripId,
+    action: 'updated',
+    entityType: 'trip',
+    entityId: tripId,
+    metadata: { updatedFields: Object.keys(input) },
+  });
 
   return { success: true, tripId };
 }
@@ -167,7 +186,7 @@ export async function archiveTrip(tripId: string): Promise<TripResult> {
     .eq('user_id', authUser.id)
     .single();
 
-  if (!member || member.role !== 'organizer') {
+  if (!member || !can('ARCHIVE_TRIP', member.role)) {
     return { error: 'Apenas organizadores podem arquivar a viagem' };
   }
 
@@ -180,8 +199,14 @@ export async function archiveTrip(tripId: string): Promise<TripResult> {
     return { error: error.message };
   }
 
-  revalidatePath('/trips');
-  revalidatePath(`/trip/${tripId}`);
+  revalidate.trip(tripId);
+
+  logActivity({
+    tripId,
+    action: 'archived',
+    entityType: 'trip',
+    entityId: tripId,
+  });
 
   return { success: true };
 }
@@ -206,7 +231,7 @@ export async function unarchiveTrip(tripId: string): Promise<TripResult> {
     .eq('user_id', authUser.id)
     .single();
 
-  if (!member || member.role !== 'organizer') {
+  if (!member || !can('ARCHIVE_TRIP', member.role)) {
     return { error: 'Apenas organizadores podem desarquivar a viagem' };
   }
 
@@ -216,8 +241,14 @@ export async function unarchiveTrip(tripId: string): Promise<TripResult> {
     return { error: error.message };
   }
 
-  revalidatePath('/trips');
-  revalidatePath(`/trip/${tripId}`);
+  revalidate.trip(tripId);
+
+  logActivity({
+    tripId,
+    action: 'unarchived',
+    entityType: 'trip',
+    entityId: tripId,
+  });
 
   return { success: true };
 }
@@ -242,9 +273,17 @@ export async function deleteTrip(tripId: string): Promise<TripResult> {
     .eq('user_id', authUser.id)
     .single();
 
-  if (!member || member.role !== 'organizer') {
+  if (!member || !can('DELETE_TRIP', member.role)) {
     return { error: 'Apenas organizadores podem excluir a viagem' };
   }
+
+  // Log before delete since trip and activity log will be gone after deletion
+  logActivity({
+    tripId,
+    action: 'deleted',
+    entityType: 'trip',
+    entityId: tripId,
+  });
 
   // Delete the trip (cascades to members, activities, expenses, etc.)
   const { error } = await supabase.from('trips').delete().eq('id', tripId);
@@ -253,7 +292,7 @@ export async function deleteTrip(tripId: string): Promise<TripResult> {
     return { error: error.message };
   }
 
-  revalidatePath('/trips');
+  revalidate.trips();
 
   return { success: true };
 }
@@ -502,7 +541,7 @@ export async function removeParticipant(tripId: string, userId: string): Promise
     .eq('user_id', authUser.id)
     .single();
 
-  if (!currentMember || currentMember.role !== 'organizer') {
+  if (!currentMember || !can('MANAGE_MEMBERS', currentMember.role)) {
     return { error: 'Apenas organizadores podem remover participantes' };
   }
 
@@ -526,7 +565,7 @@ export async function removeParticipant(tripId: string, userId: string): Promise
   }
 
   // Cannot remove other organizers (would need to implement demotion first)
-  if (targetMember.role === 'organizer') {
+  if (isOrganizer(targetMember.role)) {
     return { error: 'Não é possível remover outro organizador' };
   }
 
@@ -540,8 +579,14 @@ export async function removeParticipant(tripId: string, userId: string): Promise
     return { error: error.message };
   }
 
-  revalidatePath(`/trip/${tripId}`);
-  revalidatePath(`/trip/${tripId}/participants`);
+  revalidate.tripParticipants(tripId);
+
+  logActivity({
+    tripId,
+    action: 'removed',
+    entityType: 'trip_member',
+    metadata: { removedUserId: userId },
+  });
 
   return { success: true };
 }
@@ -574,7 +619,7 @@ export async function leaveTrip(tripId: string): Promise<TripResult> {
   }
 
   // If organizer, check if there are other organizers
-  if (membership.role === 'organizer') {
+  if (isOrganizer(membership.role)) {
     const { data: organizers } = await supabase
       .from('trip_members')
       .select('user_id')
@@ -599,9 +644,7 @@ export async function leaveTrip(tripId: string): Promise<TripResult> {
     return { error: error.message };
   }
 
-  revalidatePath('/trips');
-  revalidatePath(`/trip/${tripId}`);
-  revalidatePath(`/trip/${tripId}/participants`);
+  revalidate.tripParticipants(tripId);
 
   return { success: true };
 }
@@ -629,7 +672,7 @@ export async function promoteToOrganizer(tripId: string, userId: string): Promis
     .eq('user_id', authUser.id)
     .single();
 
-  if (!currentMember || currentMember.role !== 'organizer') {
+  if (!currentMember || !can('MANAGE_MEMBERS', currentMember.role)) {
     return { error: 'Apenas organizadores podem promover participantes' };
   }
 
@@ -645,7 +688,7 @@ export async function promoteToOrganizer(tripId: string, userId: string): Promis
     return { error: 'Usuário não é membro desta viagem' };
   }
 
-  if (targetMember.role === 'organizer') {
+  if (isOrganizer(targetMember.role)) {
     return { error: 'Usuário já é organizador' };
   }
 
@@ -659,8 +702,14 @@ export async function promoteToOrganizer(tripId: string, userId: string): Promis
     return { error: error.message };
   }
 
-  revalidatePath(`/trip/${tripId}`);
-  revalidatePath(`/trip/${tripId}/participants`);
+  revalidate.tripParticipants(tripId);
+
+  logActivity({
+    tripId,
+    action: 'promoted',
+    entityType: 'trip_member',
+    metadata: { promotedUserId: userId },
+  });
 
   return { success: true };
 }

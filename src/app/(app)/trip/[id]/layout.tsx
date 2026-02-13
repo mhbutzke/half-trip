@@ -11,7 +11,7 @@ export default async function TripLayout({ children, params }: TripLayoutProps) 
   return (
     <div className="flex flex-1">
       <TripSidebar tripId={id} />
-      <div className="flex-1">{children}</div>
+      <div className="min-w-0 flex-1">{children}</div>
     </div>
   );
 }

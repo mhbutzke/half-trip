@@ -28,7 +28,7 @@ export function PageContainer({
   return (
     <main
       className={cn(
-        'mx-auto w-full',
+        'mx-auto w-full overflow-x-hidden',
         maxWidthClasses[maxWidth],
         padding && 'px-4 py-6 sm:px-6 lg:px-8',
         bottomNav && 'pb-24 md:pb-6',

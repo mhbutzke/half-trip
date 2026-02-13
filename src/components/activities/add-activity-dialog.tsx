@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { ResponsiveFormContainer } from '@/components/ui/responsive-form-container';
 import { Form } from '@/components/ui/form';
 import { useMediaQuery } from '@/hooks/use-media-query';
+import { useDialogState } from '@/hooks/use-dialog-state';
 import { createActivitySchema, type CreateActivityInput } from '@/lib/validation/activity-schemas';
 import { createActivity } from '@/lib/supabase/activities';
 import { ActivityFormFields } from './activity-form-fields';
@@ -32,10 +33,6 @@ export function AddActivityDialog({
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
 }: AddActivityDialogProps) {
-  const [internalOpen, setInternalOpen] = useState(false);
-  const isControlled = controlledOpen !== undefined;
-  const open = isControlled ? controlledOpen : internalOpen;
-  const setOpen = isControlled ? controlledOnOpenChange! : setInternalOpen;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [links, setLinks] = useState<ActivityLink[]>([]);
   const [newLinkUrl, setNewLinkUrl] = useState('');
@@ -43,6 +40,34 @@ export function AddActivityDialog({
   const [linkError, setLinkError] = useState('');
   const [locationCoords, setLocationCoords] = useState<LocationCoords | null>(null);
   const isMobile = useMediaQuery('(max-width: 768px)');
+
+  const {
+    open,
+    setOpen,
+    handleOpenChange: baseHandleOpenChange,
+  } = useDialogState({
+    controlledOpen,
+    controlledOnOpenChange,
+    onClose: () => {
+      form.reset({
+        trip_id: tripId,
+        title: '',
+        date: defaultDate || '',
+        start_time: '',
+        duration_minutes: null,
+        location: '',
+        description: '',
+        category: undefined,
+        transport_type: null,
+        links: [],
+      });
+      setLinks([]);
+      setNewLinkUrl('');
+      setNewLinkLabel('');
+      setLinkError('');
+      setLocationCoords(null);
+    },
+  });
 
   const form = useForm<CreateActivityInput>({
     resolver: zodResolver(createActivitySchema),
@@ -61,10 +86,10 @@ export function AddActivityDialog({
   });
 
   useEffect(() => {
-    if (isControlled && open && defaultDate) {
+    if (controlledOpen !== undefined && open && defaultDate) {
       form.setValue('date', defaultDate);
     }
-  }, [isControlled, open, defaultDate, form]);
+  }, [controlledOpen, open, defaultDate, form]);
 
   const addLink = () => {
     setLinkError('');
@@ -137,32 +162,13 @@ export function AddActivityDialog({
 
   const handleOpenChange = (newOpen: boolean) => {
     if (!isSubmitting) {
-      setOpen(newOpen);
-      if (!newOpen) {
-        form.reset({
-          trip_id: tripId,
-          title: '',
-          date: defaultDate || '',
-          start_time: '',
-          duration_minutes: null,
-          location: '',
-          description: '',
-          category: undefined,
-          transport_type: null,
-          links: [],
-        });
-        setLinks([]);
-        setNewLinkUrl('');
-        setNewLinkLabel('');
-        setLinkError('');
-        setLocationCoords(null);
-      }
+      baseHandleOpenChange(newOpen);
     }
   };
 
   return (
     <>
-      {!isControlled &&
+      {controlledOpen === undefined &&
         (trigger ? (
           <button type="button" onClick={() => setOpen(true)} className="contents">
             {trigger}

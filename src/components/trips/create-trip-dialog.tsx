@@ -30,6 +30,7 @@ import { createTripSchema, tripStyles, transportTypes } from '@/lib/validation/t
 import { createTrip } from '@/lib/supabase/trips';
 import { SUPPORTED_CURRENCIES, CURRENCY_LABELS } from '@/types/currency';
 import { LocationAutocomplete } from '@/components/activities/location-autocomplete';
+import { useDialogState } from '@/hooks/use-dialog-state';
 
 interface CreateTripDialogProps {
   trigger?: React.ReactNode;
@@ -44,13 +45,22 @@ export function CreateTripDialog({
   open: controlledOpen,
   onOpenChange,
 }: CreateTripDialogProps) {
-  const [internalOpen, setInternalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const router = useRouter();
 
-  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
-  const setOpen = onOpenChange || setInternalOpen;
+  const {
+    open,
+    setOpen,
+    handleOpenChange: baseHandleOpenChange,
+  } = useDialogState({
+    controlledOpen,
+    controlledOnOpenChange: onOpenChange,
+    onClose: () => {
+      form.reset();
+      setStep(1);
+    },
+  });
 
   type CreateTripFormInput = z.input<typeof createTripSchema>;
   type CreateTripFormOutput = z.output<typeof createTripSchema>;
@@ -107,11 +117,7 @@ export function CreateTripDialog({
 
   const handleOpenChange = (newOpen: boolean) => {
     if (!isSubmitting) {
-      setOpen(newOpen);
-      if (!newOpen) {
-        form.reset();
-        setStep(1);
-      }
+      baseHandleOpenChange(newOpen);
     }
   };
 

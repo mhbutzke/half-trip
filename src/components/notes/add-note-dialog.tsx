@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Plus } from 'lucide-react';
+import { useDialogState } from '@/hooks/use-dialog-state';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -42,12 +43,19 @@ export function AddNoteDialog({
   open: controlledOpen,
   onOpenChange,
 }: AddNoteDialogProps) {
-  const [internalOpen, setInternalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Use controlled open state if provided, otherwise use internal state
-  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
-  const setOpen = onOpenChange || setInternalOpen;
+  const {
+    open,
+    setOpen,
+    handleOpenChange: baseHandleOpenChange,
+  } = useDialogState({
+    controlledOpen,
+    controlledOnOpenChange: onOpenChange,
+    onClose: () => {
+      form.reset({ trip_id: tripId, content: '' });
+    },
+  });
 
   const form = useForm<CreateNoteInput>({
     resolver: zodResolver(createNoteSchema),
@@ -79,10 +87,6 @@ export function AddNoteDialog({
       }
 
       setOpen(false);
-      form.reset({
-        trip_id: tripId,
-        content: '',
-      });
     } catch {
       toast.error('Erro ao adicionar nota');
     } finally {
@@ -92,13 +96,7 @@ export function AddNoteDialog({
 
   const handleOpenChange = (newOpen: boolean) => {
     if (!isSubmitting) {
-      setOpen(newOpen);
-      if (!newOpen) {
-        form.reset({
-          trip_id: tripId,
-          content: '',
-        });
-      }
+      baseHandleOpenChange(newOpen);
     }
   };
 

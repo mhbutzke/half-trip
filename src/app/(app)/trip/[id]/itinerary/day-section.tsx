@@ -4,10 +4,11 @@ import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { format, isToday, isTomorrow, isYesterday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Plus, Sunrise, CalendarDays } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { DraggableActivityCard } from './draggable-activity-card';
-import { ActivityCard } from './activity-card';
+import { DraggableTimelineItem } from './draggable-timeline-item';
+import { TimelineActivityItem } from './timeline-activity-item';
+import { EmptyDayState } from './empty-day-state';
 import type { ActivityWithCreator } from '@/lib/supabase/activities';
 
 interface DaySectionProps {
@@ -15,10 +16,7 @@ interface DaySectionProps {
   dayNumber: number;
   activities: ActivityWithCreator[];
   onAddActivity: (date: string) => void;
-  onEditActivity: (activity: ActivityWithCreator) => void;
-  onDeleteActivity: (activity: ActivityWithCreator) => void;
-  onSyncActivity: (activity: ActivityWithCreator) => void;
-  syncingActivityId?: string | null;
+  onActivityClick: (activity: ActivityWithCreator) => void;
   draggable?: boolean;
 }
 
@@ -34,10 +32,7 @@ export function DaySection({
   dayNumber,
   activities,
   onAddActivity,
-  onEditActivity,
-  onDeleteActivity,
-  onSyncActivity,
-  syncingActivityId = null,
+  onActivityClick,
   draggable = true,
 }: DaySectionProps) {
   const dateObj = new Date(date + 'T00:00:00');
@@ -46,108 +41,72 @@ export function DaySection({
   const isOutOfRange = dayNumber <= 0;
   const dayLabel = isOutOfRange ? 'Extra' : `Dia ${dayNumber}`;
 
-  // Make the day a droppable container
   const { setNodeRef, isOver } = useDroppable({
     id: date,
-    data: {
-      type: 'day',
-      date,
-    },
+    data: { type: 'day', date },
   });
 
-  // Get activity IDs for sortable context
   const activityIds = activities.map((a) => a.id);
 
   return (
-    <section id={`day-${date}`} className="relative scroll-mt-20">
+    <section className="flex min-h-0 flex-col">
       {/* Day Header */}
-      <div className="sticky top-14 z-10 -mx-4 bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60 sm:-mx-0 sm:px-0">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <span className="text-sm font-bold uppercase">{isOutOfRange ? '+' : dayNumber}</span>
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="font-semibold capitalize">
-                  {format(dateObj, 'EEEE', { locale: ptBR })}
-                </h2>
-                {relativeLabel && (
-                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                    {relativeLabel}
-                  </span>
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {format(dateObj, "d 'de' MMMM", { locale: ptBR })}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {dayLabel} • {activities.length}{' '}
-                {activities.length === 1 ? 'atividade' : 'atividades'}
-              </p>
-            </div>
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-bold">{dayLabel}</h2>
+            <span className="text-sm text-muted-foreground capitalize">
+              {format(dateObj, 'EEEE', { locale: ptBR })}
+            </span>
+            {relativeLabel && (
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                {relativeLabel}
+              </span>
+            )}
           </div>
-
-          <Button variant="outline" size="sm" className="h-9" onClick={() => onAddActivity(date)}>
-            <Plus className="mr-1.5 h-4 w-4" />
-            <span className="hidden sm:inline">Adicionar</span>
-          </Button>
+          <p className="text-sm text-muted-foreground">
+            {format(dateObj, "d 'de' MMMM", { locale: ptBR })} • {activities.length}{' '}
+            {activities.length === 1 ? 'atividade' : 'atividades'}
+          </p>
         </div>
+        <Button variant="outline" size="sm" className="h-8" onClick={() => onAddActivity(date)}>
+          <Plus className="mr-1 h-4 w-4" />
+          <span className="hidden sm:inline">Adicionar</span>
+        </Button>
       </div>
 
-      {/* Activities List - Droppable Container */}
+      {/* Timeline Content - Droppable Container */}
       <div
         ref={setNodeRef}
-        className={`mt-4 min-h-[60px] space-y-3 pl-8 transition-colors sm:pl-10 ${
+        className={`min-h-[80px] flex-1 transition-colors ${
           isOver ? 'rounded-lg bg-primary/5' : ''
         }`}
       >
         <SortableContext items={activityIds} strategy={verticalListSortingStrategy}>
           {hasActivities ? (
-            activities.map((activity) =>
-              draggable ? (
-                <DraggableActivityCard
-                  key={activity.id}
-                  activity={activity}
-                  onEdit={onEditActivity}
-                  onDelete={onDeleteActivity}
-                  onSync={onSyncActivity}
-                  isSyncing={syncingActivityId === activity.id}
-                />
-              ) : (
-                <ActivityCard
-                  key={activity.id}
-                  activity={activity}
-                  onEdit={onEditActivity}
-                  onDelete={onDeleteActivity}
-                  onSync={onSyncActivity}
-                  isSyncing={syncingActivityId === activity.id}
-                />
-              )
-            )
-          ) : (
-            <div className="-ml-8 flex flex-col items-center justify-center rounded-lg border border-dashed py-8 text-center sm:-ml-10">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-                {dayNumber === 1 ? (
-                  <Sunrise className="h-6 w-6 text-muted-foreground" />
+            <div className="space-y-0">
+              {activities.map((activity, index) =>
+                draggable ? (
+                  <DraggableTimelineItem
+                    key={activity.id}
+                    activity={activity}
+                    isFirst={index === 0}
+                    isLast={index === activities.length - 1}
+                    onClick={onActivityClick}
+                  />
                 ) : (
-                  <CalendarDays className="h-6 w-6 text-muted-foreground" />
-                )}
-              </div>
-              <p className="mt-3 text-sm font-medium">Nenhuma atividade</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Adicione atividades para este dia
-              </p>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="mt-3"
-                onClick={() => onAddActivity(date)}
-              >
-                <Plus className="mr-1.5 h-4 w-4" />
-                Adicionar atividade
-              </Button>
+                  <TimelineActivityItem
+                    key={activity.id}
+                    activity={activity}
+                    isFirst={index === 0}
+                    isLast={index === activities.length - 1}
+                    onClick={onActivityClick}
+                  />
+                )
+              )}
             </div>
+          ) : (
+            <EmptyDayState dayNumber={dayNumber} onAddActivity={() => onAddActivity(date)} />
           )}
         </SortableContext>
       </div>

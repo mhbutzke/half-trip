@@ -21,10 +21,14 @@ function verifyWebhookSignature(
 
   // svix-signature can contain multiple signatures separated by spaces (versioned: "v1,<sig>")
   const signatures = svixSignature.split(' ');
+  const expectedBuf = Buffer.from(expectedSignature);
   for (const sig of signatures) {
     const [version, value] = sig.split(',');
-    if (version === 'v1' && value === expectedSignature) {
-      return true;
+    if (version === 'v1' && value) {
+      const valueBuf = Buffer.from(value);
+      if (expectedBuf.length === valueBuf.length && crypto.timingSafeEqual(expectedBuf, valueBuf)) {
+        return true;
+      }
     }
   }
   return false;
@@ -47,7 +51,12 @@ export async function POST(req: NextRequest) {
 
     const body = await req.text();
 
-    // Verify webhook signature when secret is configured
+    // Verify webhook signature (required in production)
+    if (!webhookSecret && process.env.NODE_ENV === 'production') {
+      console.error('RESEND_WEBHOOK_SECRET not configured in production');
+      return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 });
+    }
+
     if (webhookSecret) {
       // Reject timestamps older than 5 minutes to prevent replay attacks
       const timestampSeconds = parseInt(svixTimestamp, 10);

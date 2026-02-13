@@ -43,7 +43,6 @@ export async function GET() {
         checks: {
           database: databaseHealthy,
         },
-        version: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
       },
       { status: statusCode }
     );

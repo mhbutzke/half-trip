@@ -19,7 +19,7 @@ const DeleteTripDialog = dynamic(() =>
 );
 import { useRealtimeSubscription } from '@/hooks/use-realtime-subscription';
 import { useOnlineStatus } from '@/hooks/use-online-status';
-import { cacheTrips, getCachedUserTrips } from '@/lib/sync';
+import { cacheTrips, getCachedUserTrips, getCachedTripMembers, getCachedUser } from '@/lib/sync';
 import { getCurrentAuthUserId, getTripsForCurrentUser } from '@/lib/supabase/trips-client';
 import { archiveTrip, unarchiveTrip, type TripWithMembers } from '@/lib/supabase/trips';
 
@@ -57,14 +57,41 @@ export function TripsList({ emptyState }: TripsListProps) {
         // Load from cache when offline
         const userId = await getCurrentAuthUserId();
         if (userId) {
+          setCurrentUserId(userId);
           const cachedTrips = await getCachedUserTrips(userId);
 
-          // Convert CachedTrip to TripWithMembers format
-          const tripsWithMembers: TripWithMembers[] = cachedTrips.map((trip) => ({
-            ...trip,
-            trip_members: [],
-            memberCount: 0,
-          }));
+          // Fetch cached members for each trip to preserve role detection offline
+          const tripsWithMembers: TripWithMembers[] = await Promise.all(
+            cachedTrips.map(async (trip) => {
+              const cachedMembers = await getCachedTripMembers(trip.id);
+              const membersWithUsers = await Promise.all(
+                cachedMembers.map(async (m) => {
+                  const cachedUser = await getCachedUser(m.user_id);
+                  return {
+                    id: m.id,
+                    trip_id: m.trip_id,
+                    user_id: m.user_id,
+                    role: m.role,
+                    joined_at: m.joined_at,
+                    invited_by: m.invited_by,
+                    users: cachedUser ?? {
+                      id: m.user_id,
+                      email: '',
+                      name: '',
+                      avatar_url: null,
+                      created_at: '',
+                      updated_at: '',
+                    },
+                  };
+                })
+              );
+              return {
+                ...trip,
+                trip_members: membersWithUsers,
+                memberCount: cachedMembers.length,
+              };
+            })
+          );
 
           const active = tripsWithMembers.filter((t) => !t.archived_at);
           const archived = tripsWithMembers.filter((t) => t.archived_at);

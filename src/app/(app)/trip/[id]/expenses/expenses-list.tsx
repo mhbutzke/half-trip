@@ -84,6 +84,11 @@ export function ExpensesList({
     return userRole === 'organizer' || expense.created_by === currentUserId;
   };
 
+  // Handle edit expense
+  const handleEditExpense = (expense: ExpenseWithDetails) => {
+    router.push(`/trip/${tripId}/expenses/${expense.id}/edit`);
+  };
+
   // Handle expense deleted
   const handleExpenseDeleted = (expenseId: string) => {
     setExpenses((prev) => prev.filter((expense) => expense.id !== expenseId));
@@ -344,6 +349,7 @@ export function ExpensesList({
                 expense={expense}
                 baseCurrency={baseCurrency}
                 canEdit={canEditExpense(expense)}
+                onEdit={() => handleEditExpense(expense)}
                 onDelete={() => setDeletingExpense(expense)}
               />
             </SwipeAction>

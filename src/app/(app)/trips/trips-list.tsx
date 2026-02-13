@@ -114,7 +114,6 @@ export function TripsList({ emptyState }: TripsListProps) {
   useRealtimeSubscription({
     table: 'trips',
     onChange: () => {
-      console.log('🔄 Trips changed, reloading list');
       loadTrips();
     },
   });

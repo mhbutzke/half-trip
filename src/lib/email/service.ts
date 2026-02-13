@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getResendClient } from './resend';
 import type { EmailType, SendEmailParams, SendEmailResult } from '@/types/email';
 import type { Json } from '@/types/database';
+import { logError } from '@/lib/errors/logger';
 
 const FROM_ADDRESSES: Record<EmailType, string> = {
   invite: 'Half Trip <convites@halftrip.com>',
@@ -75,7 +76,7 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
 
   const resend = getResendClient();
   if (!resend) {
-    console.error('Resend client not configured');
+    logError('Resend client not configured', { action: 'send-email' });
     return { success: false, error: 'Email service not configured' };
   }
 
@@ -97,7 +98,7 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
     });
 
     if (error) {
-      console.error('Resend error:', error);
+      logError(error, { action: 'resend-send', emailType, recipientEmail });
 
       await logEmailAttempt({
         emailType,
@@ -164,7 +165,7 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
     return { success: true, emailId: data?.id };
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-    console.error('Email send error:', err);
+    logError(err, { action: 'email-send', emailType, recipientEmail });
 
     await logEmailAttempt({
       emailType,

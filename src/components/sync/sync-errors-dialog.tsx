@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { syncEngine } from '@/lib/sync';
 import type { SyncQueueEntry } from '@/lib/sync/db';
 import { toast } from 'sonner';
+import { logError } from '@/lib/errors/logger';
 
 type SyncErrorsDialogProps = {
   open: boolean;
@@ -38,7 +39,7 @@ export function SyncErrorsDialog({ open, onOpenChange, onRetrySuccess }: SyncErr
       const entries = await db.sync_queue.filter((entry) => entry.retries >= 3).toArray();
       setFailedEntries(entries);
     } catch (error) {
-      console.error('[SyncErrorsDialog] Error loading failed entries:', error);
+      logError(error, { action: 'load-sync-failed-entries' });
     }
   };
 
@@ -57,7 +58,7 @@ export function SyncErrorsDialog({ open, onOpenChange, onRetrySuccess }: SyncErr
       await loadFailedEntries();
       onRetrySuccess?.();
     } catch (error) {
-      console.error('[SyncErrorsDialog] Error retrying entries:', error);
+      logError(error, { action: 'retry-sync-entries' });
       toast.error('Erro ao tentar novamente');
     } finally {
       setIsRetrying(false);
@@ -74,7 +75,7 @@ export function SyncErrorsDialog({ open, onOpenChange, onRetrySuccess }: SyncErr
       setFailedEntries([]);
       onOpenChange(false);
     } catch (error) {
-      console.error('[SyncErrorsDialog] Error clearing entries:', error);
+      logError(error, { action: 'clear-sync-entries' });
       toast.error('Erro ao limpar fila');
     } finally {
       setIsClearing(false);

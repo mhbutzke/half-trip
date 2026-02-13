@@ -1,6 +1,7 @@
 import { db, SyncQueueEntry } from './db';
 import { createClient } from '@/lib/supabase/client';
 import type { Database } from '@/types/database';
+import { logWarning, logError, logDebug, logInfo } from '@/lib/errors/logger';
 
 type TableName = keyof Database['public']['Tables'];
 
@@ -116,7 +117,7 @@ export class SyncEngine {
    */
   async processQueue(): Promise<SyncResult> {
     if (this.isProcessing) {
-      console.warn('[SyncEngine] Already processing queue, skipping...');
+      logWarning('SyncEngine: Already processing queue, skipping', { action: 'sync-queue' });
       return {
         success: false,
         processedCount: 0,
@@ -134,7 +135,7 @@ export class SyncEngine {
       const queueEntries = await db.sync_queue.orderBy('timestamp').toArray();
 
       if (queueEntries.length === 0) {
-        console.log('[SyncEngine] Queue is empty');
+        logDebug('SyncEngine: Queue is empty');
         return {
           success: true,
           processedCount: 0,
@@ -143,7 +144,7 @@ export class SyncEngine {
         };
       }
 
-      console.log(`[SyncEngine] Processing ${queueEntries.length} queue entries`);
+      logDebug(`SyncEngine: Processing ${queueEntries.length} queue entries`);
 
       let processedCount = 0;
       let errorCount = 0;
@@ -161,7 +162,7 @@ export class SyncEngine {
           // Update cached entity's sync status
           await this.updateCacheAfterSync(entry);
         } catch (error) {
-          console.error(`[SyncEngine] Error processing entry ${entry.id}:`, error);
+          logError(error, { action: 'sync-process-entry', entryId: String(entry.id) });
           errorCount++;
 
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -186,8 +187,9 @@ export class SyncEngine {
               retries: newRetries,
               error: `[${errorType}] ${errorMessage}`,
             });
-            console.error(
-              `[SyncEngine] Entry ${entry.id} failed permanently (${errorType}): ${errorMessage}`
+            logError(
+              `SyncEngine: Entry ${entry.id} failed permanently (${errorType}): ${errorMessage}`,
+              { action: 'sync-permanent-failure' }
             );
           } else {
             // Increment retry count for retryable errors
@@ -195,14 +197,15 @@ export class SyncEngine {
               retries: newRetries,
               error: `[${errorType}] ${errorMessage}`,
             });
-            console.warn(
-              `[SyncEngine] Entry ${entry.id} will retry (attempt ${newRetries}/${this.maxRetries})`
+            logWarning(
+              `SyncEngine: Entry ${entry.id} will retry (attempt ${newRetries}/${this.maxRetries})`,
+              { action: 'sync-retry' }
             );
           }
         }
       }
 
-      console.log(`[SyncEngine] Sync complete: ${processedCount} processed, ${errorCount} errors`);
+      logInfo(`SyncEngine: Sync complete: ${processedCount} processed, ${errorCount} errors`);
 
       return {
         success: errorCount === 0,
@@ -225,7 +228,7 @@ export class SyncEngine {
     const { table, operation, data } = entry;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    console.log(`[SyncEngine] Processing ${operation} on ${table}:`, (data as any).id);
+    logDebug(`SyncEngine: Processing ${operation} on ${table}: ${(data as any).id}`);
 
     switch (operation) {
       case 'insert':
@@ -264,8 +267,9 @@ export class SyncEngine {
     if (error) {
       // Check if this is a duplicate key error (record already exists)
       if (error.code === '23505' || error.message.includes('duplicate key')) {
-        console.warn(
-          `[SyncEngine] Record ${insertData.id} already exists in ${table}, converting to UPDATE`
+        logWarning(
+          `SyncEngine: Record ${insertData.id} already exists in ${table}, converting to UPDATE`,
+          { action: 'sync-insert-to-update' }
         );
         // Convert to update operation
         await this.handleUpdate(table, data, supabase);
@@ -274,7 +278,7 @@ export class SyncEngine {
       throw new Error(`Insert failed: ${error.message}`);
     }
 
-    console.log(`[SyncEngine] Successfully inserted ${table}:${normalizedInsertData.id}`);
+    logDebug(`SyncEngine: Successfully inserted ${table}:${normalizedInsertData.id}`);
   }
 
   /**
@@ -313,8 +317,9 @@ export class SyncEngine {
 
       // If remote is newer than our local modification, we have a conflict
       if (remoteUpdatedAt > localUpdatedAt) {
-        console.warn(
-          `[SyncEngine] Conflict detected for ${table}:${id} - remote version is newer. Applying last-write-wins.`
+        logWarning(
+          `SyncEngine: Conflict detected for ${table}:${id} - remote version is newer. Applying last-write-wins.`,
+          { action: 'sync-conflict' }
         );
         // Last-write-wins: proceed with update anyway, overwriting remote changes
       }
@@ -332,7 +337,7 @@ export class SyncEngine {
       throw new Error(`Update failed: ${error.message}`);
     }
 
-    console.log(`[SyncEngine] Successfully updated ${table}:${id}`);
+    logDebug(`SyncEngine: Successfully updated ${table}:${id}`);
   }
 
   /**
@@ -355,12 +360,12 @@ export class SyncEngine {
     }
 
     if (!data || data.length === 0) {
-      console.warn(
-        `[SyncEngine] Record ${id} not found in ${table} - may have been already deleted`
-      );
+      logWarning(`SyncEngine: Record ${id} not found in ${table} - may have been already deleted`, {
+        action: 'sync-delete',
+      });
       // Not an error - record is already deleted, which is the desired end state
     } else {
-      console.log(`[SyncEngine] Successfully deleted ${table}:${id}`);
+      logDebug(`SyncEngine: Successfully deleted ${table}:${id}`);
     }
   }
 
@@ -413,7 +418,9 @@ export class SyncEngine {
         await db.trip_notes.update(anyData.id, updateFields);
         break;
       default:
-        console.warn(`[SyncEngine] Unknown table for cache update: ${table}`);
+        logWarning(`SyncEngine: Unknown table for cache update: ${table}`, {
+          action: 'sync-cache-update',
+        });
     }
   }
 

@@ -80,7 +80,7 @@ export function trackMetric(metric: Metric): void {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(metricData),
     }).catch((error) => {
-      console.error('[Monitoring] Failed to send metric:', error);
+      logError(error, { action: 'send-metric' });
     });
   }
 }

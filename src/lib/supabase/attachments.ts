@@ -5,6 +5,7 @@ import { revalidate } from '@/lib/utils/revalidation';
 import type { ActivityAttachment } from '@/types/database';
 import { MAX_ATTACHMENT_SIZE, isValidAttachmentType } from '@/lib/utils/attachment-helpers';
 import { logActivity } from '@/lib/supabase/activity-log';
+import { logError } from '@/lib/errors/logger';
 
 export type AttachmentResult = {
   error?: string;
@@ -87,7 +88,7 @@ export async function uploadAttachment(activityId: string, file: File): Promise<
   });
 
   if (uploadError) {
-    console.error('Upload error:', uploadError);
+    logError(uploadError, { action: 'attachment-upload', activityId });
     return { error: 'Erro ao fazer upload do arquivo' };
   }
 
@@ -107,7 +108,7 @@ export async function uploadAttachment(activityId: string, file: File): Promise<
   if (insertError) {
     // Clean up uploaded file if database insert fails
     await supabase.storage.from('attachments').remove([filePath]);
-    console.error('Insert error:', insertError);
+    logError(insertError, { action: 'attachment-insert', activityId });
     return { error: 'Erro ao salvar anexo' };
   }
 
@@ -178,7 +179,7 @@ export async function deleteAttachment(attachmentId: string): Promise<Attachment
     .remove([attachment.file_url]);
 
   if (storageError) {
-    console.error('Storage delete error:', storageError);
+    logError(storageError, { action: 'attachment-storage-delete', attachmentId });
     // Continue with database delete even if storage fails
   }
 
@@ -189,7 +190,7 @@ export async function deleteAttachment(attachmentId: string): Promise<Attachment
     .eq('id', attachmentId);
 
   if (deleteError) {
-    console.error('Delete error:', deleteError);
+    logError(deleteError, { action: 'attachment-delete', attachmentId });
     return { error: 'Erro ao excluir anexo' };
   }
 

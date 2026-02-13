@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { isPendingSync } from '@/lib/sync';
+import { logError } from '@/lib/errors/logger';
 
 type EntityTable = 'activities' | 'expenses' | 'trip_notes' | 'trips';
 
@@ -38,7 +39,7 @@ export function useSyncStatus(table: EntityTable, id: string | undefined): SyncS
           setIsPending(pending);
         }
       } catch (error) {
-        console.error('Error checking sync status:', error);
+        logError(error, { action: 'check-sync-status', table, id });
       } finally {
         if (isMounted) {
           setIsLoading(false);

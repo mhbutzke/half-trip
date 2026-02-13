@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { sendWelcomeEmail } from '@/lib/email/send-welcome-email';
 import { routes } from '@/lib/routes';
+import { logError } from '@/lib/errors/logger';
 
 export type AuthResult = {
   error?: string;
@@ -47,7 +48,7 @@ export async function signUp(
   // Fire-and-forget welcome email (don't block signup)
   if (data.user?.id) {
     sendWelcomeEmail({ userId: data.user.id, userName: name, userEmail: email }).catch((err) =>
-      console.error('Failed to send welcome email:', err)
+      logError(err, { action: 'send-welcome-email', userId: data.user!.id })
     );
   }
 

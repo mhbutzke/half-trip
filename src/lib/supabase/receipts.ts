@@ -5,6 +5,7 @@ import { revalidate } from '@/lib/utils/revalidation';
 import { isValidReceiptType, MAX_RECEIPT_SIZE } from '@/lib/utils/receipt-helpers';
 import { canOnOwn } from '@/lib/permissions/trip-permissions';
 import { logActivity } from '@/lib/supabase/activity-log';
+import { logError } from '@/lib/errors/logger';
 
 export type ReceiptResult = {
   error?: string;
@@ -90,7 +91,7 @@ export async function uploadReceipt(
   });
 
   if (uploadError) {
-    console.error('Receipt upload error:', uploadError);
+    logError(uploadError, { action: 'receipt-upload', tripId, expenseId });
     return { error: 'Erro ao fazer upload do comprovante' };
   }
 
@@ -103,7 +104,7 @@ export async function uploadReceipt(
   if (updateError) {
     // Clean up uploaded file if database update fails
     await supabase.storage.from('receipts').remove([filePath]);
-    console.error('Receipt update error:', updateError);
+    logError(updateError, { action: 'receipt-update', tripId, expenseId });
     return { error: 'Erro ao salvar comprovante' };
   }
 
@@ -173,7 +174,7 @@ export async function deleteReceipt(tripId: string, expenseId: string): Promise<
     .remove([expense.receipt_url]);
 
   if (storageError) {
-    console.error('Receipt storage delete error:', storageError);
+    logError(storageError, { action: 'receipt-storage-delete', tripId, expenseId });
     // Continue with database update even if storage fails
   }
 
@@ -184,7 +185,7 @@ export async function deleteReceipt(tripId: string, expenseId: string): Promise<
     .eq('id', expenseId);
 
   if (updateError) {
-    console.error('Receipt delete error:', updateError);
+    logError(updateError, { action: 'receipt-delete', tripId, expenseId });
     return { error: 'Erro ao excluir comprovante' };
   }
 
@@ -233,7 +234,7 @@ export async function getReceiptUrl(tripId: string, receiptPath: string): Promis
     .createSignedUrl(receiptPath, 60 * 60);
 
   if (urlError || !signedUrl) {
-    console.error('Receipt URL error:', urlError);
+    logError(urlError, { action: 'receipt-url', tripId });
     return { error: 'Erro ao gerar URL do comprovante' };
   }
 

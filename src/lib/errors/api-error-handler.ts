@@ -1,5 +1,6 @@
 import { PostgrestError } from '@supabase/supabase-js';
 import { ERROR_MESSAGES, isNetworkError } from './error-messages';
+import { logError } from './logger';
 
 /**
  * Standard API error response
@@ -15,7 +16,7 @@ export interface ApiError {
  * Handle errors from Supabase/API calls and convert to user-friendly messages
  */
 export function handleApiError(error: unknown): ApiError {
-  console.error('[API Error]', error);
+  logError(error, { action: 'api-error' });
 
   // Network errors
   if (isNetworkError(error)) {

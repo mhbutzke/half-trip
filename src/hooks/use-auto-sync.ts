@@ -5,6 +5,7 @@ import { useOnlineStatus } from './use-online-status';
 import { syncEngine, type SyncResult } from '@/lib/sync';
 import { toast } from 'sonner';
 import { notifications } from '@/lib/notifications';
+import { logDebug, logError } from '@/lib/errors/logger';
 
 type AutoSyncConfig = {
   enabled?: boolean;
@@ -48,7 +49,7 @@ export function useAutoSync(config: AutoSyncConfig = {}): AutoSyncHook {
     setIsSyncing(true);
 
     try {
-      console.log('[AutoSync] Starting sync...');
+      logDebug('AutoSync: Starting sync');
       const result = await syncEngine.processQueue();
       setLastSyncResult(result);
       setLastSyncTime(new Date());
@@ -68,7 +69,7 @@ export function useAutoSync(config: AutoSyncConfig = {}): AutoSyncHook {
             },
           });
         }
-        console.log('[AutoSync] Sync completed successfully');
+        logDebug('AutoSync: Sync completed successfully');
       } else {
         // Categorize errors for better user feedback
         const retryableErrors = result.errors.filter((e) => e.retryable).length;
@@ -89,10 +90,13 @@ export function useAutoSync(config: AutoSyncConfig = {}): AutoSyncHook {
             `${retryableErrors} ${retryableErrors === 1 ? 'item' : 'itens'} não sincronizado${retryableErrors === 1 ? '' : 's'}. Tentando novamente...`
           );
         }
-        console.error('[AutoSync] Sync completed with errors:', result.errors);
+        logError('AutoSync: Sync completed with errors', {
+          action: 'auto-sync',
+          errors: JSON.stringify(result.errors),
+        });
       }
     } catch (error) {
-      console.error('[AutoSync] Sync failed:', error);
+      logError(error, { action: 'auto-sync' });
       toast.error('Erro ao sincronizar');
     } finally {
       setIsSyncing(false);
@@ -119,7 +123,7 @@ export function useAutoSync(config: AutoSyncConfig = {}): AutoSyncHook {
   // Sync when coming back online
   useEffect(() => {
     if (enabled && isOnline && wasOffline.current) {
-      console.log('[AutoSync] Network reconnected, syncing...');
+      logDebug('AutoSync: Network reconnected, syncing');
       sync();
     }
     wasOffline.current = !isOnline;
@@ -130,7 +134,7 @@ export function useAutoSync(config: AutoSyncConfig = {}): AutoSyncHook {
   useEffect(() => {
     if (enabled && syncInterval > 0 && isOnline) {
       intervalRef.current = setInterval(() => {
-        console.log('[AutoSync] Periodic sync triggered');
+        logDebug('AutoSync: Periodic sync triggered');
         sync();
       }, syncInterval);
 

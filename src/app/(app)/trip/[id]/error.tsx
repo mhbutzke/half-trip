@@ -5,6 +5,7 @@ import { AlertTriangle, ArrowLeft, RefreshCw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { logError } from '@/lib/errors/logger';
 
 /**
  * Error page for trip-related errors
@@ -20,8 +21,7 @@ export default function TripError({
   const router = useRouter();
 
   useEffect(() => {
-    // Log the error to console (can be extended to send to error tracking service)
-    console.error('[Trip Error]', error);
+    logError(error, { action: 'trip-error', digest: error.digest });
   }, [error]);
 
   return (

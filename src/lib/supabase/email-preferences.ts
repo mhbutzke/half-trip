@@ -5,6 +5,7 @@ import { createAdminClient } from './admin';
 import { revalidate } from '@/lib/utils/revalidation';
 import type { UserEmailPreferences } from '@/types/email';
 import type { UnsubscribeTokenPayload } from '@/lib/email/unsubscribe-token';
+import { logError } from '@/lib/errors/logger';
 
 export async function getUserEmailPreferences(): Promise<UserEmailPreferences | null> {
   const supabase = await createClient();
@@ -29,7 +30,7 @@ export async function getUserEmailPreferences(): Promise<UserEmailPreferences | 
       .single();
 
     if (error) {
-      console.error('Error creating default email preferences:', error);
+      logError(error, { action: 'create-default-email-preferences' });
       return null;
     }
 
@@ -76,7 +77,7 @@ export async function updateUserEmailPreferences(updates: {
       .insert({ user_id: user.id, ...dbUpdates });
 
     if (error) {
-      console.error('Error creating email preferences:', error);
+      logError(error, { action: 'create-email-preferences' });
       return { success: false, error: 'Erro ao salvar preferências' };
     }
   } else {
@@ -86,7 +87,7 @@ export async function updateUserEmailPreferences(updates: {
       .eq('user_id', user.id);
 
     if (error) {
-      console.error('Error updating email preferences:', error);
+      logError(error, { action: 'update-email-preferences' });
       return { success: false, error: 'Erro ao atualizar preferências' };
     }
   }
@@ -140,7 +141,7 @@ export async function unsubscribeFromEmail(
       .insert({ user_id: user.id, ...update });
 
     if (error) {
-      console.error('Error creating email preferences for unsubscribe:', error);
+      logError(error, { action: 'create-email-preferences-unsubscribe' });
       return { success: false, error: 'Erro ao salvar preferências' };
     }
   } else {
@@ -150,7 +151,7 @@ export async function unsubscribeFromEmail(
       .eq('user_id', user.id);
 
     if (error) {
-      console.error('Error updating email preferences for unsubscribe:', error);
+      logError(error, { action: 'update-email-preferences-unsubscribe' });
       return { success: false, error: 'Erro ao atualizar preferências' };
     }
   }

@@ -13,6 +13,7 @@ import { render } from '@react-email/components';
 import { routes } from '@/lib/routes';
 import { canRevokeInvite } from '@/lib/permissions/trip-permissions';
 import { logActivity } from '@/lib/supabase/activity-log';
+import { logError } from '@/lib/errors/logger';
 
 // Default invite expiration: 7 days
 const DEFAULT_INVITE_EXPIRATION_DAYS = 7;
@@ -469,7 +470,7 @@ export async function acceptInvite(code: string): Promise<AcceptInviteResult> {
 
   if (updateError) {
     // Log error but don't fail - user was already added to trip
-    console.error('Failed to mark invite as accepted:', updateError);
+    logError(updateError, { action: 'mark-invite-accepted', tripId: invite.trip_id });
   }
 
   revalidate.tripParticipants(invite.trip_id);
@@ -644,7 +645,7 @@ export async function sendEmailInvite(tripId: string, email: string): Promise<Em
   });
 
   if (!result.success) {
-    console.error('Failed to send invite email:', result.error);
+    logError(result.error, { action: 'send-invite-email', tripId });
     revalidate.trip(tripId);
     return {
       success: true,

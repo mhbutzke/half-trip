@@ -7,6 +7,7 @@ import * as z from 'zod';
 import { format } from 'date-fns';
 import { Loader2, Plane, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { logError } from '@/lib/errors/logger';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -136,7 +137,7 @@ export function FlightSearchDialog({
         setFlightData(data as FlightData);
       }
     } catch (err: unknown) {
-      console.error(err);
+      logError(err, { action: 'flight-search' });
       const message = err instanceof Error ? err.message : 'Erro ao buscar informações do voo.';
       setError(message);
     } finally {

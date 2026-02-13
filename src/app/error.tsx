@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { AlertTriangle, Home, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { logError } from '@/lib/errors/logger';
 
 /**
  * Root error page for unhandled errors in the app
@@ -17,8 +18,7 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log the error to console (can be extended to send to error tracking service)
-    console.error('[App Error]', error);
+    logError(error, { action: 'app-error', digest: error.digest });
   }, [error]);
 
   return (

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useOnlineStatus } from './use-online-status';
+import { logError, logDebug } from '@/lib/errors/logger';
 import { getCachedTripBundle, cacheTripBundle, getLastSyncTime, isTripCached } from '@/lib/sync';
 import type {
   CachedTrip,
@@ -112,7 +113,7 @@ export function useTripOffline(
         setLastSyncTime(null);
       }
     } catch (err) {
-      console.error('Error fetching cached trip data:', err);
+      logError(err, { action: 'fetch-cached-trip', tripId: tripId ?? undefined });
       setError(err instanceof Error ? err : new Error('Failed to fetch cached data'));
     } finally {
       setIsLoading(false);
@@ -138,9 +139,9 @@ export function useTripOffline(
       setLastSyncTime(syncTime);
       setIsCached(true);
 
-      console.log(`[Offline] Cached trip ${tripId} data`);
+      logDebug(`Cached trip ${tripId} data`, { action: 'cache-trip', tripId: tripId ?? undefined });
     } catch (err) {
-      console.error('Error caching trip data:', err);
+      logError(err, { action: 'cache-trip-data', tripId: tripId ?? undefined });
     }
   };
 

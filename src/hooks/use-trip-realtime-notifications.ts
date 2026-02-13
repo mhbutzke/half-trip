@@ -31,7 +31,7 @@ export function useTripRealtimeNotifications({
     table: 'activities',
     filter: `trip_id=eq.${tripId}`,
     onInsert: async (payload) => {
-      console.log('🔄 Activity added, invalidating cache', payload);
+      // Activity added - invalidate cache
       queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
       queryClient.invalidateQueries({ queryKey: ['activity-count', tripId] });
 
@@ -56,7 +56,7 @@ export function useTripRealtimeNotifications({
       }
     },
     onUpdate: async (payload) => {
-      console.log('🔄 Activity updated, invalidating cache', payload);
+      // Activity updated - invalidate cache
       queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
 
       const newRecord = payload.new as { id: string; created_by: string };
@@ -81,7 +81,6 @@ export function useTripRealtimeNotifications({
       }
     },
     onDelete: () => {
-      console.log('🔄 Activity deleted, invalidating cache');
       queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
       queryClient.invalidateQueries({ queryKey: ['activity-count', tripId] });
     },
@@ -92,7 +91,7 @@ export function useTripRealtimeNotifications({
     table: 'expenses',
     filter: `trip_id=eq.${tripId}`,
     onInsert: async (payload) => {
-      console.log('🔄 Expense added, invalidating cache', payload);
+      // Expense added - invalidate cache
       queryClient.invalidateQueries({ queryKey: ['expenses', tripId] });
       queryClient.invalidateQueries({ queryKey: ['expense-count', tripId] });
       queryClient.invalidateQueries({ queryKey: ['balance', tripId] });
@@ -120,7 +119,7 @@ export function useTripRealtimeNotifications({
       }
     },
     onUpdate: async (payload) => {
-      console.log('🔄 Expense updated, invalidating cache', payload);
+      // Expense updated - invalidate cache
       queryClient.invalidateQueries({ queryKey: ['expenses', tripId] });
       queryClient.invalidateQueries({ queryKey: ['balance', tripId] });
       queryClient.invalidateQueries({ queryKey: ['expense-summary', tripId] });
@@ -147,7 +146,6 @@ export function useTripRealtimeNotifications({
       }
     },
     onDelete: () => {
-      console.log('🔄 Expense deleted, invalidating cache');
       queryClient.invalidateQueries({ queryKey: ['expenses', tripId] });
       queryClient.invalidateQueries({ queryKey: ['expense-count', tripId] });
       queryClient.invalidateQueries({ queryKey: ['balance', tripId] });
@@ -165,7 +163,7 @@ export function useTripRealtimeNotifications({
     table: 'trip_members',
     filter: `trip_id=eq.${tripId}`,
     onInsert: async (payload) => {
-      console.log('🔄 Trip member joined, invalidating cache', payload);
+      // Trip member joined - invalidate cache
       queryClient.invalidateQueries({ queryKey: ['trip-members', tripId] });
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
       queryClient.invalidateQueries({ queryKey: ['balance', tripId] });
@@ -191,7 +189,7 @@ export function useTripRealtimeNotifications({
       }
     },
     onDelete: async (payload) => {
-      console.log('🔄 Trip member left, invalidating cache', payload);
+      // Trip member left - invalidate cache
       queryClient.invalidateQueries({ queryKey: ['trip-members', tripId] });
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
       queryClient.invalidateQueries({ queryKey: ['balance', tripId] });
@@ -223,7 +221,7 @@ export function useTripRealtimeNotifications({
     table: 'trip_notes',
     filter: `trip_id=eq.${tripId}`,
     onInsert: async (payload) => {
-      console.log('🔄 Note added, invalidating cache', payload);
+      // Note added - invalidate cache
       queryClient.invalidateQueries({ queryKey: ['notes', tripId] });
       queryClient.invalidateQueries({ queryKey: ['notes-count', tripId] });
 
@@ -248,7 +246,7 @@ export function useTripRealtimeNotifications({
       }
     },
     onUpdate: async (payload) => {
-      console.log('🔄 Note updated, invalidating cache', payload);
+      // Note updated - invalidate cache
       queryClient.invalidateQueries({ queryKey: ['notes', tripId] });
 
       const newRecord = payload.new as { id: string; created_by: string };
@@ -278,7 +276,7 @@ export function useTripRealtimeNotifications({
     table: 'settlements',
     filter: `trip_id=eq.${tripId}`,
     onUpdate: async (payload) => {
-      console.log('🔄 Settlement changed, invalidating cache', payload);
+      // Settlement changed - invalidate cache
       queryClient.invalidateQueries({ queryKey: ['settlements', tripId] });
       queryClient.invalidateQueries({ queryKey: ['balance', tripId] });
       queryClient.invalidateQueries({ queryKey: ['expense-summary', tripId] });
@@ -321,7 +319,6 @@ export function useTripRealtimeNotifications({
     table: 'trips',
     filter: `id=eq.${tripId}`,
     onUpdate: () => {
-      console.log('🔄 Trip updated, invalidating cache');
       queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
 
       notifications.tripUpdated({

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 import type { Database } from '@/types/database';
+import { logError } from '@/lib/errors/logger';
 
 function verifyWebhookSignature(
   payload: string,
@@ -53,7 +54,7 @@ export async function POST(req: NextRequest) {
 
     // Verify webhook signature (required in production)
     if (!webhookSecret && process.env.NODE_ENV === 'production') {
-      console.error('RESEND_WEBHOOK_SECRET not configured in production');
+      logError('RESEND_WEBHOOK_SECRET not configured in production', { action: 'resend-webhook' });
       return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 });
     }
 
@@ -123,7 +124,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ received: true });
   } catch (err) {
-    console.error('Resend webhook error:', err);
+    logError(err, { action: 'resend-webhook' });
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

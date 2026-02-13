@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { RealtimeChannel } from '@supabase/supabase-js';
+import { logDebug } from '@/lib/errors/logger';
 
 export type PresenceUser = {
   user_id: string;
@@ -44,7 +45,6 @@ export function useTripPresence(tripId: string | null, currentUser: PresenceUser
       channel
         .on('presence', { event: 'sync' }, () => {
           const state = channel.presenceState<PresenceUser>();
-          console.log('Presence sync:', state);
           setPresenceState(state);
 
           // Flatten the presence state to get array of unique users
@@ -62,17 +62,19 @@ export function useTripPresence(tripId: string | null, currentUser: PresenceUser
 
           setOnlineUsers(users);
         })
-        .on('presence', { event: 'join' }, ({ key, newPresences }) => {
-          console.log('User joined:', key, newPresences);
+        .on('presence', { event: 'join' }, () => {
+          // User joined presence
         })
-        .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
-          console.log('User left:', key, leftPresences);
+        .on('presence', { event: 'leave' }, () => {
+          // User left presence
         })
         .subscribe(async (status) => {
           if (status === 'SUBSCRIBED') {
             // Track our presence
             await channel.track(currentUser);
-            console.log('Tracking presence for user:', currentUser.user_id);
+            logDebug(`Tracking presence for user: ${currentUser.user_id}`, {
+              tripId: tripId ?? undefined,
+            });
           }
         });
     };
@@ -84,7 +86,6 @@ export function useTripPresence(tripId: string | null, currentUser: PresenceUser
       if (channel) {
         channel.untrack();
         supabase.removeChannel(channel);
-        console.log('Untracked presence for trip:', tripId);
       }
     };
   }, [tripId, currentUser]);

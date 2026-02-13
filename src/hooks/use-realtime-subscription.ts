@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
+import { logDebug, logError, logWarning } from '@/lib/errors/logger';
 
 type TableName =
   | 'trips'
@@ -116,13 +117,16 @@ export function useRealtimeSubscription({
 
     channel.subscribe((status, err) => {
       if (status === 'SUBSCRIBED') {
-        console.log(`✅ Subscribed to ${table} realtime updates`);
+        logDebug(`Subscribed to ${table} realtime updates`);
       } else if (status === 'CHANNEL_ERROR') {
-        console.error(`❌ Error subscribing to ${table} realtime updates`, err);
+        logError(err ?? `Error subscribing to ${table} realtime updates`, {
+          action: 'realtime-subscribe',
+          table,
+        });
       } else if (status === 'TIMED_OUT') {
-        console.warn(`⏱️ Timed out subscribing to ${table} realtime updates`);
+        logWarning(`Timed out subscribing to ${table} realtime updates`, { table });
       } else if (status === 'CLOSED') {
-        console.warn(`🔒 Realtime channel closed for ${table}`);
+        logDebug(`Realtime channel closed for ${table}`);
       }
     });
 
@@ -130,7 +134,6 @@ export function useRealtimeSubscription({
     return () => {
       if (channel) {
         supabase.removeChannel(channel);
-        console.log(`🔌 Unsubscribed from ${table} realtime updates`);
       }
     };
   }, [table, filter, event]);

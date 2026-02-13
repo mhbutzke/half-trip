@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Paperclip } from 'lucide-react';
 import { toast } from 'sonner';
+import { logError } from '@/lib/errors/logger';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -52,8 +53,8 @@ export function EditActivityDialog({
     try {
       const data = await getActivityAttachments(activity.id);
       setAttachments(data);
-    } catch {
-      console.error('Error loading attachments');
+    } catch (err) {
+      logError(err, { action: 'load-attachments', activityId: activity?.id });
     } finally {
       setLoadingAttachments(false);
     }

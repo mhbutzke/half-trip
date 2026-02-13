@@ -4,6 +4,7 @@ import React from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { logError } from '@/lib/errors/logger';
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
@@ -30,8 +31,10 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // Log error to console (can be extended to send to error tracking service)
-    console.error('[ErrorBoundary] Caught error:', error, errorInfo);
+    logError(error, {
+      action: 'error-boundary',
+      componentStack: errorInfo.componentStack ?? undefined,
+    });
   }
 
   reset = () => {

@@ -95,12 +95,31 @@ export const expenseFormSchema = z.object({
 export type ExpenseFormValues = z.infer<typeof expenseFormSchema>;
 
 /**
- * Parse amount string to number (handles comma as decimal separator)
+ * Parse amount string to number.
+ * Handles both BRL format (1.000,50) and USD format (1,000.50).
  */
 export function parseAmount(value: string): number {
-  // Replace comma with dot for parsing
-  const normalized = value.replace(',', '.');
-  const parsed = parseFloat(normalized);
+  if (!value) return 0;
+
+  // Strip currency symbols, spaces, letters
+  let cleaned = value.replace(/[^\d,.\-]/g, '');
+  if (!cleaned) return 0;
+
+  const lastComma = cleaned.lastIndexOf(',');
+  const lastDot = cleaned.lastIndexOf('.');
+
+  if (lastComma > lastDot) {
+    // Comma is the decimal separator (BRL: 1.000,50)
+    cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+  } else if (lastDot > lastComma) {
+    // Dot is the decimal separator (USD: 1,000.50)
+    cleaned = cleaned.replace(/,/g, '');
+  } else {
+    // Only one type or none — treat comma as decimal
+    cleaned = cleaned.replace(',', '.');
+  }
+
+  const parsed = parseFloat(cleaned);
   return isNaN(parsed) ? 0 : parsed;
 }
 

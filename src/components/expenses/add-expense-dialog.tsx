@@ -1,9 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, Plus, ArrowRight, ArrowLeft } from 'lucide-react';
+import {
+  Loader2,
+  Plus,
+  ArrowRight,
+  ArrowLeft,
+  Camera,
+  ImageIcon,
+  Sparkles,
+  X,
+  Pencil,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,10 +52,13 @@ import {
   formatAmount,
 } from '@/lib/validation/expense-schemas';
 import { createExpense } from '@/lib/supabase/expenses';
+import { uploadReceipt } from '@/lib/supabase/receipts';
 import { useCurrencyInput, formatCurrencyWithCursor } from '@/hooks/use-currency-input';
 import { SUPPORTED_CURRENCIES, type SupportedCurrency } from '@/types/currency';
 import { cn } from '@/lib/utils';
 import type { TripMemberWithUser } from '@/lib/supabase/trips';
+
+type DialogStep = 'capture' | 'details' | 'split';
 
 interface AddExpenseDialogProps {
   tripId: string;
@@ -73,7 +86,14 @@ export function AddExpenseDialog({
   const open = isControlled ? controlledOpen : internalOpen;
   const setOpen = isControlled ? controlledOnOpenChange! : setInternalOpen;
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<DialogStep>('capture');
+
+  // Receipt state
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const defaultValues: ExpenseFormValues = {
     description: '',
@@ -119,6 +139,56 @@ export function AddExpenseDialog({
     name: m.users.name,
     avatar_url: m.users.avatar_url,
   }));
+
+  // Receipt handlers
+  const handleReceiptCapture = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error('Arquivo muito grande. Máximo 10MB.');
+        return;
+      }
+
+      if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
+        toast.error('Use imagens (JPEG, PNG, WebP) ou PDF.');
+        return;
+      }
+
+      // Clean up previous preview
+      if (receiptPreview) {
+        URL.revokeObjectURL(receiptPreview);
+      }
+
+      setReceiptFile(file);
+      if (file.type.startsWith('image/')) {
+        setReceiptPreview(URL.createObjectURL(file));
+      }
+
+      // Simulate AI receipt analysis
+      setIsAnalyzing(true);
+      // TODO: Replace with actual AI receipt analysis API call
+      // e.g., const result = await analyzeReceipt(file);
+      setTimeout(() => {
+        setIsAnalyzing(false);
+        setStep('details');
+        toast.info('Preencha os dados da despesa');
+      }, 1200);
+
+      // Reset input values
+      if (cameraInputRef.current) cameraInputRef.current.value = '';
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    },
+    [receiptPreview]
+  );
+
+  const clearReceipt = useCallback(() => {
+    if (receiptPreview) URL.revokeObjectURL(receiptPreview);
+    setReceiptFile(null);
+    setReceiptPreview(null);
+    setIsAnalyzing(false);
+  }, [receiptPreview]);
 
   const onSubmit = async (data: ExpenseFormValues) => {
     const amount = parseAmount(data.amount);
@@ -189,10 +259,18 @@ export function AddExpenseDialog({
         return;
       }
 
+      // Upload receipt if captured
+      if (receiptFile && result.expenseId) {
+        try {
+          await uploadReceipt(tripId, result.expenseId, receiptFile);
+        } catch {
+          toast.warning('Despesa criada, mas erro ao enviar comprovante.');
+        }
+      }
+
       toast.success('Despesa adicionada com sucesso!');
       setOpen(false);
-      form.reset(defaultValues);
-      setStep(1);
+      resetDialog();
       onSuccess?.();
     } catch {
       toast.error('Erro ao salvar despesa');
@@ -201,27 +279,49 @@ export function AddExpenseDialog({
     }
   };
 
+  const resetDialog = () => {
+    form.reset(defaultValues);
+    setStep('capture');
+    clearReceipt();
+  };
+
   const handleOpenChange = (newOpen: boolean) => {
     if (!isSubmitting) {
       setOpen(newOpen);
       if (!newOpen) {
-        form.reset(defaultValues);
-        setStep(1);
+        resetDialog();
       }
     }
   };
 
-  const handleNext = () => {
+  const handleNextToSplit = () => {
     const amount = parseAmount(form.getValues('amount') || '0');
     if (amount <= 0) {
       toast.error('Informe um valor maior que zero');
+      return;
+    }
+    const description = form.getValues('description');
+    if (!description || description.length < 2) {
+      toast.error('Informe a descrição da despesa');
       return;
     }
     if (!form.getValues('paid_by')) {
       toast.error('Selecione quem pagou');
       return;
     }
-    setStep(2);
+    setStep('split');
+  };
+
+  const stepTitles: Record<DialogStep, string> = {
+    capture: 'Nova despesa',
+    details: 'Item e valor',
+    split: 'Como dividir',
+  };
+
+  const stepDescriptions: Record<DialogStep, string> = {
+    capture: 'Fotografe um comprovante ou lance manualmente',
+    details: 'Informe o item e o valor da despesa',
+    split: 'Configure a divisão da despesa',
   };
 
   return (
@@ -236,65 +336,218 @@ export function AddExpenseDialog({
           </Button>
         ))}
 
+      {/* Hidden file inputs */}
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={handleReceiptCapture}
+      />
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*,application/pdf"
+        className="hidden"
+        onChange={handleReceiptCapture}
+      />
+
       <ResponsiveFormContainer
         open={open}
         onOpenChange={handleOpenChange}
-        title={step === 1 ? 'Quanto e quem pagou' : 'Como dividir'}
-        description={
-          step === 1 ? 'Informe o valor e quem pagou.' : 'Configure a divisão da despesa.'
-        }
+        title={stepTitles[step]}
+        description={stepDescriptions[step]}
       >
         {/* Step indicator */}
         <div className="flex justify-center gap-2 py-2">
-          <div className={cn('size-2 rounded-full', step === 1 ? 'bg-primary' : 'bg-muted')} />
-          <div className={cn('size-2 rounded-full', step === 2 ? 'bg-primary' : 'bg-muted')} />
+          <div
+            className={cn('size-2 rounded-full', step === 'capture' ? 'bg-primary' : 'bg-muted')}
+          />
+          <div
+            className={cn('size-2 rounded-full', step === 'details' ? 'bg-primary' : 'bg-muted')}
+          />
+          <div
+            className={cn('size-2 rounded-full', step === 'split' ? 'bg-primary' : 'bg-muted')}
+          />
         </div>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {step === 1 && (
+            {/* ── Step 1: Capture ── */}
+            {step === 'capture' && (
+              <div className="flex flex-col gap-4 py-2">
+                {receiptPreview ? (
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="relative">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={receiptPreview}
+                        alt="Comprovante"
+                        className="max-h-52 rounded-xl border shadow-sm"
+                      />
+                      {!isAnalyzing && (
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="absolute -right-2 -top-2 h-7 w-7 rounded-full"
+                          onClick={clearReceipt}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                    {isAnalyzing ? (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Processando comprovante...
+                      </div>
+                    ) : (
+                      <div className="flex w-full gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={clearReceipt}
+                        >
+                          Refazer
+                        </Button>
+                        <Button type="button" className="flex-1" onClick={() => setStep('details')}>
+                          Continuar
+                          <ArrowRight className="ml-1 h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    {/* Camera CTA */}
+                    <button
+                      type="button"
+                      className="flex flex-col items-center gap-3 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-6 sm:p-8 transition-colors hover:border-primary/50 hover:bg-primary/10 active:bg-primary/15"
+                      onClick={() => cameraInputRef.current?.click()}
+                    >
+                      <div className="flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-primary/10">
+                        <Camera className="h-7 w-7 sm:h-8 sm:w-8 text-primary" />
+                      </div>
+                      <div className="text-center">
+                        <p className="font-semibold text-sm sm:text-base">Fotografar comprovante</p>
+                        <p className="mt-0.5 text-xs text-muted-foreground flex items-center justify-center gap-1">
+                          <Sparkles className="h-3 w-3" />
+                          IA identifica automaticamente
+                        </p>
+                      </div>
+                    </button>
+
+                    {/* Gallery/File picker */}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <ImageIcon className="mr-2 h-4 w-4" />
+                      Selecionar da galeria
+                    </Button>
+
+                    {/* Divider */}
+                    <div className="flex items-center gap-3 py-1">
+                      <div className="flex-1 border-t" />
+                      <span className="text-xs text-muted-foreground">ou</span>
+                      <div className="flex-1 border-t" />
+                    </div>
+
+                    {/* Manual entry */}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="w-full text-muted-foreground"
+                      onClick={() => setStep('details')}
+                    >
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Lançar manualmente
+                    </Button>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* ── Step 2: Details ── */}
+            {step === 'details' && (
               <>
-                {/* Large amount input */}
+                {/* Receipt thumbnail if captured */}
+                {receiptPreview && (
+                  <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-2">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={receiptPreview}
+                      alt="Comprovante"
+                      className="h-10 w-10 rounded object-cover"
+                    />
+                    <span className="text-sm text-muted-foreground flex-1">
+                      Comprovante anexado
+                    </span>
+                    <Sparkles className="h-4 w-4 text-primary" />
+                  </div>
+                )}
+
+                {/* Description */}
                 <FormField
                   control={form.control}
-                  name="amount"
-                  render={() => (
+                  name="description"
+                  render={({ field }) => (
                     <FormItem>
+                      <FormLabel>Descrição</FormLabel>
                       <FormControl>
-                        <Input
-                          className="text-center text-3xl font-bold h-16 border-none shadow-none focus-visible:ring-0"
-                          {...amountInput}
-                        />
+                        <Input placeholder="Ex: Jantar no restaurante" {...field} autoFocus />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                {/* Currency selector */}
-                <FormField
-                  control={form.control}
-                  name="currency"
-                  render={({ field }) => (
-                    <FormItem className="flex justify-center">
-                      <Select onValueChange={field.onChange} value={field.value}>
+                {/* Amount + Currency */}
+                <div className="flex gap-2">
+                  <FormField
+                    control={form.control}
+                    name="amount"
+                    render={() => (
+                      <FormItem className="flex-1">
+                        <FormLabel>Valor</FormLabel>
                         <FormControl>
-                          <SelectTrigger className="w-24">
-                            <SelectValue />
-                          </SelectTrigger>
+                          <Input className="text-lg font-bold tabular-nums" {...amountInput} />
                         </FormControl>
-                        <SelectContent>
-                          {SUPPORTED_CURRENCIES.map((currency) => (
-                            <SelectItem key={currency} value={currency}>
-                              {currency}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="currency"
+                    render={({ field }) => (
+                      <FormItem className="w-24">
+                        <FormLabel>Moeda</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {SUPPORTED_CURRENCIES.map((currency) => (
+                              <SelectItem key={currency} value={currency}>
+                                {currency}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 {/* Exchange rate */}
                 {isForeignCurrency && (
@@ -327,45 +580,8 @@ export function AddExpenseDialog({
                   />
                 )}
 
-                {/* Paid by - AvatarSelector */}
-                <div className="space-y-2">
-                  <FormLabel>Pago por</FormLabel>
-                  <AvatarSelector
-                    participants={avatarParticipants}
-                    selected={form.watch('paid_by')}
-                    onSelect={(id) => form.setValue('paid_by', id)}
-                  />
-                </div>
-
-                {/* Next button */}
-                <div className="flex justify-end pt-4">
-                  <Button type="button" onClick={handleNext}>
-                    Próximo
-                    <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
-                  </Button>
-                </div>
-              </>
-            )}
-
-            {step === 2 && (
-              <>
-                {/* Description */}
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Descrição</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ex: Jantar no restaurante" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
                 {/* Date and Category */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   <FormField
                     control={form.control}
                     name="date"
@@ -406,6 +622,16 @@ export function AddExpenseDialog({
                   />
                 </div>
 
+                {/* Paid by - AvatarSelector */}
+                <div className="space-y-2">
+                  <FormLabel>Pago por</FormLabel>
+                  <AvatarSelector
+                    participants={avatarParticipants}
+                    selected={form.watch('paid_by')}
+                    onSelect={(id) => form.setValue('paid_by', id)}
+                  />
+                </div>
+
                 {/* Notes */}
                 <FormField
                   control={form.control}
@@ -420,6 +646,33 @@ export function AddExpenseDialog({
                     </FormItem>
                   )}
                 />
+
+                {/* Navigation buttons */}
+                <div className="flex justify-between pt-4">
+                  <Button type="button" variant="outline" onClick={() => setStep('capture')}>
+                    <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />
+                    Voltar
+                  </Button>
+                  <Button type="button" onClick={handleNextToSplit}>
+                    Próximo
+                    <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+                  </Button>
+                </div>
+              </>
+            )}
+
+            {/* ── Step 3: Split ── */}
+            {step === 'split' && (
+              <>
+                {/* Amount summary */}
+                <div className="flex items-center justify-between rounded-lg bg-muted/50 px-4 py-3">
+                  <span className="text-sm text-muted-foreground">
+                    {form.getValues('description')}
+                  </span>
+                  <span className="font-semibold tabular-nums">
+                    {parsedAmount > 0 ? formatAmount(parsedAmount, watchCurrency) : '—'}
+                  </span>
+                </div>
 
                 {/* Split type */}
                 <FormField
@@ -536,7 +789,7 @@ export function AddExpenseDialog({
 
                 {/* Back + Submit buttons */}
                 <div className="flex justify-between pt-4">
-                  <Button type="button" variant="outline" onClick={() => setStep(1)}>
+                  <Button type="button" variant="outline" onClick={() => setStep('details')}>
                     <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />
                     Voltar
                   </Button>

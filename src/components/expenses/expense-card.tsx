@@ -57,22 +57,25 @@ export const ExpenseCard = memo(function ExpenseCard({
 
   return (
     <Card className="overflow-hidden">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between gap-4">
+      <CardContent className="p-3 sm:p-4">
+        <div className="flex items-start justify-between gap-2 sm:gap-4">
           {/* Left: Icon and main info */}
-          <div className="flex items-start gap-3 min-w-0 flex-1">
+          <div className="flex items-start gap-2 sm:gap-3 min-w-0 flex-1">
             <div
               className={cn(
-                'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg',
+                'flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg',
                 categoryInfo.bgColor
               )}
             >
-              <CategoryIcon className={cn('h-5 w-5', categoryInfo.color)} />
+              <CategoryIcon className={cn('h-4 w-4 sm:h-5 sm:w-5', categoryInfo.color)} />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="font-medium truncate">{expense.description}</p>
-              <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-                <Badge variant="secondary" className="text-xs font-normal">
+              <p className="font-medium truncate text-sm sm:text-base">{expense.description}</p>
+              <div className="mt-0.5 sm:mt-1 flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
+                <Badge
+                  variant="secondary"
+                  className="text-[10px] sm:text-xs font-normal px-1.5 py-0"
+                >
                   {categoryInfo.label}
                 </Badge>
                 <span>{formattedDate}</span>
@@ -81,14 +84,14 @@ export const ExpenseCard = memo(function ExpenseCard({
             </div>
           </div>
 
-          {/* Right: Amount, receipt badge, and menu */}
-          <div className="flex items-start gap-2 shrink-0">
+          {/* Right: Amount and menu */}
+          <div className="flex items-start gap-1 shrink-0">
             <div className="flex flex-col items-end gap-0.5">
-              <p className="font-semibold text-lg">
+              <p className="font-semibold text-sm sm:text-lg whitespace-nowrap tabular-nums">
                 {formatAmount(expense.amount, expense.currency)}
               </p>
               {isForeignCurrency && (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap tabular-nums">
                   {formatAmount(convertedAmount, baseCurrency)}
                 </p>
               )}
@@ -96,7 +99,7 @@ export const ExpenseCard = memo(function ExpenseCard({
             {canEdit && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8">
                     <MoreHorizontal className="h-4 w-4" />
                     <span className="sr-only">Opções</span>
                   </Button>
@@ -137,10 +140,10 @@ export const ExpenseCard = memo(function ExpenseCard({
         </div>
 
         {/* Footer: Paid by and split info */}
-        <div className="mt-3 flex items-center justify-between">
+        <div className="mt-2 sm:mt-3 flex items-center justify-between">
           {/* Paid by */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Pago por</span>
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <span className="text-[10px] sm:text-xs text-muted-foreground">Pago por</span>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -151,7 +154,7 @@ export const ExpenseCard = memo(function ExpenseCard({
                         {getInitials(expense.paid_by_user.name)}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-sm font-medium">
+                    <span className="text-xs sm:text-sm font-medium">
                       {expense.paid_by_user.name.split(' ')[0]}
                     </span>
                   </div>
@@ -167,9 +170,11 @@ export const ExpenseCard = memo(function ExpenseCard({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="flex items-center gap-1.5 text-muted-foreground">
-                  <Users className="h-4 w-4" />
-                  <span className="text-sm">Dividido entre {expense.expense_splits.length}</span>
+                <div className="flex items-center gap-1 sm:gap-1.5 text-muted-foreground">
+                  <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="text-xs sm:text-sm">
+                    Dividido entre {expense.expense_splits.length}
+                  </span>
                 </div>
               </TooltipTrigger>
               <TooltipContent>

@@ -40,8 +40,12 @@ describe('Expense Split Calculations', () => {
       expect(parseAmount('abc')).toBe(0);
     });
 
-    it('should handle strings with multiple separators', () => {
-      expect(parseAmount('1,234.56')).toBe(1.234); // Only first separator is replaced
+    it('should handle strings with multiple separators (USD format)', () => {
+      expect(parseAmount('1,234.56')).toBe(1234.56);
+    });
+
+    it('should handle strings with multiple separators (BRL format)', () => {
+      expect(parseAmount('1.234,56')).toBe(1234.56);
     });
   });
 

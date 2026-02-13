@@ -508,26 +508,33 @@ export function ItineraryList({
   return (
     <>
       {/* Summary + Actions */}
-      <div className="space-y-3 rounded-lg border bg-muted/20 p-4">
-        <div className="grid gap-3 sm:grid-cols-3">
-          <div className="rounded-lg border bg-background p-3">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">
-              Total de atividades
+      <div className="space-y-3 rounded-lg border bg-muted/20 p-3 sm:p-4">
+        {/* Stats: horizontal scroll on mobile, grid on larger screens */}
+        <div className="flex gap-2 overflow-x-auto pb-1 sm:grid sm:grid-cols-3 sm:gap-3 sm:overflow-visible sm:pb-0">
+          <div className="min-w-[110px] flex-shrink-0 rounded-lg border bg-background p-2 sm:min-w-0 sm:p-3">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground sm:text-xs">
+              Atividades
             </p>
-            <p className="mt-1 text-2xl font-bold">{visibleActivitiesCount}</p>
+            <p className="mt-0.5 text-xl font-bold sm:mt-1 sm:text-2xl">{visibleActivitiesCount}</p>
             {isFilteredView && (
-              <p className="mt-1 text-xs text-muted-foreground">de {totalActivities} no total</p>
+              <p className="mt-0.5 text-[10px] text-muted-foreground sm:mt-1 sm:text-xs">
+                de {totalActivities}
+              </p>
             )}
           </div>
-          <div className="rounded-lg border bg-background p-3">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Dias planejados</p>
-            <p className="mt-1 text-2xl font-bold">
+          <div className="min-w-[110px] flex-shrink-0 rounded-lg border bg-background p-2 sm:min-w-0 sm:p-3">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground sm:text-xs">
+              Dias planejados
+            </p>
+            <p className="mt-0.5 text-xl font-bold sm:mt-1 sm:text-2xl">
               {plannedDays}/{tripDays.length}
             </p>
           </div>
-          <div className="rounded-lg border bg-background p-3">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Dia mais cheio</p>
-            <p className="mt-1 text-sm font-semibold">
+          <div className="min-w-[110px] flex-shrink-0 rounded-lg border bg-background p-2 sm:min-w-0 sm:p-3">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground sm:text-xs">
+              Dia mais cheio
+            </p>
+            <p className="mt-0.5 text-sm font-semibold">
               {busiestDay
                 ? `${format(parseISO(busiestDay.date), 'd/MM')} (${busiestDay.count})`
                 : 'Sem atividades'}
@@ -535,32 +542,36 @@ export function ItineraryList({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative min-w-[220px] flex-1">
-            <Search
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-              aria-hidden="true"
-            />
-            <Input
-              placeholder="Buscar no roteiro..."
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              className="pl-9 pr-9"
-            />
-            {searchTerm && (
-              <button
-                type="button"
-                onClick={() => setSearchTerm('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                aria-label="Limpar busca"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
+        {/* Search bar - full width on mobile */}
+        <div className="relative">
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden="true"
+          />
+          <Input
+            placeholder="Buscar no roteiro..."
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            className="pl-9 pr-9"
+          />
+          {searchTerm && (
+            <button
+              type="button"
+              onClick={() => setSearchTerm('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label="Limpar busca"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+
+        {/* Category filters: horizontal scroll on mobile */}
+        <div className="flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
           <Button
             variant={categoryFilter === 'all' ? 'default' : 'outline'}
             size="sm"
+            className="flex-shrink-0"
             onClick={() => setCategoryFilter('all')}
           >
             Todas
@@ -570,6 +581,7 @@ export function ItineraryList({
               key={category.value}
               variant={categoryFilter === category.value ? 'default' : 'outline'}
               size="sm"
+              className="flex-shrink-0"
               onClick={() => setCategoryFilter(category.value)}
             >
               {category.label}

@@ -43,7 +43,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <AppHeader user={user} />
       <OfflineIndicator />
       {/* Main content with bottom padding for mobile nav */}
-      <main id="main-content" className="flex-1 pb-20 md:pb-0">
+      <main id="main-content" className="flex-1 pb-24 md:pb-0">
         {children}
       </main>
       {/* Mobile bottom navigation - auto-detects trip context */}

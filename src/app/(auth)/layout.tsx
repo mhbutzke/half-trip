@@ -5,10 +5,16 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   return (
     <div className="min-h-svh flex flex-col">
       {/* Header */}
-      <header className="flex h-14 items-center justify-center border-b px-4">
+      <header className="flex h-14 items-center justify-between border-b px-4">
         <Link href="/" className="flex items-center gap-2 font-semibold">
           <Plane className="h-5 w-5 text-primary" />
           <span>Half Trip</span>
+        </Link>
+        <Link
+          href="/login"
+          className="rounded-md bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+        >
+          Entrar
         </Link>
       </header>
 

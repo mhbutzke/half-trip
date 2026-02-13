@@ -4,6 +4,7 @@ import { useState, useMemo, memo } from 'react';
 import {
   Clock,
   MapPin,
+  Navigation,
   MoreVertical,
   Pencil,
   Share2,
@@ -59,7 +60,9 @@ export const ActivityCard = memo(function ActivityCard({
   const links = Array.isArray(activity.links) ? (activity.links as ActivityLink[]) : [];
   const locationMapsUrl = meta?.location_place_id
     ? `https://www.google.com/maps/search/?api=1&query=${meta.location_lat},${meta.location_lng}&query_place_id=${meta.location_place_id}`
-    : null;
+    : activity.location
+      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(activity.location)}`
+      : null;
   const { isPending } = useSyncStatus('activities', activity.id);
   const attachmentsCount = activity.attachments_count ?? 0;
 
@@ -126,6 +129,20 @@ export const ActivityCard = memo(function ActivityCard({
                       <span className="truncate">{activity.location}</span>
                     )}
                   </div>
+                )}
+
+                {/* Google Maps Button */}
+                {activity.location && locationMapsUrl && (
+                  <a
+                    href={locationMapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 inline-flex items-center gap-1.5 rounded-md border bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-100 dark:bg-blue-950 dark:text-blue-300 dark:hover:bg-blue-900"
+                    aria-label={`Abrir ${activity.location} no Google Maps (abre em nova aba)`}
+                  >
+                    <Navigation className="h-3.5 w-3.5" aria-hidden="true" />
+                    Abrir no Maps
+                  </a>
                 )}
 
                 {/* Flight Details */}

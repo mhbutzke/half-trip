@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback, ReactNode } from 'react';
+import { useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { Archive } from 'lucide-react';
+import { Archive, Search, X } from 'lucide-react';
 import { TripCard } from '@/components/trips/trip-card';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
+import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Lazy load dialogs - only needed when user clicks actions
@@ -34,6 +35,7 @@ export function TripsList({ emptyState }: TripsListProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [editingTrip, setEditingTrip] = useState<TripWithMembers | null>(null);
   const [deletingTripId, setDeletingTripId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const loadTrips = useCallback(async () => {
     setIsLoading(true);
@@ -142,6 +144,26 @@ export function TripsList({ emptyState }: TripsListProps) {
     return member?.role || null;
   };
 
+  // Filter trips by search term
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const filteredTrips = useMemo(() => {
+    if (!normalizedSearch) return trips;
+    return trips.filter((trip) =>
+      [trip.name, trip.destination || ''].some((field) =>
+        field.toLowerCase().includes(normalizedSearch)
+      )
+    );
+  }, [trips, normalizedSearch]);
+
+  const filteredArchivedTrips = useMemo(() => {
+    if (!normalizedSearch) return archivedTrips;
+    return archivedTrips.filter((trip) =>
+      [trip.name, trip.destination || ''].some((field) =>
+        field.toLowerCase().includes(normalizedSearch)
+      )
+    );
+  }, [archivedTrips, normalizedSearch]);
+
   if (isLoading) {
     return null; // Suspense will show loading state
   }
@@ -153,16 +175,42 @@ export function TripsList({ emptyState }: TripsListProps) {
     return emptyState;
   }
 
+  const searchBar = (
+    <div className="relative mb-4">
+      <Search
+        className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+        aria-hidden="true"
+      />
+      <Input
+        placeholder="Buscar viagens..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="pl-9 pr-9"
+      />
+      {searchTerm && (
+        <button
+          type="button"
+          onClick={() => setSearchTerm('')}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          aria-label="Limpar busca"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      )}
+    </div>
+  );
+
   return (
     <PullToRefresh onRefresh={loadTrips}>
+      {searchBar}
       {hasArchivedTrips ? (
         <Tabs defaultValue="active" className="w-full">
           <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
             <TabsTrigger value="active" className="flex items-center gap-2">
               Ativas
-              {hasTrips && (
+              {filteredTrips.length > 0 && (
                 <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs">
-                  {trips.length}
+                  {filteredTrips.length}
                 </span>
               )}
             </TabsTrigger>
@@ -170,15 +218,15 @@ export function TripsList({ emptyState }: TripsListProps) {
               <Archive className="h-4 w-4" />
               Arquivadas
               <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
-                {archivedTrips.length}
+                {filteredArchivedTrips.length}
               </span>
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="active" className="mt-6">
-            {hasTrips ? (
+            {filteredTrips.length > 0 ? (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {trips.map((trip) => (
+                {filteredTrips.map((trip) => (
                   <TripCard
                     key={trip.id}
                     trip={trip}
@@ -189,39 +237,57 @@ export function TripsList({ emptyState }: TripsListProps) {
                   />
                 ))}
               </div>
+            ) : normalizedSearch ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                Nenhuma viagem encontrada para &ldquo;{searchTerm}&rdquo;
+              </p>
             ) : (
               emptyState
             )}
           </TabsContent>
 
           <TabsContent value="archived" className="mt-6">
+            {filteredArchivedTrips.length > 0 ? (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {filteredArchivedTrips.map((trip) => (
+                  <TripCard
+                    key={trip.id}
+                    trip={trip}
+                    userRole={getUserRole(trip)}
+                    onEdit={handleEdit}
+                    onUnarchive={handleUnarchive}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                Nenhuma viagem arquivada encontrada
+              </p>
+            )}
+          </TabsContent>
+        </Tabs>
+      ) : (
+        <>
+          {filteredTrips.length > 0 ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {archivedTrips.map((trip) => (
+              {filteredTrips.map((trip) => (
                 <TripCard
                   key={trip.id}
                   trip={trip}
                   userRole={getUserRole(trip)}
                   onEdit={handleEdit}
-                  onUnarchive={handleUnarchive}
+                  onArchive={handleArchive}
                   onDelete={handleDelete}
                 />
               ))}
             </div>
-          </TabsContent>
-        </Tabs>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {trips.map((trip) => (
-            <TripCard
-              key={trip.id}
-              trip={trip}
-              userRole={getUserRole(trip)}
-              onEdit={handleEdit}
-              onArchive={handleArchive}
-              onDelete={handleDelete}
-            />
-          ))}
-        </div>
+          ) : (
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              Nenhuma viagem encontrada para &ldquo;{searchTerm}&rdquo;
+            </p>
+          )}
+        </>
       )}
 
       {editingTrip && (

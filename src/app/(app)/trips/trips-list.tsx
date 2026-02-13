@@ -32,6 +32,7 @@ export function TripsList({ emptyState }: TripsListProps) {
   const isOnline = useOnlineStatus();
   const [trips, setTrips] = useState<TripWithMembers[]>([]);
   const [archivedTrips, setArchivedTrips] = useState<TripWithMembers[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [editingTrip, setEditingTrip] = useState<TripWithMembers | null>(null);
   const [deletingTripId, setDeletingTripId] = useState<string | null>(null);
@@ -43,6 +44,7 @@ export function TripsList({ emptyState }: TripsListProps) {
       if (isOnline) {
         // Fetch from client-safe readers when online
         const { userId, activeTrips, archivedTrips: archived } = await getTripsForCurrentUser();
+        setCurrentUserId(userId);
         setTrips(activeTrips);
         setArchivedTrips(archived);
 
@@ -132,15 +134,8 @@ export function TripsList({ emptyState }: TripsListProps) {
 
   // Get user role for each trip
   const getUserRole = (trip: TripWithMembers): 'organizer' | 'participant' | null => {
-    // Find the current user in trip members by checking if they're the creator
-    const organizer = trip.trip_members?.find((m) => m.role === 'organizer');
-    if (organizer && trip.created_by === organizer.user_id) {
-      return 'organizer';
-    }
-    // Fallback: check if any member is organizer
-    const member = trip.trip_members?.find(
-      (m) => m.role === 'organizer' || m.role === 'participant'
-    );
+    if (!currentUserId) return null;
+    const member = trip.trip_members?.find((m) => m.user_id === currentUserId);
     return member?.role || null;
   };
 

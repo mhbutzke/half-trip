@@ -27,7 +27,7 @@ interface ExpenseCardProps {
   expense: ExpenseWithDetails;
   baseCurrency?: string;
   canEdit: boolean;
-  onEdit: () => void;
+  onEdit?: () => void;
   onDelete: () => void;
 }
 
@@ -125,10 +125,12 @@ export const ExpenseCard = memo(function ExpenseCard({
                     <Share2 className="mr-2 h-4 w-4" aria-hidden="true" />
                     Compartilhar
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={onEdit}>
-                    <Pencil className="mr-2 h-4 w-4" />
-                    Editar
-                  </DropdownMenuItem>
+                  {onEdit && (
+                    <DropdownMenuItem onClick={onEdit}>
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Editar
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem onClick={onDelete} className="text-destructive">
                     <Trash2 className="mr-2 h-4 w-4" />
                     Excluir

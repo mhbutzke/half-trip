@@ -26,7 +26,7 @@ export function PageContainer({
   bottomNav = false,
 }: PageContainerProps) {
   return (
-    <main
+    <div
       className={cn(
         'mx-auto w-full overflow-x-hidden',
         maxWidthClasses[maxWidth],
@@ -36,6 +36,6 @@ export function PageContainer({
       )}
     >
       {children}
-    </main>
+    </div>
   );
 }

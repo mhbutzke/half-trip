@@ -328,7 +328,9 @@ export function AddExpenseDialog({
     <>
       {!isControlled &&
         (trigger ? (
-          <span onClick={() => setOpen(true)}>{trigger}</span>
+          <button type="button" onClick={() => setOpen(true)} className="contents">
+            {trigger}
+          </button>
         ) : (
           <Button size="sm" onClick={() => setOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />

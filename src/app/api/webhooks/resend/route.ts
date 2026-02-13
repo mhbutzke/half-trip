@@ -1,6 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import crypto from 'crypto';
 import type { Database } from '@/types/database';
+
+function verifyWebhookSignature(
+  payload: string,
+  svixId: string,
+  svixTimestamp: string,
+  svixSignature: string,
+  secret: string
+): boolean {
+  // Resend/Svix signs with: base64(HMAC-SHA256(secret, "${msgId}.${timestamp}.${body}"))
+  // The secret is prefixed with "whsec_" followed by base64-encoded key
+  const secretBytes = Buffer.from(secret.replace('whsec_', ''), 'base64');
+  const toSign = `${svixId}.${svixTimestamp}.${payload}`;
+  const expectedSignature = crypto
+    .createHmac('sha256', secretBytes)
+    .update(toSign)
+    .digest('base64');
+
+  // svix-signature can contain multiple signatures separated by spaces (versioned: "v1,<sig>")
+  const signatures = svixSignature.split(' ');
+  for (const sig of signatures) {
+    const [version, value] = sig.split(',');
+    if (version === 'v1' && value === expectedSignature) {
+      return true;
+    }
+  }
+  return false;
+}
 
 /**
  * Resend webhook handler.
@@ -13,12 +41,27 @@ export async function POST(req: NextRequest) {
     const svixTimestamp = req.headers.get('svix-timestamp');
     const svixSignature = req.headers.get('svix-signature');
 
-    // In production, verify webhook signature
-    if (webhookSecret && (!svixId || !svixTimestamp || !svixSignature)) {
+    if (!svixId || !svixTimestamp || !svixSignature) {
       return NextResponse.json({ error: 'Missing webhook headers' }, { status: 401 });
     }
 
-    const payload = await req.json();
+    const body = await req.text();
+
+    // Verify webhook signature when secret is configured
+    if (webhookSecret) {
+      // Reject timestamps older than 5 minutes to prevent replay attacks
+      const timestampSeconds = parseInt(svixTimestamp, 10);
+      const now = Math.floor(Date.now() / 1000);
+      if (isNaN(timestampSeconds) || Math.abs(now - timestampSeconds) > 300) {
+        return NextResponse.json({ error: 'Invalid timestamp' }, { status: 401 });
+      }
+
+      if (!verifyWebhookSignature(body, svixId, svixTimestamp, svixSignature, webhookSecret)) {
+        return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+      }
+    }
+
+    const payload = JSON.parse(body);
     const eventType: string = payload.type;
     const emailId: string | undefined = payload.data?.email_id;
 
@@ -72,9 +115,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ received: true });
   } catch (err) {
     console.error('Resend webhook error:', err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Unknown error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

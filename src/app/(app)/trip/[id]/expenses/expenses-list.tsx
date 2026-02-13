@@ -344,10 +344,6 @@ export function ExpensesList({
                 expense={expense}
                 baseCurrency={baseCurrency}
                 canEdit={canEditExpense(expense)}
-                onEdit={() => {
-                  // TODO: Open edit expense sheet
-                  window.location.href = `/trip/${tripId}/expenses/${expense.id}/edit`;
-                }}
                 onDelete={() => setDeletingExpense(expense)}
               />
             </SwipeAction>

@@ -70,7 +70,6 @@ export function TripOverview({
   const [createPollOpen, setCreatePollOpen] = useState(false);
   const refreshTripData = useCallback(() => {
     router.refresh();
-    window.setTimeout(() => router.refresh(), 1200);
   }, [router]);
 
   // Enable real-time updates for this trip

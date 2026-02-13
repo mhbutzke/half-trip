@@ -122,7 +122,7 @@ export function ChecklistCard({
         {checklist.items.map((item) => (
           <div
             key={item.id}
-            className="flex items-center gap-3 rounded-md px-2 py-1.5 hover:bg-muted/50"
+            className="group flex items-center gap-3 rounded-md px-2 py-1.5 hover:bg-muted/50"
           >
             <Checkbox
               checked={item.is_completed}
@@ -142,7 +142,7 @@ export function ChecklistCard({
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 opacity-0 group-hover:opacity-100 hover:opacity-100 focus:opacity-100"
+              className="h-7 w-7 md:opacity-0 md:group-hover:opacity-100 hover:opacity-100 focus:opacity-100"
               onClick={() => handleDeleteItem(item.id)}
               aria-label={`Remover "${item.title}"`}
             >

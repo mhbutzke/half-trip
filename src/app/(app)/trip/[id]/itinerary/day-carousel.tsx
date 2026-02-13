@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 interface DayCarouselProps {
   dates: string[];
   tripDays: string[];
-  activitiesByDate: Record<string, { length: number }[]>;
+  activitiesByDate: Record<string, { length: number }>;
   activeIndex: number;
   onDayChange: (index: number) => void;
   children: React.ReactNode[];

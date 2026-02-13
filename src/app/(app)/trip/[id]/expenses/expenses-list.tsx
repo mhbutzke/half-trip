@@ -24,7 +24,6 @@ import { deleteExpense } from '@/lib/supabase/expenses';
 import { formatAmount } from '@/lib/validation/expense-schemas';
 import type { TripMemberWithUser } from '@/lib/supabase/trips';
 import type { ExpenseWithDetails } from '@/types/expense';
-import { routes } from '@/lib/routes';
 import type { TripMemberRole, ExpenseCategory } from '@/types/database';
 import { usePermissions } from '@/hooks/use-permissions';
 
@@ -60,6 +59,7 @@ export function ExpensesList({
   const permissions = usePermissions({ userRole, currentUserId });
   const [expenses, setExpenses] = useState<ExpenseWithDetails[]>(initialExpenses);
   const [deletingExpense, setDeletingExpense] = useState<ExpenseWithDetails | null>(null);
+  const [editingExpense, setEditingExpense] = useState<ExpenseWithDetails | null>(null);
   const [isAddOpen, setIsAddOpen] = useState(false);
 
   const handleExpenseAdded = () => {
@@ -87,9 +87,9 @@ export function ExpensesList({
     return permissions.canOnOwn('EDIT', expense.created_by);
   };
 
-  // Handle edit expense
+  // Handle edit expense via dialog
   const handleEditExpense = (expense: ExpenseWithDetails) => {
-    router.push(routes.trip.expenseEdit(tripId, expense.id));
+    setEditingExpense(expense);
   };
 
   // Handle expense deleted
@@ -372,6 +372,20 @@ export function ExpensesList({
         onOpenChange={setIsAddOpen}
         onSuccess={handleExpenseAdded}
       />
+
+      {/* Edit expense dialog */}
+      {editingExpense && (
+        <AddExpenseDialog
+          tripId={tripId}
+          members={members}
+          currentUserId={currentUserId}
+          baseCurrency={baseCurrency}
+          expense={editingExpense}
+          open={!!editingExpense}
+          onOpenChange={(open) => !open && setEditingExpense(null)}
+          onSuccess={handleExpenseAdded}
+        />
+      )}
 
       {/* Delete confirmation dialog */}
       <DeleteExpenseDialog

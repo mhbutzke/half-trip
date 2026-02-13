@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useMemo, useRef, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -26,7 +26,6 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from '@/components/ui/form';
 import {
   Select,
@@ -35,28 +34,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
 import {
   expenseFormSchema,
   type ExpenseFormValues,
   expenseCategories,
   splitTypes,
-  type SplitType,
   parseAmount,
-  calculateEqualSplits,
-  calculateAmountSplits,
-  calculatePercentageSplits,
-  validateSplitsTotal,
-  validatePercentagesTotal,
-  formatAmount,
+  formatAmountInput,
 } from '@/lib/validation/expense-schemas';
-import { createExpense } from '@/lib/supabase/expenses';
+import { createExpense, updateExpense } from '@/lib/supabase/expenses';
 import { uploadReceipt } from '@/lib/supabase/receipts';
-import { useCurrencyInput, formatCurrencyWithCursor } from '@/hooks/use-currency-input';
-import { SUPPORTED_CURRENCIES, type SupportedCurrency } from '@/types/currency';
+import { useDialogState } from '@/hooks/use-dialog-state';
+import { useExpenseSplits } from '@/hooks/use-expense-splits';
+import { CurrencyAmountInput } from '@/components/forms/currency-amount-input';
+import { MemberSplitSelector } from '@/components/forms/member-split-selector';
 import { cn } from '@/lib/utils';
+import type { SupportedCurrency } from '@/types/currency';
 import type { TripMemberWithUser } from '@/lib/supabase/trips';
+import type { ExpenseWithDetails } from '@/types/expense';
 
 type DialogStep = 'capture' | 'details' | 'split';
 
@@ -69,6 +64,8 @@ interface AddExpenseDialogProps {
   onSuccess?: () => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  /** When provided, dialog operates in edit mode */
+  expense?: ExpenseWithDetails | null;
 }
 
 export function AddExpenseDialog({
@@ -80,13 +77,11 @@ export function AddExpenseDialog({
   onSuccess,
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
+  expense,
 }: AddExpenseDialogProps) {
-  const [internalOpen, setInternalOpen] = useState(false);
-  const isControlled = controlledOpen !== undefined;
-  const open = isControlled ? controlledOpen : internalOpen;
-  const setOpen = isControlled ? controlledOnOpenChange! : setInternalOpen;
+  const isEditing = !!expense;
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [step, setStep] = useState<DialogStep>('capture');
+  const [step, setStep] = useState<DialogStep>(isEditing ? 'details' : 'capture');
 
   // Receipt state
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
@@ -95,44 +90,44 @@ export function AddExpenseDialog({
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const defaultValues: ExpenseFormValues = {
-    description: '',
-    amount: '',
-    currency: (baseCurrency as SupportedCurrency) || 'BRL',
-    exchange_rate: '',
-    date: new Date().toISOString().split('T')[0],
-    category: 'other',
-    paid_by: currentUserId,
-    notes: '',
-    split_type: 'equal',
-    selected_members: members.map((m) => m.user_id),
-    custom_amounts: {},
-    custom_percentages: {},
-  };
+  const defaultValues: ExpenseFormValues = useMemo(
+    () => ({
+      description: expense?.description || '',
+      amount: expense ? formatAmountInput(expense.amount) : '',
+      currency:
+        (expense?.currency as SupportedCurrency) || (baseCurrency as SupportedCurrency) || 'BRL',
+      exchange_rate:
+        expense?.exchange_rate && expense.exchange_rate !== 1
+          ? formatAmountInput(expense.exchange_rate)
+          : '',
+      date: expense?.date || new Date().toISOString().split('T')[0],
+      category: expense?.category || 'other',
+      paid_by: expense?.paid_by || currentUserId,
+      notes: expense?.notes || '',
+      split_type: 'equal',
+      selected_members:
+        expense?.expense_splits.map((s) => s.user_id) || members.map((m) => m.user_id),
+      custom_amounts: {},
+      custom_percentages: {},
+    }),
+    [expense, baseCurrency, currentUserId, members]
+  );
+
+  const { open, setOpen } = useDialogState({
+    controlledOpen,
+    controlledOnOpenChange,
+  });
 
   const form = useForm<ExpenseFormValues>({
     resolver: zodResolver(expenseFormSchema),
     defaultValues,
   });
 
-  const watchCurrency = form.watch('currency');
-  const watchAmount = form.watch('amount');
   const watchSplitType = form.watch('split_type');
   const watchSelectedMembers = form.watch('selected_members');
+  const watchAmount = form.watch('amount');
 
-  const isForeignCurrency = watchCurrency !== baseCurrency;
-  const parsedAmount = parseAmount(watchAmount || '0');
-
-  const amountInput = useCurrencyInput({
-    value: watchAmount,
-    onChange: (v) => form.setValue('amount', v),
-  });
-
-  const exchangeRateValue = form.watch('exchange_rate');
-  const exchangeRateInput = useCurrencyInput({
-    value: exchangeRateValue,
-    onChange: (v) => form.setValue('exchange_rate', v),
-  });
+  const { calculateSplits } = useExpenseSplits(baseCurrency);
 
   const avatarParticipants = members.map((m) => ({
     id: m.user_id,
@@ -191,54 +186,15 @@ export function AddExpenseDialog({
   }, [receiptPreview]);
 
   const onSubmit = async (data: ExpenseFormValues) => {
-    const amount = parseAmount(data.amount);
-    if (amount <= 0) {
-      toast.error('Valor deve ser maior que zero');
-      return;
-    }
+    const splitResult = calculateSplits(data);
+    if (!splitResult) return;
 
-    const exchangeRate =
-      isForeignCurrency && data.exchange_rate ? parseAmount(data.exchange_rate) : 1;
-
-    if (isForeignCurrency && exchangeRate <= 0) {
-      toast.error('Taxa de câmbio deve ser maior que zero');
-      return;
-    }
-
-    let splits;
-    const splitType = data.split_type as SplitType;
-    if (splitType === 'equal') {
-      splits = calculateEqualSplits(amount, data.selected_members);
-    } else if (splitType === 'by_amount') {
-      splits = calculateAmountSplits(amount, data.custom_amounts || {}, data.selected_members);
-      const validation = validateSplitsTotal(splits, amount);
-      if (!validation.valid) {
-        toast.error(
-          `A soma das divisões difere do total em ${formatAmount(Math.abs(validation.difference), data.currency)}`
-        );
-        return;
-      }
-    } else {
-      splits = calculatePercentageSplits(
-        amount,
-        data.custom_percentages || {},
-        data.selected_members
-      );
-      const validation = validatePercentagesTotal(
-        data.custom_percentages || {},
-        data.selected_members
-      );
-      if (!validation.valid) {
-        toast.error(`A soma dos percentuais difere de 100% em ${validation.difference}%`);
-        return;
-      }
-    }
+    const { splits, amount, exchangeRate } = splitResult;
 
     setIsSubmitting(true);
 
     try {
-      const result = await createExpense({
-        trip_id: tripId,
+      const payload = {
         description: data.description,
         amount,
         currency: data.currency,
@@ -252,15 +208,19 @@ export function AddExpenseDialog({
           amount: s.amount,
           percentage: s.percentage,
         })),
-      });
+      };
+
+      const result = isEditing
+        ? await updateExpense(expense!.id, payload)
+        : await createExpense({ ...payload, trip_id: tripId });
 
       if (result.error) {
         toast.error(result.error);
         return;
       }
 
-      // Upload receipt if captured
-      if (receiptFile && result.expenseId) {
+      // Upload receipt if captured (only for new expenses)
+      if (!isEditing && receiptFile && result.expenseId) {
         try {
           await uploadReceipt(tripId, result.expenseId, receiptFile);
         } catch {
@@ -268,7 +228,9 @@ export function AddExpenseDialog({
         }
       }
 
-      toast.success('Despesa adicionada com sucesso!');
+      toast.success(
+        isEditing ? 'Despesa atualizada com sucesso!' : 'Despesa adicionada com sucesso!'
+      );
       setOpen(false);
       resetDialog();
       onSuccess?.();
@@ -281,7 +243,7 @@ export function AddExpenseDialog({
 
   const resetDialog = () => {
     form.reset(defaultValues);
-    setStep('capture');
+    setStep(isEditing ? 'details' : 'capture');
     clearReceipt();
   };
 
@@ -313,9 +275,9 @@ export function AddExpenseDialog({
   };
 
   const stepTitles: Record<DialogStep, string> = {
-    capture: 'Nova despesa',
-    details: 'Item e valor',
-    split: 'Como dividir',
+    capture: isEditing ? 'Editar despesa' : 'Nova despesa',
+    details: isEditing ? 'Editar valor' : 'Item e valor',
+    split: isEditing ? 'Editar divisão' : 'Como dividir',
   };
 
   const stepDescriptions: Record<DialogStep, string> = {
@@ -326,7 +288,7 @@ export function AddExpenseDialog({
 
   return (
     <>
-      {!isControlled &&
+      {controlledOpen === undefined &&
         (trigger ? (
           <button type="button" onClick={() => setOpen(true)} className="contents">
             {trigger}
@@ -509,78 +471,8 @@ export function AddExpenseDialog({
                   )}
                 />
 
-                {/* Amount + Currency */}
-                <div className="flex gap-2">
-                  <FormField
-                    control={form.control}
-                    name="amount"
-                    render={() => (
-                      <FormItem className="flex-1">
-                        <FormLabel>Valor</FormLabel>
-                        <FormControl>
-                          <Input className="text-lg font-bold tabular-nums" {...amountInput} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="currency"
-                    render={({ field }) => (
-                      <FormItem className="w-24">
-                        <FormLabel>Moeda</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {SUPPORTED_CURRENCIES.map((currency) => (
-                              <SelectItem key={currency} value={currency}>
-                                {currency}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                {/* Exchange rate */}
-                {isForeignCurrency && (
-                  <FormField
-                    control={form.control}
-                    name="exchange_rate"
-                    render={() => (
-                      <FormItem>
-                        <FormLabel>Taxa de câmbio</FormLabel>
-                        <FormControl>
-                          <Input {...exchangeRateInput} placeholder="Ex: 5,78" />
-                        </FormControl>
-                        <FormDescription>
-                          1 {watchCurrency} = ? {baseCurrency}
-                        </FormDescription>
-                        {parsedAmount > 0 &&
-                          exchangeRateValue &&
-                          parseAmount(exchangeRateValue) > 0 && (
-                            <p className="text-sm text-muted-foreground">
-                              {formatAmount(parsedAmount, watchCurrency)} ={' '}
-                              {formatAmount(
-                                parsedAmount * parseAmount(exchangeRateValue),
-                                baseCurrency
-                              )}
-                            </p>
-                          )}
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
+                {/* Amount + Currency + Exchange Rate */}
+                <CurrencyAmountInput form={form} baseCurrency={baseCurrency} variant="compact" />
 
                 {/* Date and Category */}
                 <div className="grid grid-cols-2 gap-3">
@@ -651,10 +543,16 @@ export function AddExpenseDialog({
 
                 {/* Navigation buttons */}
                 <div className="flex justify-between pt-4">
-                  <Button type="button" variant="outline" onClick={() => setStep('capture')}>
-                    <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />
-                    Voltar
-                  </Button>
+                  {!isEditing ? (
+                    <Button type="button" variant="outline" onClick={() => setStep('capture')}>
+                      <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />
+                      Voltar
+                    </Button>
+                  ) : (
+                    <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
+                      Cancelar
+                    </Button>
+                  )}
                   <Button type="button" onClick={handleNextToSplit}>
                     Próximo
                     <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
@@ -672,7 +570,9 @@ export function AddExpenseDialog({
                     {form.getValues('description')}
                   </span>
                   <span className="font-semibold tabular-nums">
-                    {parsedAmount > 0 ? formatAmount(parsedAmount, watchCurrency) : '—'}
+                    {parseAmount(watchAmount || '0') > 0
+                      ? `${watchAmount} ${form.watch('currency')}`
+                      : '—'}
                   </span>
                 </div>
 
@@ -702,89 +602,33 @@ export function AddExpenseDialog({
                   )}
                 />
 
-                {/* Member selection */}
+                {/* Member selection with splits */}
                 <FormField
                   control={form.control}
                   name="selected_members"
                   render={() => (
                     <FormItem>
                       <FormLabel>Participantes da divisão</FormLabel>
-                      <div className="space-y-2">
-                        {members.map((member) => (
-                          <div key={member.user_id} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`dialog-member-${member.user_id}`}
-                              checked={watchSelectedMembers.includes(member.user_id)}
-                              onCheckedChange={(checked) => {
-                                const current = form.getValues('selected_members');
-                                if (checked) {
-                                  form.setValue('selected_members', [...current, member.user_id], {
-                                    shouldValidate: true,
-                                  });
-                                } else {
-                                  form.setValue(
-                                    'selected_members',
-                                    current.filter((id) => id !== member.user_id),
-                                    { shouldValidate: true }
-                                  );
-                                }
-                              }}
-                            />
-                            <Label
-                              htmlFor={`dialog-member-${member.user_id}`}
-                              className="text-sm font-normal"
-                            >
-                              {member.users.name}
-                            </Label>
-
-                            {watchSplitType === 'by_amount' &&
-                              watchSelectedMembers.includes(member.user_id) && (
-                                <Input
-                                  className="ml-auto w-28"
-                                  placeholder="0,00"
-                                  inputMode="numeric"
-                                  value={form.watch(`custom_amounts.${member.user_id}`) || ''}
-                                  onChange={(e) => {
-                                    const { value } = formatCurrencyWithCursor(e.target.value);
-                                    form.setValue(`custom_amounts.${member.user_id}`, value);
-                                  }}
-                                />
-                              )}
-
-                            {watchSplitType === 'by_percentage' &&
-                              watchSelectedMembers.includes(member.user_id) && (
-                                <div className="ml-auto flex items-center gap-1">
-                                  <Input
-                                    className="w-20"
-                                    placeholder="0"
-                                    inputMode="decimal"
-                                    value={form.watch(`custom_percentages.${member.user_id}`) || ''}
-                                    onChange={(e) =>
-                                      form.setValue(
-                                        `custom_percentages.${member.user_id}`,
-                                        e.target.value
-                                      )
-                                    }
-                                  />
-                                  <span className="text-sm text-muted-foreground">%</span>
-                                </div>
-                              )}
-                          </div>
-                        ))}
-                      </div>
+                      <MemberSplitSelector
+                        members={members}
+                        splitType={watchSplitType as 'equal' | 'by_amount' | 'by_percentage'}
+                        selectedMembers={watchSelectedMembers}
+                        onSelectedMembersChange={(ids) =>
+                          form.setValue('selected_members', ids, { shouldValidate: true })
+                        }
+                        customAmounts={form.watch('custom_amounts')}
+                        onCustomAmountsChange={(amounts) =>
+                          form.setValue('custom_amounts', amounts)
+                        }
+                        customPercentages={form.watch('custom_percentages')}
+                        onCustomPercentagesChange={(percentages) =>
+                          form.setValue('custom_percentages', percentages)
+                        }
+                        currency={form.watch('currency')}
+                        totalAmount={watchAmount}
+                        idPrefix="dialog-member"
+                      />
                       <FormMessage />
-
-                      {watchSplitType === 'equal' &&
-                        watchSelectedMembers.length > 0 &&
-                        parsedAmount > 0 && (
-                          <p className="text-sm text-muted-foreground">
-                            {formatAmount(
-                              parsedAmount / watchSelectedMembers.length,
-                              watchCurrency
-                            )}{' '}
-                            por pessoa
-                          </p>
-                        )}
                     </FormItem>
                   )}
                 />
@@ -797,7 +641,7 @@ export function AddExpenseDialog({
                   </Button>
                   <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Salvar
+                    {isEditing ? 'Salvar alterações' : 'Salvar'}
                   </Button>
                 </div>
               </>

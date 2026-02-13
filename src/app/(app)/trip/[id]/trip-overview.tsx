@@ -42,6 +42,13 @@ const AddNoteDialog = dynamic(
     })),
   { ssr: false }
 );
+const AddExpenseDialog = dynamic(
+  () =>
+    import('@/components/expenses/add-expense-dialog').then((mod) => ({
+      default: mod.AddExpenseDialog,
+    })),
+  { ssr: false }
+);
 
 interface TripOverviewProps {
   trip: TripWithMembers;
@@ -68,6 +75,7 @@ export function TripOverview({
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [isActivityOpen, setIsActivityOpen] = useState(false);
   const [isNoteOpen, setIsNoteOpen] = useState(false);
+  const [isExpenseOpen, setIsExpenseOpen] = useState(false);
   const [createPollOpen, setCreatePollOpen] = useState(false);
   const refreshTripData = useCallback(() => {
     router.refresh();
@@ -369,11 +377,7 @@ export function TripOverview({
                 <Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />
                 Atividade
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => router.push(routes.trip.expenseAdd(trip.id))}
-              >
+              <Button variant="outline" size="sm" onClick={() => setIsExpenseOpen(true)}>
                 <Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />
                 Despesa
               </Button>
@@ -426,6 +430,22 @@ export function TripOverview({
           router.refresh();
         }}
       />
+
+      {/* Add Expense Dialog */}
+      {currentUserId && (
+        <AddExpenseDialog
+          tripId={trip.id}
+          members={trip.trip_members}
+          currentUserId={currentUserId}
+          baseCurrency={trip.base_currency}
+          open={isExpenseOpen}
+          onOpenChange={setIsExpenseOpen}
+          onSuccess={() => {
+            setIsExpenseOpen(false);
+            router.refresh();
+          }}
+        />
+      )}
 
       {/* Create Poll Dialog */}
       <CreatePollDialog

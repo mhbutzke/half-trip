@@ -21,9 +21,6 @@ export const routes = {
     overview: (id: string) => `/trip/${id}` as const,
     itinerary: (id: string) => `/trip/${id}/itinerary` as const,
     expenses: (id: string) => `/trip/${id}/expenses` as const,
-    expenseAdd: (id: string) => `/trip/${id}/expenses/add` as const,
-    expenseEdit: (tripId: string, expenseId: string) =>
-      `/trip/${tripId}/expenses/${expenseId}/edit` as const,
     balance: (id: string) => `/trip/${id}/balance` as const,
     budget: (id: string) => `/trip/${id}/budget` as const,
     participants: (id: string) => `/trip/${id}/participants` as const,

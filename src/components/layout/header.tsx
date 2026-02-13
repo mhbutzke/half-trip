@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { routes } from '@/lib/routes';
 import { SyncStatus } from '@/components/sync';
 import { NotificationPanel, NotificationSettingsDialog } from '@/components/notifications';
 
@@ -40,8 +41,8 @@ export function Header({ user, onSignOut }: HeaderProps) {
 
   const navigation = user
     ? [
-        { name: 'Viagens', href: '/trips', icon: Plane },
-        { name: 'Configurações', href: '/settings', icon: Settings },
+        { name: 'Viagens', href: routes.trips(), icon: Plane },
+        { name: 'Configurações', href: routes.settings(), icon: Settings },
       ]
     : [];
 
@@ -51,7 +52,10 @@ export function Header({ user, onSignOut }: HeaderProps) {
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
-        <Link href={user ? '/trips' : '/'} className="flex min-h-[44px] items-center gap-2">
+        <Link
+          href={user ? routes.trips() : routes.home()}
+          className="flex min-h-[44px] items-center gap-2"
+        >
           <span className="text-xl font-bold text-primary">Half Trip</span>
         </Link>
 
@@ -130,7 +134,7 @@ export function Header({ user, onSignOut }: HeaderProps) {
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/settings" className="flex items-center">
+                    <Link href={routes.settings()} className="flex items-center">
                       <Settings className="mr-2 h-4 w-4" />
                       Configurações
                     </Link>
@@ -231,10 +235,10 @@ export function Header({ user, onSignOut }: HeaderProps) {
             /* Auth buttons for logged out users */
             <div className="flex items-center gap-2">
               <Button variant="ghost" asChild className="hidden min-h-[44px] sm:inline-flex">
-                <Link href="/login">Entrar</Link>
+                <Link href={routes.login()}>Entrar</Link>
               </Button>
               <Button asChild className="min-h-[44px]">
-                <Link href="/register">Criar conta</Link>
+                <Link href={routes.register()}>Criar conta</Link>
               </Button>
             </div>
           )}

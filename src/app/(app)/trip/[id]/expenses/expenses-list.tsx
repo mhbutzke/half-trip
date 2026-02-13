@@ -24,6 +24,7 @@ import { deleteExpense } from '@/lib/supabase/expenses';
 import { formatAmount } from '@/lib/validation/expense-schemas';
 import type { TripMemberWithUser } from '@/lib/supabase/trips';
 import type { ExpenseWithDetails } from '@/types/expense';
+import { routes } from '@/lib/routes';
 import type { TripMemberRole, ExpenseCategory } from '@/types/database';
 
 const AddExpenseDialog = dynamic(
@@ -86,7 +87,7 @@ export function ExpensesList({
 
   // Handle edit expense
   const handleEditExpense = (expense: ExpenseWithDetails) => {
-    router.push(`/trip/${tripId}/expenses/${expense.id}/edit`);
+    router.push(routes.trip.expenseEdit(tripId, expense.id));
   };
 
   // Handle expense deleted

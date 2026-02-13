@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { routes } from '@/lib/routes';
 import { PageContainer } from '@/components/layout/page-container';
 import { ProfileForm } from '@/components/profile/profile-form';
 import { PasswordChangeForm } from '@/components/settings/password-change-form';
@@ -36,7 +37,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
   ]);
 
   if (!user) {
-    redirect('/login');
+    redirect(routes.login());
   }
 
   return (

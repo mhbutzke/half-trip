@@ -3,15 +3,16 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { routes } from '@/lib/routes';
 
 interface FinancesTabBarProps {
   tripId: string;
 }
 
 const tabs = [
-  { label: 'Despesas', segment: 'expenses' },
-  { label: 'Balanço', segment: 'balance' },
-  { label: 'Orçamento', segment: 'budget' },
+  { label: 'Despesas', key: 'expenses' as const },
+  { label: 'Balanço', key: 'balance' as const },
+  { label: 'Orçamento', key: 'budget' as const },
 ];
 
 export function FinancesTabBar({ tripId }: FinancesTabBarProps) {
@@ -21,12 +22,12 @@ export function FinancesTabBar({ tripId }: FinancesTabBarProps) {
     <div className="sticky top-14 z-40 border-b bg-background/95 backdrop-blur md:hidden">
       <div className="mx-auto flex max-w-lg">
         {tabs.map((tab) => {
-          const href = `/trip/${tripId}/${tab.segment}`;
+          const href = routes.trip[tab.key](tripId);
           const isActive = pathname.startsWith(href);
 
           return (
             <Link
-              key={tab.segment}
+              key={tab.key}
               href={href}
               className={cn(
                 'flex-1 py-2.5 text-center text-sm font-medium transition-colors',

@@ -4,6 +4,7 @@ import { createClient } from './server';
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { sendWelcomeEmail } from '@/lib/email/send-welcome-email';
+import { routes } from '@/lib/routes';
 
 export type AuthResult = {
   error?: string;
@@ -77,7 +78,7 @@ export async function signIn(email: string, password: string): Promise<AuthResul
 export async function signOut(): Promise<void> {
   const supabase = await createClient();
   await supabase.auth.signOut();
-  redirect('/login');
+  redirect(routes.login());
 }
 
 export async function forgotPassword(email: string): Promise<AuthResult> {

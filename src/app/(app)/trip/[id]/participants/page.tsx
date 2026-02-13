@@ -6,6 +6,7 @@ import { getTripInvites, getEmailInvites } from '@/lib/supabase/invites';
 import { ParticipantsList } from './participants-list';
 import { ParticipantsHeader } from './participants-header';
 import { ParticipantsSkeleton } from './participants-skeleton';
+import { routes } from '@/lib/routes';
 
 interface ParticipantsPageProps {
   params: Promise<{ id: string }>;
@@ -18,7 +19,7 @@ async function ParticipantsContent({ tripId }: { tripId: string }) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/login');
+    redirect(routes.login());
   }
 
   const [trip, members, userRole, linkInvites, emailInvites] = await Promise.all([

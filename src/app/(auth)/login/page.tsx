@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 
 import { loginSchema, type LoginInput } from '@/lib/validation/auth-schemas';
 import { signIn } from '@/lib/supabase/auth';
+import { routes } from '@/lib/routes';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -56,7 +57,7 @@ function LoginFormSkeleton() {
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get('redirect') || '/trips';
+  const redirectTo = searchParams.get('redirect') || routes.trips();
   const authError = searchParams.get('error');
 
   const [isLoading, setIsLoading] = useState(false);
@@ -66,7 +67,7 @@ function LoginForm() {
 
   // Build register link with redirect param if present
   const registerHref =
-    redirectTo !== '/trips' ? `/register?redirect=${encodeURIComponent(redirectTo)}` : '/register';
+    redirectTo !== routes.trips() ? routes.register(redirectTo) : routes.register();
 
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
@@ -135,7 +136,7 @@ function LoginForm() {
                   <div className="flex items-center justify-between">
                     <FormLabel>Senha</FormLabel>
                     <Link
-                      href="/forgot-password"
+                      href={routes.forgotPassword()}
                       className="text-sm text-muted-foreground hover:text-primary"
                     >
                       Esqueceu a senha?

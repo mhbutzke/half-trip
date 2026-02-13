@@ -9,6 +9,7 @@ import { CheckCircle } from 'lucide-react';
 
 import { registerSchema, type RegisterInput } from '@/lib/validation/auth-schemas';
 import { signUp } from '@/lib/supabase/auth';
+import { routes } from '@/lib/routes';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -97,7 +98,7 @@ function RegisterForm() {
   }
 
   // Build login link with redirect param if present
-  const loginHref = redirectTo ? `/login?redirect=${encodeURIComponent(redirectTo)}` : '/login';
+  const loginHref = redirectTo ? routes.login(redirectTo) : routes.login();
 
   if (success) {
     return (
@@ -113,7 +114,7 @@ function RegisterForm() {
           </CardDescription>
         </CardHeader>
         <CardFooter className="justify-center">
-          <Link href="/login">
+          <Link href={routes.login()}>
             <Button variant="outline">Voltar para o login</Button>
           </Link>
         </CardFooter>

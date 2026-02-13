@@ -7,6 +7,7 @@ import { PageContainer } from '@/components/layout/page-container';
 import { NotesHeader } from './notes-header';
 import { NotesList } from './notes-list';
 import { NotesSkeleton } from './notes-skeleton';
+import { routes } from '@/lib/routes';
 
 interface NotesPageProps {
   params: Promise<{ id: string }>;
@@ -19,7 +20,7 @@ async function NotesContent({ tripId }: { tripId: string }) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/login');
+    redirect(routes.login());
   }
 
   const [trip, notes, userRole] = await Promise.all([

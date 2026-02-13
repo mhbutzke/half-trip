@@ -46,6 +46,7 @@ import { createExpense, updateExpense } from '@/lib/supabase/expenses';
 import { useCurrencyInput, formatCurrencyWithCursor } from '@/hooks/use-currency-input';
 import { SUPPORTED_CURRENCIES, type SupportedCurrency } from '@/types/currency';
 import type { TripMemberWithUser } from '@/lib/supabase/trips';
+import { routes } from '@/lib/routes';
 import type { ExpenseWithDetails } from '@/types/expense';
 import Link from 'next/link';
 
@@ -207,7 +208,7 @@ export function ExpenseForm({
         toast.success('Despesa adicionada com sucesso!');
       }
 
-      router.push(`/trip/${tripId}/expenses`);
+      router.push(routes.trip.expenses(tripId));
       router.refresh();
     } catch {
       toast.error('Erro ao salvar despesa');
@@ -220,7 +221,7 @@ export function ExpenseForm({
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" asChild>
-          <Link href={`/trip/${tripId}/expenses`}>
+          <Link href={routes.trip.expenses(tripId)}>
             <ArrowLeft className="h-4 w-4" />
             <span className="sr-only">Voltar</span>
           </Link>
@@ -522,7 +523,7 @@ export function ExpenseForm({
               {/* Submit */}
               <div className="flex gap-3 pt-4">
                 <Button type="button" variant="outline" asChild>
-                  <Link href={`/trip/${tripId}/expenses`}>Cancelar</Link>
+                  <Link href={routes.trip.expenses(tripId)}>Cancelar</Link>
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

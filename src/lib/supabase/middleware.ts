@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import type { Database } from '@/types/database';
+import { routes } from '@/lib/routes';
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -61,20 +62,26 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   // Define public routes that don't require authentication
-  const publicRoutes = ['/', '/login', '/register', '/forgot-password', '/reset-password'];
+  const publicRoutes: string[] = [
+    routes.home(),
+    routes.login(),
+    routes.register(),
+    routes.forgotPassword(),
+    routes.resetPassword(),
+  ];
   const isPublicRoute =
     publicRoutes.includes(request.nextUrl.pathname) ||
     request.nextUrl.pathname.startsWith('/invite/') ||
     request.nextUrl.pathname.startsWith('/auth/');
 
   // Define auth routes (login, register, etc.)
-  const authRoutes = ['/login', '/register', '/forgot-password'];
+  const authRoutes: string[] = [routes.login(), routes.register(), routes.forgotPassword()];
   const isAuthRoute = authRoutes.includes(request.nextUrl.pathname);
 
   if (!user && !isPublicRoute) {
     // No user, redirect to login page
     const url = request.nextUrl.clone();
-    url.pathname = '/login';
+    url.pathname = routes.login();
     url.searchParams.set('redirect', request.nextUrl.pathname);
     return NextResponse.redirect(url);
   }
@@ -82,7 +89,7 @@ export async function updateSession(request: NextRequest) {
   // Redirect authenticated users away from auth pages (except reset-password which needs auth session)
   if (user && isAuthRoute) {
     const url = request.nextUrl.clone();
-    url.pathname = '/trips';
+    url.pathname = routes.trips();
     return NextResponse.redirect(url);
   }
 

@@ -14,6 +14,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { routes } from '@/lib/routes';
 
 interface TripSidebarProps {
   tripId: string;
@@ -30,20 +31,20 @@ export function TripSidebar({ tripId }: TripSidebarProps) {
   const pathname = usePathname();
 
   const mainItems: SidebarItem[] = [
-    { name: 'Resumo', href: `/trip/${tripId}`, icon: Home, exact: true },
-    { name: 'Roteiro', href: `/trip/${tripId}/itinerary`, icon: Calendar },
+    { name: 'Resumo', href: routes.trip.overview(tripId), icon: Home, exact: true },
+    { name: 'Roteiro', href: routes.trip.itinerary(tripId), icon: Calendar },
   ];
 
   const financeItems: SidebarItem[] = [
-    { name: 'Despesas', href: `/trip/${tripId}/expenses`, icon: Receipt },
-    { name: 'Balanço', href: `/trip/${tripId}/balance`, icon: Scale },
-    { name: 'Orçamento', href: `/trip/${tripId}/budget`, icon: Wallet },
+    { name: 'Despesas', href: routes.trip.expenses(tripId), icon: Receipt },
+    { name: 'Balanço', href: routes.trip.balance(tripId), icon: Scale },
+    { name: 'Orçamento', href: routes.trip.budget(tripId), icon: Wallet },
   ];
 
   const moreItems: SidebarItem[] = [
-    { name: 'Grupo', href: `/trip/${tripId}/participants`, icon: Users },
-    { name: 'Checklists', href: `/trip/${tripId}/checklists`, icon: CheckSquare },
-    { name: 'Notas', href: `/trip/${tripId}/notes`, icon: FileText },
+    { name: 'Grupo', href: routes.trip.participants(tripId), icon: Users },
+    { name: 'Checklists', href: routes.trip.checklists(tripId), icon: CheckSquare },
+    { name: 'Notas', href: routes.trip.notes(tripId), icon: FileText },
   ];
 
   const isActive = (href: string, exact?: boolean) => {

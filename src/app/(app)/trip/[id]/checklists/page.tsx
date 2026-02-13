@@ -9,6 +9,7 @@ import { PageContainer } from '@/components/layout/page-container';
 import { Button } from '@/components/ui/button';
 import { ChecklistsContent } from './checklists-content';
 import ChecklistsLoading from './loading';
+import { routes } from '@/lib/routes';
 
 interface ChecklistsPageProps {
   params: Promise<{ id: string }>;
@@ -21,7 +22,7 @@ async function ChecklistsPageContent({ tripId }: { tripId: string }) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/login');
+    redirect(routes.login());
   }
 
   const [trip, checklists, userRole] = await Promise.all([
@@ -39,7 +40,7 @@ async function ChecklistsPageContent({ tripId }: { tripId: string }) {
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" className="h-8 gap-1 px-2" asChild>
-            <Link href={`/trip/${tripId}`}>
+            <Link href={routes.trip.overview(tripId)}>
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
               <span className="hidden sm:inline">{trip.name}</span>
             </Link>

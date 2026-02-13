@@ -10,6 +10,7 @@ import { parseDateOnly } from '@/lib/utils/date-only';
 import { sendEmail } from '@/lib/email/service';
 import { getUnsubscribeFooterUrl } from '@/lib/email/unsubscribe-token';
 import { render } from '@react-email/components';
+import { routes } from '@/lib/routes';
 
 // Default invite expiration: 7 days
 const DEFAULT_INVITE_EXPIRATION_DAYS = 7;
@@ -120,7 +121,7 @@ export async function createInviteLink(
   revalidatePath(`/trip/${tripId}`);
 
   // Build the invite URL (will be prepended with base URL on client)
-  const inviteUrl = `/invite/${code}`;
+  const inviteUrl = routes.invite(code);
 
   return { success: true, invite, inviteUrl };
 }
@@ -589,7 +590,7 @@ export async function sendEmailInvite(tripId: string, email: string): Promise<Em
 
   // Send the email using centralized service
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-  const inviteUrl = `${appUrl}/invite/${inviteCode}`;
+  const inviteUrl = `${appUrl}${routes.invite(inviteCode)}`;
 
   const formatDate = (dateString: string) => {
     return format(parseDateOnly(dateString), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });

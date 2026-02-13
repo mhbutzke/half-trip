@@ -40,6 +40,7 @@ import { archiveTrip, unarchiveTrip, type TripWithMembers } from '@/lib/supabase
 import { can } from '@/lib/permissions';
 import { useTripPresence, type PresenceUser } from '@/hooks/use-trip-presence';
 import { parseDateOnly } from '@/lib/utils/date-only';
+import { routes } from '@/lib/routes';
 import type { TripStyle, TripMemberRole } from '@/types/database';
 import Link from 'next/link';
 
@@ -168,7 +169,7 @@ export function TripHeader({ trip, userRole, currentUserId, currentUser }: TripH
 
   const handleDeleteSuccess = () => {
     setIsDeleteOpen(false);
-    router.push('/trips');
+    router.push(routes.trips());
   };
 
   // Get up to 5 member avatars
@@ -181,7 +182,7 @@ export function TripHeader({ trip, userRole, currentUserId, currentUser }: TripH
         {/* Back link and actions */}
         <div className="flex items-center justify-between">
           <Link
-            href="/trips"
+            href={routes.trips()}
             className="flex min-h-[44px] items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground active:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -193,7 +194,7 @@ export function TripHeader({ trip, userRole, currentUserId, currentUser }: TripH
             <ShareButton
               title={`Viagem: ${trip.name}`}
               text={`${trip.name} - ${trip.destination}`}
-              path={`/trip/${trip.id}`}
+              path={routes.trip.overview(trip.id)}
               variant="outline"
             />
             {canInvite && (

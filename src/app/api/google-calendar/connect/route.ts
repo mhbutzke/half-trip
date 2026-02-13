@@ -2,13 +2,14 @@ import { randomUUID } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { buildGoogleOAuthUrl } from '@/lib/google-calendar/google-api';
+import { routes } from '@/lib/routes';
 
 const STATE_COOKIE_NAME = 'gcal_oauth_state';
 const REDIRECT_COOKIE_NAME = 'gcal_oauth_redirect';
 
 function sanitizeRedirectPath(path: string | null): string {
   if (!path || !path.startsWith('/')) {
-    return '/settings';
+    return routes.settings();
   }
 
   return path;
@@ -22,12 +23,12 @@ export async function GET(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.redirect(new URL('/login', request.nextUrl.origin));
+    return NextResponse.redirect(new URL(routes.login(), request.nextUrl.origin));
   }
 
   const redirectPath = sanitizeRedirectPath(request.nextUrl.searchParams.get('redirect'));
   const state = randomUUID();
-  const redirectUri = `${request.nextUrl.origin}/api/google-calendar/callback`;
+  const redirectUri = `${request.nextUrl.origin}${routes.api.googleCalendar.callback()}`;
 
   try {
     const authUrl = buildGoogleOAuthUrl({
@@ -60,7 +61,7 @@ export async function GET(request: NextRequest) {
 
     return response;
   } catch {
-    const fallbackUrl = new URL('/settings', request.nextUrl.origin);
+    const fallbackUrl = new URL(routes.settings(), request.nextUrl.origin);
     fallbackUrl.searchParams.set('google_calendar', 'missing_env');
     return NextResponse.redirect(fallbackUrl);
   }

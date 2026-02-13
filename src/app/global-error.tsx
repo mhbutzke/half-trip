@@ -1,5 +1,7 @@
 'use client';
 
+import { routes } from '@/lib/routes';
+
 /**
  * Global error boundary for root layout errors.
  * This catches errors that `error.tsx` cannot handle,
@@ -100,9 +102,9 @@ export default function GlobalError({
               >
                 Tentar novamente
               </button>
-              {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- global-error replaces root layout, so Next.js Link is unavailable */}
+              {/* global-error replaces root layout, so Next.js Link is unavailable */}
               <a
-                href="/"
+                href={routes.home()}
                 style={{
                   padding: '0.625rem 1.25rem',
                   backgroundColor: '#ffffff',

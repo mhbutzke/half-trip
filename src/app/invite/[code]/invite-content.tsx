@@ -28,6 +28,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { acceptInvite, type InviteDetailsResult } from '@/lib/supabase/invites';
 import { parseDateOnly } from '@/lib/utils/date-only';
+import { routes } from '@/lib/routes';
 
 interface InviteContentProps {
   code: string;
@@ -77,7 +78,7 @@ export function InviteContent({
     if (result.error) {
       // Special case: already a member
       if (result.tripId) {
-        router.push(`/trip/${result.tripId}`);
+        router.push(routes.trip.overview(result.tripId));
         return;
       }
       setError(result.error);
@@ -90,7 +91,7 @@ export function InviteContent({
 
     // Redirect to trip after short delay
     setTimeout(() => {
-      router.push(`/trip/${result.tripId}`);
+      router.push(routes.trip.overview(result.tripId!));
     }, 1500);
   }
 
@@ -223,10 +224,10 @@ export function InviteContent({
           <p className="text-center text-sm text-muted-foreground">
             Entre ou crie uma conta para participar
           </p>
-          <Link href={`/login?redirect=/invite/${code}`}>
+          <Link href={routes.login(routes.invite(code))}>
             <Button className="w-full">Entrar</Button>
           </Link>
-          <Link href={`/register?redirect=/invite/${code}`}>
+          <Link href={routes.register(routes.invite(code))}>
             <Button variant="outline" className="w-full">
               Criar conta
             </Button>
@@ -234,7 +235,7 @@ export function InviteContent({
         </div>
       </CardContent>
       <CardFooter className="justify-center">
-        <Link href="/" className="text-sm text-muted-foreground hover:text-primary">
+        <Link href={routes.home()} className="text-sm text-muted-foreground hover:text-primary">
           Voltar para o início
         </Link>
       </CardFooter>
@@ -258,7 +259,7 @@ function InvalidInvite({ message }: { message: string }) {
         </p>
       </CardContent>
       <CardFooter className="justify-center">
-        <Link href="/">
+        <Link href={routes.home()}>
           <Button variant="outline">Ir para o início</Button>
         </Link>
       </CardFooter>
@@ -277,7 +278,7 @@ function AlreadyMember({ tripId, tripName }: { tripId: string; tripName: string 
         <CardDescription>Você já é membro da viagem &quot;{tripName}&quot;</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Link href={`/trip/${tripId}`}>
+        <Link href={routes.trip.overview(tripId)}>
           <Button className="w-full">
             <Plane className="mr-2 h-4 w-4" />
             Ver viagem
@@ -285,7 +286,7 @@ function AlreadyMember({ tripId, tripName }: { tripId: string; tripName: string 
         </Link>
       </CardContent>
       <CardFooter className="justify-center">
-        <Link href="/trips" className="text-sm text-muted-foreground hover:text-primary">
+        <Link href={routes.trips()} className="text-sm text-muted-foreground hover:text-primary">
           Ver todas as viagens
         </Link>
       </CardFooter>

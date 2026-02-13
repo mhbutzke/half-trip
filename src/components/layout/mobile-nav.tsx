@@ -16,6 +16,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { routes } from '@/lib/routes';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 
 type NavItem = {
@@ -41,18 +42,18 @@ export function MobileNav() {
   const tripNavigation: NavItem[] = [
     {
       name: 'Resumo',
-      href: `/trip/${tripId}`,
+      href: routes.trip.overview(tripId!),
       icon: Home,
       exact: true,
     },
     {
       name: 'Roteiro',
-      href: `/trip/${tripId}/itinerary`,
+      href: routes.trip.itinerary(tripId!),
       icon: Calendar,
     },
     {
       name: 'Finanças',
-      href: `/trip/${tripId}/expenses`,
+      href: routes.trip.expenses(tripId!),
       icon: Wallet,
     },
     {
@@ -65,21 +66,21 @@ export function MobileNav() {
   const mainNavigation: NavItem[] = [
     {
       name: 'Viagens',
-      href: '/trips',
+      href: routes.trips(),
       icon: Plane,
     },
     {
       name: 'Configurações',
-      href: '/settings',
+      href: routes.settings(),
       icon: Settings,
     },
   ];
 
   const moreItems: NavItem[] = tripId
     ? [
-        { name: 'Grupo', href: `/trip/${tripId}/participants`, icon: Users },
-        { name: 'Checklists', href: `/trip/${tripId}/checklists`, icon: CheckSquare },
-        { name: 'Notas', href: `/trip/${tripId}/notes`, icon: FileText },
+        { name: 'Grupo', href: routes.trip.participants(tripId), icon: Users },
+        { name: 'Checklists', href: routes.trip.checklists(tripId), icon: CheckSquare },
+        { name: 'Notas', href: routes.trip.notes(tripId), icon: FileText },
       ]
     : [];
 
@@ -94,11 +95,11 @@ export function MobileNav() {
       return pathname === href;
     }
     // "Finanças" should be active on expenses, balance, and budget
-    if (tripId && href === `/trip/${tripId}/expenses`) {
+    if (tripId && href === routes.trip.expenses(tripId)) {
       return (
-        pathname.startsWith(`/trip/${tripId}/expenses`) ||
-        pathname.startsWith(`/trip/${tripId}/balance`) ||
-        pathname.startsWith(`/trip/${tripId}/budget`)
+        pathname.startsWith(routes.trip.expenses(tripId)) ||
+        pathname.startsWith(routes.trip.balance(tripId)) ||
+        pathname.startsWith(routes.trip.budget(tripId))
       );
     }
     return pathname.startsWith(href);

@@ -33,6 +33,7 @@ import {
 import type { TripWithMembers } from '@/lib/supabase/trips';
 import { can } from '@/lib/permissions';
 import { parseDateOnly } from '@/lib/utils/date-only';
+import { routes } from '@/lib/routes';
 import type { TripMemberRole, TripStyle } from '@/types/database';
 
 interface TripCardProps {
@@ -117,7 +118,7 @@ export const TripCard = memo(function TripCard({
 
   return (
     <Card className="group relative overflow-hidden transition-all hover:shadow-md">
-      <Link href={`/trip/${trip.id}`} className="absolute inset-0 z-0" />
+      <Link href={routes.trip.overview(trip.id)} className="absolute inset-0 z-0" />
 
       {trip.cover_url && (
         <div className="relative h-32 w-full">

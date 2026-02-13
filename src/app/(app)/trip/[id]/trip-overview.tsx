@@ -20,6 +20,7 @@ import { BadgeDisplay } from '@/components/badges/badge-display';
 import { computeBadges } from '@/lib/utils/travel-badges';
 import { useTripRealtime } from '@/hooks/use-trip-realtime';
 import { parseDateOnly } from '@/lib/utils/date-only';
+import { routes } from '@/lib/routes';
 import type { TripWithMembers } from '@/lib/supabase/trips';
 import type { DashboardData } from '@/lib/supabase/dashboard';
 import type { ActivityLogEntry } from '@/types/activity-log';
@@ -155,7 +156,7 @@ export function TripOverview({
             />
           }
           description={dashboard?.balanceDescription ?? 'Sem despesas ainda'}
-          onClick={() => router.push(`/trip/${trip.id}/balance`)}
+          onClick={() => router.push(routes.trip.balance(trip.id))}
         />
 
         {/* Two-column grid: Next Activity + Total Expenses */}
@@ -176,7 +177,7 @@ export function TripOverview({
                 ? formatActivityDate(dashboard.nextActivity.date, dashboard.nextActivity.time)
                 : undefined
             }
-            onClick={() => router.push(`/trip/${trip.id}/itinerary`)}
+            onClick={() => router.push(routes.trip.itinerary(trip.id))}
           />
 
           {/* Total Expenses */}
@@ -195,7 +196,7 @@ export function TripOverview({
                 ? `${dashboard.expenseCount} ${dashboard.expenseCount === 1 ? 'despesa' : 'despesas'}`
                 : 'Nenhuma despesa registrada'
             }
-            onClick={() => router.push(`/trip/${trip.id}/expenses`)}
+            onClick={() => router.push(routes.trip.expenses(trip.id))}
           />
         </div>
 
@@ -283,7 +284,7 @@ export function TripOverview({
             <CardContent className="space-y-2">
               {dashboard.pendingSettlements.count > 0 && (
                 <Link
-                  href={`/trip/${trip.id}/balance`}
+                  href={routes.trip.balance(trip.id)}
                   className="flex items-center justify-between rounded-lg p-2 transition-colors hover:bg-accent"
                 >
                   <div className="flex items-center gap-3">
@@ -371,7 +372,7 @@ export function TripOverview({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => router.push(`/trip/${trip.id}/expenses/add`)}
+                onClick={() => router.push(routes.trip.expenseAdd(trip.id))}
               >
                 <Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />
                 Despesa

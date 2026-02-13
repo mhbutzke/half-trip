@@ -9,6 +9,7 @@ import { CheckCircle } from 'lucide-react';
 
 import { resetPasswordSchema, type ResetPasswordInput } from '@/lib/validation/auth-schemas';
 import { resetPassword } from '@/lib/supabase/auth';
+import { routes } from '@/lib/routes';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -71,7 +72,7 @@ export default function ResetPasswordPage() {
           </CardDescription>
         </CardHeader>
         <CardFooter className="justify-center">
-          <Button onClick={() => router.push('/login')}>Ir para o login</Button>
+          <Button onClick={() => router.push(routes.login())}>Ir para o login</Button>
         </CardFooter>
       </Card>
     );
@@ -139,7 +140,7 @@ export default function ResetPasswordPage() {
         </Form>
       </CardContent>
       <CardFooter className="justify-center">
-        <Link href="/login" className="text-sm text-muted-foreground hover:text-primary">
+        <Link href={routes.login()} className="text-sm text-muted-foreground hover:text-primary">
           Voltar para o login
         </Link>
       </CardFooter>

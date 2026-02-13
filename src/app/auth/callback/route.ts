@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
+import { routes } from '@/lib/routes';
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -14,7 +15,7 @@ export async function GET(request: Request) {
     if (!error) {
       // If this is a password recovery, redirect to reset password page
       if (type === 'recovery') {
-        return NextResponse.redirect(`${origin}/reset-password`);
+        return NextResponse.redirect(`${origin}${routes.resetPassword()}`);
       }
 
       // If there's a redirect URL (e.g., from invite flow), use it
@@ -25,10 +26,10 @@ export async function GET(request: Request) {
       }
 
       // Otherwise, redirect to trips page (main app)
-      return NextResponse.redirect(`${origin}/trips`);
+      return NextResponse.redirect(`${origin}${routes.trips()}`);
     }
   }
 
   // If there was an error or no code, redirect to login with error
-  return NextResponse.redirect(`${origin}/login?error=auth_error`);
+  return NextResponse.redirect(`${origin}${routes.login()}?error=auth_error`);
 }

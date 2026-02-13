@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { exchangeGoogleCodeForTokens, getGoogleUserEmail } from '@/lib/google-calendar/google-api';
 import { createClient } from '@/lib/supabase/server';
+import { routes } from '@/lib/routes';
 
 const STATE_COOKIE_NAME = 'gcal_oauth_state';
 const REDIRECT_COOKIE_NAME = 'gcal_oauth_redirect';
 
 function sanitizeRedirectPath(path: string | null): string {
   if (!path || !path.startsWith('/')) {
-    return '/settings';
+    return routes.settings();
   }
 
   return path;
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.redirect(new URL('/login', request.nextUrl.origin));
+    return NextResponse.redirect(new URL(routes.login(), request.nextUrl.origin));
   }
 
   const code = request.nextUrl.searchParams.get('code');
@@ -46,7 +47,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const redirectUri = `${request.nextUrl.origin}/api/google-calendar/callback`;
+    const redirectUri = `${request.nextUrl.origin}${routes.api.googleCalendar.callback()}`;
     const tokens = await exchangeGoogleCodeForTokens({
       code,
       redirectUri,

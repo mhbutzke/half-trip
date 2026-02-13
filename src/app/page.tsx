@@ -4,6 +4,7 @@ import { Header } from '@/components/layout/header';
 import { PageContainer } from '@/components/layout/page-container';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { routes } from '@/lib/routes';
 
 const features = [
   {
@@ -47,13 +48,13 @@ export default function Home() {
           </p>
           <div className="mt-10 flex flex-col gap-4 sm:flex-row">
             <Button size="lg" asChild>
-              <Link href="/register">
+              <Link href={routes.register()}>
                 Começar agora
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
-              <Link href="/login">Já tenho conta</Link>
+              <Link href={routes.login()}>Já tenho conta</Link>
             </Button>
           </div>
         </section>
@@ -100,7 +101,7 @@ export default function Home() {
             Menos contas, mais histórias. Comece a planejar sua próxima viagem.
           </p>
           <Button size="lg" className="mt-8" asChild>
-            <Link href="/register">
+            <Link href={routes.register()}>
               Criar minha primeira viagem
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>

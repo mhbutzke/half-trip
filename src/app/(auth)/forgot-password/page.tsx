@@ -8,6 +8,7 @@ import { Mail, ArrowLeft } from 'lucide-react';
 
 import { forgotPasswordSchema, type ForgotPasswordInput } from '@/lib/validation/auth-schemas';
 import { forgotPassword } from '@/lib/supabase/auth';
+import { routes } from '@/lib/routes';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -69,7 +70,7 @@ export default function ForgotPasswordPage() {
           </CardDescription>
         </CardHeader>
         <CardFooter className="justify-center">
-          <Link href="/login">
+          <Link href={routes.login()}>
             <Button variant="outline">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Voltar para o login
@@ -125,7 +126,7 @@ export default function ForgotPasswordPage() {
       </CardContent>
       <CardFooter className="justify-center">
         <Link
-          href="/login"
+          href={routes.login()}
           className="flex items-center text-sm text-muted-foreground hover:text-primary"
         >
           <ArrowLeft className="mr-1 h-4 w-4" />

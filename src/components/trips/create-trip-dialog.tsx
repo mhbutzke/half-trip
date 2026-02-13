@@ -29,6 +29,7 @@ import {
 import { createTripSchema, tripStyles, transportTypes } from '@/lib/validation/trip-schemas';
 import { createTrip } from '@/lib/supabase/trips';
 import { SUPPORTED_CURRENCIES, CURRENCY_LABELS } from '@/types/currency';
+import { LocationAutocomplete } from '@/components/activities/location-autocomplete';
 
 interface CreateTripDialogProps {
   trigger?: React.ReactNode;
@@ -173,7 +174,12 @@ export function CreateTripDialog({
                     <FormItem>
                       <FormLabel>Destino</FormLabel>
                       <FormControl>
-                        <Input placeholder="Ex: Florianópolis, SC" {...field} />
+                        <LocationAutocomplete
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="Ex: Florianópolis, SC"
+                          types={['(cities)']}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

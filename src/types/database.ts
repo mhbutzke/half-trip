@@ -887,6 +887,118 @@ export type Database = {
           },
         ];
       };
+      user_email_preferences: {
+        Row: {
+          id: string;
+          user_id: string;
+          invite_emails: boolean;
+          trip_reminder_emails: boolean;
+          daily_summary_emails: boolean;
+          welcome_emails: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          invite_emails?: boolean;
+          trip_reminder_emails?: boolean;
+          daily_summary_emails?: boolean;
+          welcome_emails?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          invite_emails?: boolean;
+          trip_reminder_emails?: boolean;
+          daily_summary_emails?: boolean;
+          welcome_emails?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'user_email_preferences_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: true;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      email_logs: {
+        Row: {
+          id: string;
+          email_type: 'invite' | 'trip_reminder' | 'daily_summary' | 'welcome';
+          recipient_email: string;
+          recipient_user_id: string | null;
+          resend_email_id: string | null;
+          subject: string;
+          from_address: string;
+          metadata: Json;
+          status: 'pending' | 'sent' | 'delivered' | 'bounced' | 'complained' | 'failed';
+          error_message: string | null;
+          sent_at: string;
+          delivered_at: string | null;
+          opened_at: string | null;
+          bounced_at: string | null;
+          complained_at: string | null;
+          retry_count: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          email_type: 'invite' | 'trip_reminder' | 'daily_summary' | 'welcome';
+          recipient_email: string;
+          recipient_user_id?: string | null;
+          resend_email_id?: string | null;
+          subject: string;
+          from_address: string;
+          metadata?: Json;
+          status?: 'pending' | 'sent' | 'delivered' | 'bounced' | 'complained' | 'failed';
+          error_message?: string | null;
+          sent_at?: string;
+          delivered_at?: string | null;
+          opened_at?: string | null;
+          bounced_at?: string | null;
+          complained_at?: string | null;
+          retry_count?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          email_type?: 'invite' | 'trip_reminder' | 'daily_summary' | 'welcome';
+          recipient_email?: string;
+          recipient_user_id?: string | null;
+          resend_email_id?: string | null;
+          subject?: string;
+          from_address?: string;
+          metadata?: Json;
+          status?: 'pending' | 'sent' | 'delivered' | 'bounced' | 'complained' | 'failed';
+          error_message?: string | null;
+          sent_at?: string;
+          delivered_at?: string | null;
+          opened_at?: string | null;
+          bounced_at?: string | null;
+          complained_at?: string | null;
+          retry_count?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'email_logs_recipient_user_id_fkey';
+            columns: ['recipient_user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       poll_votes: {
         Row: {
           id: string;
@@ -1068,3 +1180,11 @@ export type UpdateTripPoll = UpdateTables<'trip_polls'>;
 export type PollVote = Tables<'poll_votes'>;
 export type InsertPollVote = InsertTables<'poll_votes'>;
 export type UpdatePollVote = UpdateTables<'poll_votes'>;
+
+export type UserEmailPreferencesRow = Tables<'user_email_preferences'>;
+export type InsertUserEmailPreferences = InsertTables<'user_email_preferences'>;
+export type UpdateUserEmailPreferences = UpdateTables<'user_email_preferences'>;
+
+export type EmailLogRow = Tables<'email_logs'>;
+export type InsertEmailLog = InsertTables<'email_logs'>;
+export type UpdateEmailLog = UpdateTables<'email_logs'>;

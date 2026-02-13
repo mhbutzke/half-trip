@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -68,9 +68,16 @@ export function TripOverview({
   const [isActivityOpen, setIsActivityOpen] = useState(false);
   const [isNoteOpen, setIsNoteOpen] = useState(false);
   const [createPollOpen, setCreatePollOpen] = useState(false);
+  const refreshTripData = useCallback(() => {
+    router.refresh();
+    window.setTimeout(() => router.refresh(), 1200);
+  }, [router]);
 
   // Enable real-time updates for this trip
-  useTripRealtime({ tripId: trip.id });
+  useTripRealtime({
+    tripId: trip.id,
+    onPollChange: refreshTripData,
+  });
 
   const baseCurrency = dashboard?.baseCurrency ?? 'BRL';
 
@@ -325,7 +332,7 @@ export function TripOverview({
                 poll={poll}
                 currentUserId={currentUserId || ''}
                 isOrganizer={userRole === 'organizer'}
-                onUpdate={() => router.refresh()}
+                onUpdate={refreshTripData}
               />
             ))}
           </div>
@@ -427,7 +434,7 @@ export function TripOverview({
         onOpenChange={setCreatePollOpen}
         onSuccess={() => {
           setCreatePollOpen(false);
-          router.refresh();
+          refreshTripData();
         }}
       />
     </>

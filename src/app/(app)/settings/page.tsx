@@ -4,8 +4,10 @@ import { ProfileForm } from '@/components/profile/profile-form';
 import { PasswordChangeForm } from '@/components/settings/password-change-form';
 import { DangerZone } from '@/components/settings/danger-zone';
 import { GoogleCalendarSettings } from '@/components/settings/google-calendar-settings';
+import { EmailPreferencesForm } from '@/components/settings/email-preferences-form';
 import { getUserProfile } from '@/lib/supabase/profile';
 import { getGoogleCalendarConnectionStatus } from '@/lib/supabase/google-calendar';
+import { getUserEmailPreferences } from '@/lib/supabase/email-preferences';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 
@@ -21,8 +23,17 @@ interface SettingsPageProps {
 }
 
 export default async function SettingsPage({ searchParams }: SettingsPageProps) {
-  const [{ google_calendar: googleCalendarStatus }, user, googleCalendarConnection] =
-    await Promise.all([searchParams, getUserProfile(), getGoogleCalendarConnectionStatus()]);
+  const [
+    { google_calendar: googleCalendarStatus },
+    user,
+    googleCalendarConnection,
+    emailPreferences,
+  ] = await Promise.all([
+    searchParams,
+    getUserProfile(),
+    getGoogleCalendarConnectionStatus(),
+    getUserEmailPreferences(),
+  ]);
 
   if (!user) {
     redirect('/login');
@@ -75,6 +86,22 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
               connected={googleCalendarConnection.connected}
               googleEmail={googleCalendarConnection.googleEmail}
             />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Notificações por Email</CardTitle>
+            <CardDescription>Gerencie quais emails você deseja receber.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {emailPreferences ? (
+              <EmailPreferencesForm preferences={emailPreferences} />
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Erro ao carregar preferências de email.
+              </p>
+            )}
           </CardContent>
         </Card>
 

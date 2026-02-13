@@ -3,6 +3,7 @@
 import { createClient } from './server';
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
+import { sendWelcomeEmail } from '@/lib/email/send-welcome-email';
 
 export type AuthResult = {
   error?: string;
@@ -24,7 +25,7 @@ export async function signUp(
     ? `${origin}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`
     : `${origin}/auth/callback`;
 
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -40,6 +41,13 @@ export async function signUp(
       return { error: 'Este email já está cadastrado' };
     }
     return { error: error.message };
+  }
+
+  // Fire-and-forget welcome email (don't block signup)
+  if (data.user?.id) {
+    sendWelcomeEmail({ userId: data.user.id, userName: name, userEmail: email }).catch((err) =>
+      console.error('Failed to send welcome email:', err)
+    );
   }
 
   return { success: true };

@@ -15,9 +15,10 @@ import {
 interface WelcomeEmailProps {
   userName: string;
   loginUrl: string;
+  unsubscribeUrl?: string;
 }
 
-export function WelcomeEmail({ userName, loginUrl }: WelcomeEmailProps) {
+export function WelcomeEmail({ userName, loginUrl, unsubscribeUrl }: WelcomeEmailProps) {
   const previewText = `Bem-vindo ao Half Trip, ${userName}! Comece a planejar sua próxima viagem.`;
 
   return (
@@ -72,6 +73,13 @@ export function WelcomeEmail({ userName, loginUrl }: WelcomeEmailProps) {
               </Link>{' '}
               - Planeje junto. Viaje melhor. Divida justo.
             </Text>
+            {unsubscribeUrl && (
+              <Text style={unsubscribeText}>
+                <Link href={unsubscribeUrl} style={unsubscribeLink}>
+                  Cancelar inscrição
+                </Link>
+              </Text>
+            )}
           </Section>
         </Container>
       </Body>
@@ -190,5 +198,18 @@ const footerText = {
 
 const link = {
   color: '#0d9488',
+  textDecoration: 'underline',
+};
+
+const unsubscribeText = {
+  color: '#9ca3af',
+  fontSize: '11px',
+  lineHeight: '1.5',
+  margin: '8px 0 0',
+  textAlign: 'center' as const,
+};
+
+const unsubscribeLink = {
+  color: '#6b7280',
   textDecoration: 'underline',
 };

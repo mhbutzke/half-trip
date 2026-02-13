@@ -17,10 +17,11 @@ export type LocationCoords = {
 interface LocationAutocompleteProps {
   value: string;
   onChange: (location: string) => void;
-  onPlaceSelect: (coords: LocationCoords | null) => void;
+  onPlaceSelect?: (coords: LocationCoords | null) => void;
   initialCoords?: LocationCoords | null;
   placeholder?: string;
   className?: string;
+  types?: string[];
 }
 
 export function LocationAutocomplete({
@@ -30,6 +31,7 @@ export function LocationAutocomplete({
   initialCoords,
   placeholder = 'Ex: Aeroporto GRU',
   className,
+  types,
 }: LocationAutocompleteProps) {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
@@ -77,27 +79,31 @@ export function LocationAutocomplete({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const fetchSuggestions = useCallback((input: string) => {
-    if (!autocompleteServiceRef.current || !input.trim()) {
-      setSuggestions([]);
-      return;
-    }
-
-    autocompleteServiceRef.current.getPlacePredictions(
-      {
-        input,
-        sessionToken: sessionTokenRef.current!,
-      },
-      (predictions, status) => {
-        if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
-          setSuggestions(predictions);
-          setShowSuggestions(true);
-        } else {
-          setSuggestions([]);
-        }
+  const fetchSuggestions = useCallback(
+    (input: string) => {
+      if (!autocompleteServiceRef.current || !input.trim()) {
+        setSuggestions([]);
+        return;
       }
-    );
-  }, []);
+
+      autocompleteServiceRef.current.getPlacePredictions(
+        {
+          input,
+          sessionToken: sessionTokenRef.current!,
+          ...(types && { types }),
+        },
+        (predictions, status) => {
+          if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
+            setSuggestions(predictions);
+            setShowSuggestions(true);
+          } else {
+            setSuggestions([]);
+          }
+        }
+      );
+    },
+    [types]
+  );
 
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -107,7 +113,7 @@ export function LocationAutocomplete({
       // Clear selected coords when user types (they're editing the location)
       if (selectedCoords) {
         setSelectedCoords(null);
-        onPlaceSelect(null);
+        onPlaceSelect?.(null);
       }
 
       // Debounce API calls
@@ -124,6 +130,12 @@ export function LocationAutocomplete({
       onChange(prediction.description);
       setShowSuggestions(false);
       setSuggestions([]);
+
+      // Only fetch place details if coords are needed
+      if (!onPlaceSelect) {
+        sessionTokenRef.current = new google.maps.places.AutocompleteSessionToken();
+        return;
+      }
 
       // Get place details for coordinates
       if (placesServiceRef.current) {
@@ -155,7 +167,7 @@ export function LocationAutocomplete({
   const clearLocation = useCallback(() => {
     onChange('');
     setSelectedCoords(null);
-    onPlaceSelect(null);
+    onPlaceSelect?.(null);
     setSuggestions([]);
     setShowSuggestions(false);
   }, [onChange, onPlaceSelect]);

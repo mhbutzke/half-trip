@@ -5,9 +5,11 @@ import { revalidatePath } from 'next/cache';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { TripInvite, User } from '@/types/database';
-import { getResendClient } from '@/lib/email/resend';
 import { InviteEmail } from '@/lib/email/invite-email';
 import { parseDateOnly } from '@/lib/utils/date-only';
+import { sendEmail } from '@/lib/email/service';
+import { getUnsubscribeFooterUrl } from '@/lib/email/unsubscribe-token';
+import { render } from '@react-email/components';
 
 // Default invite expiration: 7 days
 const DEFAULT_INVITE_EXPIRATION_DAYS = 7;
@@ -585,20 +587,7 @@ export async function sendEmailInvite(tripId: string, email: string): Promise<Em
     invite = newInvite;
   }
 
-  // Send the email using Resend
-  const resend = getResendClient();
-
-  if (!resend) {
-    // If Resend is not configured, still create the invite but warn about email
-    console.warn('Email invite created but email could not be sent (Resend not configured)');
-    revalidatePath(`/trip/${tripId}`);
-    return {
-      success: true,
-      invite,
-      error: 'Convite criado, mas o email nao pode ser enviado. Copie o link manualmente.',
-    };
-  }
-
+  // Send the email using centralized service
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   const inviteUrl = `${appUrl}/invite/${inviteCode}`;
 
@@ -606,32 +595,33 @@ export async function sendEmailInvite(tripId: string, email: string): Promise<Em
     return format(parseDateOnly(dateString), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
   };
 
-  try {
-    const { error: emailError } = await resend.emails.send({
-      from: 'Half Trip <convites@halftrip.com>',
-      to: email.toLowerCase(),
-      subject: `Convite para viagem: ${trip.name}`,
-      react: InviteEmail({
-        inviteUrl,
-        tripName: trip.name,
-        tripDestination: trip.destination,
-        tripStartDate: formatDate(trip.start_date),
-        tripEndDate: formatDate(trip.end_date),
-        inviterName: inviter.name,
-        recipientEmail: email.toLowerCase(),
-      }),
-    });
+  const unsubscribeUrl = getUnsubscribeFooterUrl(authUser.id, email.toLowerCase(), 'invite');
 
-    if (emailError) {
-      console.error('Failed to send invite email:', emailError);
-      return {
-        success: true,
-        invite,
-        error: 'Convite criado, mas houve um erro ao enviar o email.',
-      };
-    }
-  } catch (err) {
-    console.error('Failed to send invite email:', err);
+  const emailHtml = await render(
+    InviteEmail({
+      inviteUrl,
+      tripName: trip.name,
+      tripDestination: trip.destination,
+      tripStartDate: formatDate(trip.start_date),
+      tripEndDate: formatDate(trip.end_date),
+      inviterName: inviter.name,
+      recipientEmail: email.toLowerCase(),
+      unsubscribeUrl,
+    })
+  );
+
+  const result = await sendEmail({
+    emailType: 'invite',
+    recipientEmail: email.toLowerCase(),
+    subject: `Convite para viagem: ${trip.name}`,
+    htmlContent: emailHtml,
+    metadata: { trip_id: tripId, invite_code: inviteCode, inviter_id: authUser.id },
+    checkPreferences: false,
+  });
+
+  if (!result.success) {
+    console.error('Failed to send invite email:', result.error);
+    revalidatePath(`/trip/${tripId}`);
     return {
       success: true,
       invite,

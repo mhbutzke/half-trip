@@ -3,13 +3,14 @@ import { useRealtimeSubscription } from './use-realtime-subscription';
 
 interface UseTripRealtimeOptions {
   tripId: string;
+  onPollChange?: () => void;
 }
 
 /**
  * Hook for subscribing to all trip-related realtime updates
  * Automatically invalidates React Query caches when data changes
  */
-export function useTripRealtime({ tripId }: UseTripRealtimeOptions) {
+export function useTripRealtime({ tripId, onPollChange }: UseTripRealtimeOptions) {
   const queryClient = useQueryClient();
 
   // Subscribe to trip changes
@@ -98,6 +99,7 @@ export function useTripRealtime({ tripId }: UseTripRealtimeOptions) {
     onChange: (payload) => {
       console.log('🔄 Poll changed, invalidating cache', payload.eventType);
       queryClient.invalidateQueries({ queryKey: ['polls', tripId] });
+      onPollChange?.();
     },
   });
 
@@ -107,6 +109,7 @@ export function useTripRealtime({ tripId }: UseTripRealtimeOptions) {
     onChange: (payload) => {
       console.log('🔄 Poll vote changed, invalidating cache', payload.eventType);
       queryClient.invalidateQueries({ queryKey: ['polls', tripId] });
+      onPollChange?.();
     },
   });
 }

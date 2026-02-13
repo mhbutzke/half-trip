@@ -8,13 +8,10 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public assets (images, etc.)
-     * Feel free to modify this pattern to include more paths.
+     * Match app and API routes, but skip Next.js internals and static assets.
+     * This avoids intercepting dev HMR websocket endpoints (/_next/webpack-hmr)
+     * and PWA assets (manifest.webmanifest, sw.js), which should never redirect to login.
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/|favicon.ico|manifest.webmanifest|sw.js|workbox-[^/]+\\.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|map|txt|xml)$).*)',
   ],
 };

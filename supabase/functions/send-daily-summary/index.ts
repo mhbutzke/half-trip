@@ -1,12 +1,15 @@
-import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.91.0';
+import { generateBaseEmailHtml, emailStyles } from '../_shared/base-html-template.ts';
+import { dispatchDailySummaryEmail } from '../_shared/email-dispatch.ts';
+import { generateUnsubscribeUrl } from '../_shared/unsubscribe-token.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-Deno.serve(async (req) => {
+serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -26,7 +29,6 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const today = new Date().toISOString().split('T')[0];
 
-    // Find active trips (today is between start_date and end_date)
     const { data: trips } = await supabase
       .from('trips')
       .select(
@@ -49,15 +51,15 @@ Deno.serve(async (req) => {
     const formatCurrency = (v: number, c: string) =>
       new Intl.NumberFormat('pt-BR', { style: 'currency', currency: c }).format(v);
 
+    const s = emailStyles;
+
     for (const trip of trips) {
-      // Get today's expenses
       const { data: todayExpenses } = await supabase
         .from('expenses')
         .select('amount, exchange_rate, description, paid_by, users!expenses_paid_by_fkey(name)')
         .eq('trip_id', trip.id)
         .eq('date', today);
 
-      // Get tomorrow's activities
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       const tomorrowStr = tomorrow.toISOString().split('T')[0];
@@ -75,20 +77,18 @@ Deno.serve(async (req) => {
         0
       );
 
-      // Only send if there's something to report
       if ((todayExpenses || []).length === 0 && (tomorrowActivities || []).length === 0) continue;
 
-      // Build email HTML
+      // Build body HTML
       const expenseLines = (todayExpenses || [])
-        .map(
-          (e: {
-            description: string;
-            amount: number;
-            exchange_rate: number | null;
-            users: { name: string } | null;
-          }) =>
-            `<li>${e.description} - ${formatCurrency(e.amount * (e.exchange_rate || 1), trip.base_currency)} (${e.users?.name || 'N/A'})</li>`
-        )
+        .map((e) => {
+          const paidByRaw = (e as Record<string, unknown>).users;
+          const paidBy = Array.isArray(paidByRaw)
+            ? (paidByRaw[0] as { name?: string } | undefined)
+            : (paidByRaw as { name?: string } | null);
+
+          return `<li>${e.description} - ${formatCurrency(e.amount * (e.exchange_rate || 1), trip.base_currency)} (${paidBy?.name || 'N/A'})</li>`;
+        })
         .join('');
 
       const activityLines = (tomorrowActivities || [])
@@ -98,63 +98,70 @@ Deno.serve(async (req) => {
         )
         .join('');
 
-      const html = `<!DOCTYPE html><html><head><meta charset="utf-8"></head>
-<body style="background-color:#f6f9fc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-<div style="background-color:#fff;margin:0 auto;padding:20px 0 48px;max-width:600px;">
-  <div style="padding:24px 40px;"><h1 style="color:#0d9488;font-size:28px;font-weight:700;margin:0;text-align:center;">Half Trip</h1></div>
-  <div style="padding:0 40px;">
-    <h1 style="color:#1f2937;font-size:22px;margin:0 0 16px;">Resumo do dia - ${trip.name}</h1>
+      const bodyHtml = `${
+        (todayExpenses || []).length > 0
+          ? `<h3 style="${s.subheading}">Gastos de hoje</h3>
+<ul style="color:#374151;font-size:14px;padding-left:20px;">${expenseLines}</ul>
+<p style="color:#0d9488;font-size:16px;font-weight:600;">Total: ${formatCurrency(todayTotal, trip.base_currency)}</p>`
+          : ''
+      }
+${
+  (tomorrowActivities || []).length > 0
+    ? `<h3 style="${s.subheading}">Atividades de amanhã</h3>
+<ul style="color:#374151;font-size:14px;padding-left:20px;">${activityLines}</ul>`
+    : ''
+}
+<div style="${s.buttonContainer}">
+  <a href="${appUrl}/trip/${trip.id}" style="${s.button}">Ver viagem</a>
+</div>`;
 
-    ${
-      (todayExpenses || []).length > 0
-        ? `
-    <h3 style="color:#1f2937;font-size:16px;margin:20px 0 8px;">Gastos de hoje</h3>
-    <ul style="color:#374151;font-size:14px;padding-left:20px;">${expenseLines}</ul>
-    <p style="color:#0d9488;font-size:16px;font-weight:600;">Total: ${formatCurrency(todayTotal, trip.base_currency)}</p>
-    `
-        : ''
-    }
+      const subject = `Resumo do dia - ${trip.name}`;
 
-    ${
-      (tomorrowActivities || []).length > 0
-        ? `
-    <h3 style="color:#1f2937;font-size:16px;margin:20px 0 8px;">Atividades de amanha</h3>
-    <ul style="color:#374151;font-size:14px;padding-left:20px;">${activityLines}</ul>
-    `
-        : ''
-    }
-
-    <div style="text-align:center;margin:32px 0;">
-      <a href="${appUrl}/trip/${trip.id}" style="background-color:#0d9488;border-radius:6px;color:#fff;font-size:16px;font-weight:600;text-decoration:none;padding:12px 24px;display:inline-block;">Ver viagem</a>
-    </div>
-  </div>
-  <hr style="border-color:#e5e7eb;margin:32px 40px;" />
-  <div style="padding:0 40px;"><p style="color:#9ca3af;font-size:12px;text-align:center;">halftrip.com</p></div>
-</div></body></html>`;
-
-      // Send to each member
       for (const member of trip.trip_members || []) {
-        const user = (member as { users: { id: string; name: string; email: string } | null })
-          .users;
+        const userRaw = (member as Record<string, unknown>).users;
+        const user = (Array.isArray(userRaw) ? userRaw[0] : userRaw) as {
+          id?: string;
+          name?: string;
+          email?: string;
+        } | null;
         if (!user?.email) continue;
+        if (!user.id) continue;
 
-        try {
-          await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${resendApiKey}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              from: 'Half Trip <resumo@halftrip.com>',
-              to: user.email,
-              subject: `Resumo do dia - ${trip.name}`,
-              html,
-            }),
-          });
+        // Check user preferences
+        const { data: prefs } = await supabase
+          .from('user_email_preferences')
+          .select('daily_summary_emails')
+          .eq('user_id', user.id)
+          .single();
+
+        if (prefs && prefs.daily_summary_emails === false) {
+          console.log(`User ${user.id} opted out of daily summaries`);
+          continue;
+        }
+
+        const unsubscribeUrl = await generateUnsubscribeUrl(
+          { userId: user.id, email: user.email, emailType: 'daily_summary' },
+          appUrl
+        );
+
+        const html = generateBaseEmailHtml({
+          previewText: `Resumo do dia - ${trip.name}`,
+          heading: `Resumo do dia - ${trip.name}`,
+          bodyHtml,
+          unsubscribeUrl,
+        });
+        const result = await dispatchDailySummaryEmail({
+          supabase,
+          resendApiKey,
+          recipientEmail: user.email,
+          recipientUserId: user.id,
+          subject,
+          html,
+          tripId: trip.id,
+        });
+
+        if (result.success) {
           sentCount++;
-        } catch (err) {
-          console.error(`Failed to send to ${user.email}:`, err);
         }
       }
     }

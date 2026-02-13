@@ -20,6 +20,7 @@ interface InviteEmailProps {
   tripEndDate: string;
   inviterName: string;
   recipientEmail: string;
+  unsubscribeUrl?: string;
 }
 
 export function InviteEmail({
@@ -29,6 +30,7 @@ export function InviteEmail({
   tripStartDate,
   tripEndDate,
   inviterName,
+  unsubscribeUrl,
 }: InviteEmailProps) {
   const previewText = `${inviterName} te convidou para participar da viagem "${tripName}"`;
 
@@ -85,6 +87,13 @@ export function InviteEmail({
               </Link>{' '}
               - Planeje junto. Viaje melhor. Divida justo.
             </Text>
+            {unsubscribeUrl && (
+              <Text style={unsubscribeText}>
+                <Link href={unsubscribeUrl} style={unsubscribeLink}>
+                  Cancelar inscrição
+                </Link>
+              </Text>
+            )}
           </Section>
         </Container>
       </Body>
@@ -203,5 +212,18 @@ const footerText = {
 
 const link = {
   color: '#0d9488',
+  textDecoration: 'underline',
+};
+
+const unsubscribeText = {
+  color: '#9ca3af',
+  fontSize: '11px',
+  lineHeight: '1.5',
+  margin: '8px 0 0',
+  textAlign: 'center' as const,
+};
+
+const unsubscribeLink = {
+  color: '#6b7280',
   textDecoration: 'underline',
 };

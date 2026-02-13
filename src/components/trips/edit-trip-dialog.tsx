@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/select';
 import { createTripSchema, tripStyles, transportTypes } from '@/lib/validation/trip-schemas';
 import { updateTrip } from '@/lib/supabase/trips';
+import { LocationAutocomplete } from '@/components/activities/location-autocomplete';
 import type { TripWithMembers } from '@/lib/supabase/trips';
 import { SUPPORTED_CURRENCIES, CURRENCY_LABELS, type SupportedCurrency } from '@/types/currency';
 import type { TransportType } from '@/types/database';
@@ -186,7 +187,12 @@ export function EditTripDialog({ trip, open, onOpenChange, onSuccess }: EditTrip
                 <FormItem>
                   <FormLabel>Destino</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ex: Florianópolis, SC" {...field} />
+                    <LocationAutocomplete
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Ex: Florianópolis, SC"
+                      types={['(cities)']}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

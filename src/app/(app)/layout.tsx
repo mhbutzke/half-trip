@@ -1,4 +1,5 @@
 import { AppHeader } from '@/components/layout/app-header';
+import { AppMobileHeader } from '@/components/layout/app-mobile-header';
 import { MobileNav } from '@/components/layout/mobile-nav';
 import { SkipNav } from '@/components/layout/skip-nav';
 import { OfflineIndicator } from '@/components/offline';
@@ -40,7 +41,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex min-h-svh flex-col overflow-x-hidden">
       <SkipNav />
-      <AppHeader user={user} />
+      {/* Desktop header */}
+      <div className="hidden md:block">
+        <AppHeader user={user} />
+      </div>
+      {/* Mobile header */}
+      <AppMobileHeader user={user} />
       <OfflineIndicator />
       {/* Main content with bottom padding for mobile nav */}
       <main id="main-content" className="flex-1 pb-24 md:pb-0">

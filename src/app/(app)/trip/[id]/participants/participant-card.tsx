@@ -100,26 +100,26 @@ export function ParticipantCard({
 
   return (
     <>
-      <div className="flex items-center justify-between rounded-lg border p-3">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between gap-3 rounded-lg border p-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
           <Avatar className="h-10 w-10">
             <AvatarImage src={member.users.avatar_url || undefined} />
             <AvatarFallback>{getInitials(member.users.name)}</AvatarFallback>
           </Avatar>
-          <div>
-            <div className="flex items-center gap-2">
-              <p className="font-medium">
-                {member.users.name}
-                {isCurrentUser && <span className="ml-1 text-muted-foreground">(você)</span>}
-              </p>
-              {isMemberOrganizer && (
-                <Badge variant="secondary" className="gap-1">
+          <div className="min-w-0 flex-1">
+            <p className="break-words font-medium">
+              {member.users.name}
+              {isCurrentUser && <span className="ml-1 text-muted-foreground">(você)</span>}
+            </p>
+            {isMemberOrganizer && (
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <Badge variant="secondary" className="max-w-full gap-1">
                   <Crown className="h-3 w-3" />
                   Organizador
                 </Badge>
-              )}
-            </div>
-            <p className="text-sm text-muted-foreground">{member.users.email}</p>
+              </div>
+            )}
+            <p className="mt-1 break-all text-sm text-muted-foreground">{member.users.email}</p>
           </div>
         </div>
 
@@ -127,7 +127,7 @@ export function ParticipantCard({
         {(canManage || isCurrentUser) && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Button variant="ghost" size="icon" className="h-11 w-11 shrink-0 sm:h-8 sm:w-8">
                 <MoreHorizontal className="h-4 w-4" />
                 <span className="sr-only">Ações</span>
               </Button>

@@ -62,7 +62,7 @@ export function EmptyDayState({ dayNumber, onAddActivity }: EmptyDayStateProps) 
 
       <h3 className="text-sm font-medium">{message.title}</h3>
       <p className="mt-1 text-xs text-muted-foreground">{message.subtitle}</p>
-      <Button variant="ghost" size="sm" className="mt-3" onClick={onAddActivity}>
+      <Button variant="ghost" size="sm" className="mt-3 h-11 sm:h-9" onClick={onAddActivity}>
         <Plus className="mr-1.5 h-4 w-4" />
         Adicionar atividade
       </Button>

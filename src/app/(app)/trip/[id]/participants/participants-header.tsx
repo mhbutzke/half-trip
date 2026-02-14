@@ -27,7 +27,7 @@ export function ParticipantsHeader({
         <div className="space-y-1">
           <Link
             href={`/trip/${tripId}`}
-            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+            className="inline-flex min-h-[44px] items-center gap-1 text-sm text-muted-foreground hover:text-foreground active:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
             Voltar

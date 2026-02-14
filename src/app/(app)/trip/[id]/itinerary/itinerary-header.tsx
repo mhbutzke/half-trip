@@ -73,7 +73,12 @@ export function ItineraryHeader({ trip, googleCalendarConnected }: ItineraryHead
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm" className="h-8 gap-1 px-2" asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-11 min-w-[44px] gap-1 px-2 sm:h-8 sm:min-w-0"
+          asChild
+        >
           <Link href={`/trip/${trip.id}`}>
             <ArrowLeft className="h-4 w-4" />
             <span className="hidden sm:inline">{trip.name}</span>

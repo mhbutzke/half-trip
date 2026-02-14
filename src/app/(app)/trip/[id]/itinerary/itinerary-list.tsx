@@ -474,7 +474,7 @@ export function ItineraryList({
           <Button
             variant={categoryFilter === 'all' ? 'default' : 'outline'}
             size="sm"
-            className="flex-shrink-0"
+            className="h-11 flex-shrink-0 sm:h-9"
             onClick={() => setCategoryFilter('all')}
           >
             Todas
@@ -484,7 +484,7 @@ export function ItineraryList({
               key={category.value}
               variant={categoryFilter === category.value ? 'default' : 'outline'}
               size="sm"
-              className="flex-shrink-0"
+              className="h-11 flex-shrink-0 sm:h-9"
               onClick={() => setCategoryFilter(category.value)}
             >
               {category.label}
@@ -504,7 +504,7 @@ export function ItineraryList({
               tripId={tripId}
               onSuccess={handleAddSuccess}
               trigger={
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="h-11 sm:h-9">
                   <Plane className="mr-2 h-4 w-4" />
                   Voo
                 </Button>
@@ -515,7 +515,7 @@ export function ItineraryList({
             tripId={tripId}
             defaultDate={defaultActivityDate}
             trigger={
-              <Button size="sm">
+              <Button size="sm" className="h-11 sm:h-9">
                 <Plus className="mr-2 h-4 w-4" />
                 Nova atividade
               </Button>
@@ -535,7 +535,7 @@ export function ItineraryList({
         <div className="rounded-lg border border-dashed py-10 text-center">
           <p className="text-sm font-medium">Nenhuma atividade encontrada para o filtro atual.</p>
           <Button
-            className="mt-3"
+            className="mt-3 h-11 sm:h-9"
             variant="outline"
             size="sm"
             onClick={() => {

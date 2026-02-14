@@ -70,6 +70,7 @@ export async function updateSession(request: NextRequest) {
     routes.register(),
     routes.forgotPassword(),
     routes.resetPassword(),
+    routes.offline(),
   ];
   const isPublicRoute =
     publicRoutes.includes(request.nextUrl.pathname) ||

@@ -71,7 +71,7 @@ export function ExportDropdown({ tripId, tripName }: ExportDropdownProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" disabled={isExporting}>
+        <Button variant="outline" size="sm" className="h-11 sm:h-9" disabled={isExporting}>
           <Download className="mr-2 h-4 w-4" aria-hidden="true" />
           {isExporting ? 'Exportando...' : 'Exportar'}
         </Button>

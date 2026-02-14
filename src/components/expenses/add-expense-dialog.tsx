@@ -294,7 +294,7 @@ export function AddExpenseDialog({
             {trigger}
           </button>
         ) : (
-          <Button size="sm" onClick={() => setOpen(true)}>
+          <Button size="sm" className="h-11 sm:h-9" onClick={() => setOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Adicionar despesa
           </Button>

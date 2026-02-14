@@ -180,6 +180,7 @@ export function ExpensesList({
             size="icon"
             onClick={() => setShowFilters(!showFilters)}
             className="relative"
+            aria-label="Alternar filtros"
           >
             <Filter className="h-4 w-4" />
             {activeFiltersCount > 0 && (
@@ -255,7 +256,7 @@ export function ExpensesList({
 
             {/* Clear filters button */}
             {activeFiltersCount > 0 && (
-              <Button variant="ghost" size="sm" onClick={clearFilters} className="h-9">
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="h-11 sm:h-9">
                 <X className="mr-1 h-3 w-3" />
                 Limpar
               </Button>
@@ -361,7 +362,9 @@ export function ExpensesList({
       )}
 
       {/* Mobile FAB */}
-      <FAB icon={Plus} label="Adicionar despesa" onClick={() => setIsAddOpen(true)} />
+      {expenses.length > 0 && (
+        <FAB icon={Plus} label="Adicionar despesa" onClick={() => setIsAddOpen(true)} />
+      )}
 
       <AddExpenseDialog
         tripId={tripId}

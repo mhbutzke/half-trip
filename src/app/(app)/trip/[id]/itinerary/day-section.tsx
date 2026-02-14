@@ -69,7 +69,12 @@ export function DaySection({
             {activities.length === 1 ? 'atividade' : 'atividades'}
           </p>
         </div>
-        <Button variant="outline" size="sm" className="h-8" onClick={() => onAddActivity(date)}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-11 min-w-[44px] sm:h-8 sm:min-w-0"
+          onClick={() => onAddActivity(date)}
+        >
           <Plus className="mr-1 h-4 w-4" />
           <span className="hidden sm:inline">Adicionar</span>
         </Button>

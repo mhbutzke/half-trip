@@ -184,7 +184,7 @@ export const ActivityCard = memo(function ActivityCard({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 opacity-100 transition-opacity sm:h-8 sm:w-8 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 data-[state=open]:opacity-100"
+                    className="h-11 w-11 opacity-100 transition-opacity sm:h-8 sm:w-8 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 data-[state=open]:opacity-100"
                     aria-label="Opções da atividade"
                   >
                     <MoreVertical className="h-4 w-4" aria-hidden="true" />

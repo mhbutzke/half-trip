@@ -30,7 +30,7 @@ export function FinancesTabBar({ tripId }: FinancesTabBarProps) {
               key={tab.key}
               href={href}
               className={cn(
-                'flex-1 py-2.5 text-center text-sm font-medium transition-colors',
+                'flex h-11 flex-1 items-center justify-center text-center text-sm font-medium transition-colors',
                 isActive
                   ? 'border-b-2 border-primary text-primary'
                   : 'text-muted-foreground hover:text-foreground'

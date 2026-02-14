@@ -190,6 +190,7 @@ export function TripSummary({ summary, currentUserId, isOrganizer }: TripSummary
                           <Button
                             size="sm"
                             variant="ghost"
+                            className="h-11 w-11 sm:h-9 sm:w-9"
                             onClick={() => setPixSettlement(settlement)}
                             aria-label="Pagar via Pix"
                           >
@@ -198,6 +199,7 @@ export function TripSummary({ summary, currentUserId, isOrganizer }: TripSummary
                           <Button
                             size="sm"
                             variant="outline"
+                            className="h-11 sm:h-9"
                             onClick={() => handleMarkSettlement(settlement)}
                           >
                             Marcar pago

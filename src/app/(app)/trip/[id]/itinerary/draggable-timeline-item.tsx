@@ -111,7 +111,7 @@ export function DraggableTimelineItem({
       <button
         {...attributes}
         {...listeners}
-        className="mt-2 flex-shrink-0 cursor-grab rounded p-1 opacity-100 transition-opacity hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:opacity-0 sm:group-hover/item:opacity-100 active:cursor-grabbing"
+        className="mt-1 flex h-11 w-11 flex-shrink-0 cursor-grab items-center justify-center rounded opacity-100 transition-opacity hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:mt-2 sm:h-8 sm:w-8 sm:opacity-0 sm:group-hover/item:opacity-100 active:cursor-grabbing"
         aria-label="Arrastar atividade"
       >
         <GripVertical className="h-4 w-4 text-muted-foreground" />

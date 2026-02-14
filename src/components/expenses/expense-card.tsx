@@ -99,7 +99,7 @@ export const ExpenseCard = memo(function ExpenseCard({
             {canEdit && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8">
+                  <Button variant="ghost" size="icon" className="h-11 w-11 sm:h-8 sm:w-8">
                     <MoreHorizontal className="h-4 w-4" />
                     <span className="sr-only">Opções</span>
                   </Button>

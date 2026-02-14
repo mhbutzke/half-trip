@@ -18,9 +18,9 @@ function Checkbox({ className, ...props }: React.ComponentProps<typeof CheckboxP
     >
       <CheckboxPrimitive.Indicator
         data-slot="checkbox-indicator"
-        className="grid place-content-center text-current transition-none"
+        className="grid place-content-center text-current"
       >
-        <CheckIcon className="size-3.5" />
+        <CheckIcon className="size-3.5 animate-in zoom-in-0 duration-150" />
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
   );

@@ -40,7 +40,7 @@ export const NoteCard = memo(function NoteCard({ note, canEdit, onEdit, onDelete
   const { isPending } = useSyncStatus('trip_notes', note.id);
 
   return (
-    <Card>
+    <Card className="active:scale-[0.98] transition-transform duration-100">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-3">

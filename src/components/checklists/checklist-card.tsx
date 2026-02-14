@@ -82,7 +82,7 @@ export function ChecklistCard({
   }
 
   return (
-    <Card>
+    <Card className="active:scale-[0.98] transition-transform duration-100">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">

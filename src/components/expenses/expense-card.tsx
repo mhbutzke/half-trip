@@ -56,7 +56,7 @@ export const ExpenseCard = memo(function ExpenseCard({
   };
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden active:scale-[0.98] transition-transform duration-100">
       <CardContent className="p-3 sm:p-4">
         <div className="flex items-start justify-between gap-2 sm:gap-4">
           {/* Left: Icon and main info */}

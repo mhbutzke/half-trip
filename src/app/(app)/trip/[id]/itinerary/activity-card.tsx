@@ -69,7 +69,7 @@ export const ActivityCard = memo(function ActivityCard({
   const hasDetails = activity.description || links.length > 0;
 
   return (
-    <Card className="group relative transition-shadow hover:shadow-md">
+    <Card className="group relative transition-[shadow,transform] duration-100 hover:shadow-md active:scale-[0.98]">
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
           {/* Category Icon */}

@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getTripById, getTripMembers, getUserRoleInTrip } from '@/lib/supabase/trips';
 import { getTripInvites, getEmailInvites } from '@/lib/supabase/invites';
+import { PageContainer } from '@/components/layout/page-container';
 import { ParticipantsList } from './participants-list';
 import { ParticipantsHeader } from './participants-header';
 import { ParticipantsSkeleton } from './participants-skeleton';
@@ -60,8 +61,10 @@ export default async function ParticipantsPage({ params }: ParticipantsPageProps
   const { id } = await params;
 
   return (
-    <Suspense fallback={<ParticipantsSkeleton />}>
-      <ParticipantsContent tripId={id} />
-    </Suspense>
+    <PageContainer>
+      <Suspense fallback={<ParticipantsSkeleton />}>
+        <ParticipantsContent tripId={id} />
+      </Suspense>
+    </PageContainer>
   );
 }

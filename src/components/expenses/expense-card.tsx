@@ -5,7 +5,6 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { MoreHorizontal, Pencil, Share2, Trash2, Users } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -46,60 +45,48 @@ export const ExpenseCard = memo(function ExpenseCard({
 
   const formattedDate = format(new Date(expense.date), "d 'de' MMM", { locale: ptBR });
 
-  const getInitials = (name: string) => {
-    return name
+  const getInitials = (name: string) =>
+    name
       .split(' ')
       .map((n) => n[0])
       .join('')
       .toUpperCase()
       .slice(0, 2);
-  };
 
   return (
-    <Card className="overflow-hidden active:scale-[0.98] transition-transform duration-100">
-      <CardContent className="p-3 sm:p-4">
-        <div className="flex items-start justify-between gap-2 sm:gap-4">
-          {/* Left: Icon and main info */}
-          <div className="flex items-start gap-2 sm:gap-3 min-w-0 flex-1">
-            <div
-              className={cn(
-                'flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg',
-                categoryInfo.bgColor
-              )}
-            >
-              <CategoryIcon className={cn('h-4 w-4 sm:h-5 sm:w-5', categoryInfo.color)} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="font-medium truncate text-sm sm:text-base">{expense.description}</p>
-              <div className="mt-0.5 sm:mt-1 flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
-                <Badge
-                  variant="secondary"
-                  className="text-[10px] sm:text-xs font-normal px-1.5 py-0"
-                >
-                  {categoryInfo.label}
-                </Badge>
-                <span>{formattedDate}</span>
-                {isPending && <PendingIndicator isPending={isPending} size="sm" />}
-              </div>
-            </div>
+    <Card className="overflow-hidden transition-transform duration-100 active:scale-[0.98]">
+      <CardContent className="p-3">
+        {/* Line 1: Icon + Description + Amount + Menu */}
+        <div className="flex items-center gap-3">
+          <div
+            className={cn(
+              'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg',
+              categoryInfo.bgColor
+            )}
+          >
+            <CategoryIcon className={cn('h-4 w-4', categoryInfo.color)} aria-hidden="true" />
           </div>
 
-          {/* Right: Amount and menu */}
-          <div className="flex items-start gap-1 shrink-0">
-            <div className="flex flex-col items-end gap-0.5">
-              <p className="font-semibold text-sm sm:text-lg whitespace-nowrap tabular-nums">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium">{expense.description}</p>
+          </div>
+
+          <div className="flex shrink-0 items-center gap-1">
+            <div className="flex flex-col items-end">
+              <p className="whitespace-nowrap text-base font-bold tabular-nums">
                 {formatAmount(expense.amount, expense.currency)}
               </p>
               {isForeignCurrency && (
-                <p className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap tabular-nums">
+                <p className="whitespace-nowrap text-[10px] tabular-nums text-muted-foreground">
                   {formatAmount(convertedAmount, baseCurrency)}
                 </p>
               )}
             </div>
+            {isPending && <PendingIndicator isPending={isPending} size="sm" />}
             {canEdit && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-11 w-11 sm:h-8 sm:w-8">
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
                     <MoreHorizontal className="h-4 w-4" />
                     <span className="sr-only">Opções</span>
                   </Button>
@@ -141,64 +128,49 @@ export const ExpenseCard = memo(function ExpenseCard({
           </div>
         </div>
 
-        {/* Footer: Paid by and split info */}
-        <div className="mt-2 sm:mt-3 flex items-center justify-between">
-          {/* Paid by */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <span className="text-[10px] sm:text-xs text-muted-foreground">Pago por</span>
+        {/* Line 2: Date + Split info + Paid by */}
+        <div className="mt-1.5 flex items-center justify-between pl-12">
+          <span className="text-xs text-muted-foreground">{formattedDate}</span>
+
+          <div className="flex items-center gap-3">
+            {/* Split info */}
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="flex items-center gap-1.5">
-                    <Avatar className="h-6 w-6">
-                      <AvatarImage src={expense.paid_by_user.avatar_url || undefined} />
-                      <AvatarFallback className="text-xs">
-                        {getInitials(expense.paid_by_user.name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-xs sm:text-sm font-medium">
-                      {expense.paid_by_user.name.split(' ')[0]}
-                    </span>
+                  <div className="flex items-center gap-1 text-muted-foreground">
+                    <Users className="h-3 w-3" aria-hidden="true" />
+                    <span className="text-xs">{expense.expense_splits.length}</span>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>{expense.paid_by_user.name}</p>
+                  <div className="space-y-1">
+                    {expense.expense_splits.map((split) => (
+                      <div key={split.id} className="flex items-center justify-between gap-4">
+                        <span>{split.users.name}</span>
+                        <span className="font-medium">
+                          {formatAmount(split.amount, expense.currency)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
+
+            {/* Paid by */}
+            <div className="flex items-center gap-1.5">
+              <Avatar className="h-5 w-5">
+                <AvatarImage src={expense.paid_by_user.avatar_url || undefined} />
+                <AvatarFallback className="text-[9px]">
+                  {getInitials(expense.paid_by_user.name)}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-xs text-muted-foreground">
+                {expense.paid_by_user.name.split(' ')[0]}
+              </span>
+            </div>
           </div>
-
-          {/* Split info */}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex items-center gap-1 sm:gap-1.5 text-muted-foreground">
-                  <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  <span className="text-xs sm:text-sm">
-                    Dividido entre {expense.expense_splits.length}
-                  </span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <div className="space-y-1">
-                  {expense.expense_splits.map((split) => (
-                    <div key={split.id} className="flex items-center justify-between gap-4">
-                      <span>{split.users.name}</span>
-                      <span className="font-medium">
-                        {formatAmount(split.amount, expense.currency)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
         </div>
-
-        {/* Notes if present */}
-        {expense.notes && (
-          <p className="mt-3 text-sm text-muted-foreground border-t pt-3">{expense.notes}</p>
-        )}
       </CardContent>
     </Card>
   );

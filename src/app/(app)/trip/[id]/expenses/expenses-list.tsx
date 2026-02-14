@@ -17,8 +17,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { FAB } from '@/components/ui/fab';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
-import { SwipeAction } from '@/components/ui/swipe-action';
-import { ExpenseCard, DeleteExpenseDialog } from '@/components/expenses';
+import { DeleteExpenseDialog } from '@/components/expenses';
+import { ExpenseDateGroup } from '@/components/expenses/expense-date-group';
 import { expenseCategoryList, getCategoryInfo } from '@/lib/utils/expense-categories';
 import { deleteExpense } from '@/lib/supabase/expenses';
 import { formatAmount } from '@/lib/validation/expense-schemas';
@@ -156,6 +156,17 @@ export function ExpensesList({
       (sum, expense) => sum + expense.amount * (expense.exchange_rate ?? 1),
       0
     );
+  }, [filteredExpenses]);
+
+  // Group expenses by date
+  const groupedExpenses = useMemo(() => {
+    const groups = new Map<string, ExpenseWithDetails[]>();
+    filteredExpenses.forEach((exp) => {
+      const dateKey = exp.date;
+      if (!groups.has(dateKey)) groups.set(dateKey, []);
+      groups.get(dateKey)!.push(exp);
+    });
+    return Array.from(groups.entries()).sort(([a], [b]) => b.localeCompare(a));
   }, [filteredExpenses]);
 
   return (
@@ -341,22 +352,18 @@ export function ExpensesList({
           )}
         </div>
       ) : (
-        <div className="space-y-3">
-          {filteredExpenses.map((expense) => (
-            <SwipeAction
-              key={expense.id}
-              onDelete={() => handleSwipeDelete(expense)}
-              confirmMessage={`Excluir despesa "${expense.description}"?`}
-              disabled={!canEditExpense(expense)}
-            >
-              <ExpenseCard
-                expense={expense}
-                baseCurrency={baseCurrency}
-                canEdit={canEditExpense(expense)}
-                onEdit={() => handleEditExpense(expense)}
-                onDelete={() => setDeletingExpense(expense)}
-              />
-            </SwipeAction>
+        <div className="space-y-4">
+          {groupedExpenses.map(([date, dateExpenses]) => (
+            <ExpenseDateGroup
+              key={date}
+              date={date}
+              expenses={dateExpenses}
+              baseCurrency={baseCurrency}
+              canEditExpense={canEditExpense}
+              onEdit={handleEditExpense}
+              onDelete={(exp) => setDeletingExpense(exp)}
+              onSwipeDelete={handleSwipeDelete}
+            />
           ))}
         </div>
       )}

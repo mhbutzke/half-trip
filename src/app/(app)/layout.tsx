@@ -1,7 +1,9 @@
 import { AppHeader } from '@/components/layout/app-header';
 import { AppMobileHeader } from '@/components/layout/app-mobile-header';
+import { AnimatedPage } from '@/components/layout/animated-page';
 import { MobileNav } from '@/components/layout/mobile-nav';
 import { SkipNav } from '@/components/layout/skip-nav';
+import { ScrollToTop } from '@/components/ui/scroll-to-top';
 import { OfflineIndicator } from '@/components/offline';
 import { InstallPrompt } from '@/components/pwa/install-prompt';
 import { NotificationToastListener } from '@/components/notifications';
@@ -50,8 +52,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <OfflineIndicator />
       {/* Main content with bottom padding for mobile nav */}
       <main id="main-content" className="flex-1 pb-24 md:pb-0">
-        {children}
+        <AnimatedPage>{children}</AnimatedPage>
       </main>
+      {/* Scroll-to-top button (mobile only) */}
+      <ScrollToTop />
       {/* Mobile bottom navigation - auto-detects trip context */}
       <MobileNav />
       {/* PWA install prompt */}

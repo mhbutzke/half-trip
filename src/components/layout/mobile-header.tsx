@@ -15,9 +15,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { routes } from '@/lib/routes';
+import { cn } from '@/lib/utils';
 import { SyncStatus } from '@/components/sync';
 import { NotificationPanel, NotificationSettingsDialog } from '@/components/notifications';
 import { useTripContext } from '@/hooks/use-trip-context';
+import { useScrollDirection } from '@/hooks/use-scroll-direction';
 
 interface MobileHeaderProps {
   user: {
@@ -35,6 +37,8 @@ export function MobileHeader({ user, onSignOut }: MobileHeaderProps) {
   const [notificationSettingsOpen, setNotificationSettingsOpen] = useState(false);
 
   const storeTripName = useTripContext((s) => s.tripName);
+  const scrollDirection = useScrollDirection();
+  const isHidden = scrollDirection === 'down';
 
   useEffect(() => {
     queueMicrotask(() => setMounted(true));
@@ -69,7 +73,12 @@ export function MobileHeader({ user, onSignOut }: MobileHeaderProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden">
+      <header
+        className={cn(
+          'sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden transition-transform duration-200',
+          isHidden && '-translate-y-full'
+        )}
+      >
         <div className="flex h-12 items-center justify-between px-4">
           {/* Left: Back button + title */}
           <div className="flex min-w-0 flex-1 items-center gap-2">

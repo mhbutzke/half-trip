@@ -1,6 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import {
+  cloneElement,
+  isValidElement,
+  useEffect,
+  useState,
+  type KeyboardEventHandler,
+  type MouseEventHandler,
+} from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Plus } from 'lucide-react';
@@ -24,6 +31,10 @@ interface AddActivityDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
+
+type TriggerElementProps = {
+  onClick?: MouseEventHandler<HTMLElement>;
+};
 
 export function AddActivityDialog({
   tripId,
@@ -166,19 +177,47 @@ export function AddActivityDialog({
     }
   };
 
+  const handleTriggerKeyboard: KeyboardEventHandler<HTMLElement> = (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      setOpen(true);
+    }
+  };
+
+  const uncontrolledTrigger =
+    controlledOpen === undefined ? (
+      trigger ? (
+        isValidElement<TriggerElementProps>(trigger) ? (
+          cloneElement(trigger, {
+            onClick: (event) => {
+              trigger.props.onClick?.(event);
+              if (!event.defaultPrevented) {
+                setOpen(true);
+              }
+            },
+          })
+        ) : (
+          <span
+            role="button"
+            tabIndex={0}
+            className="contents"
+            onClick={() => setOpen(true)}
+            onKeyDown={handleTriggerKeyboard}
+          >
+            {trigger}
+          </span>
+        )
+      ) : (
+        <Button size="sm" onClick={() => setOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Adicionar atividade
+        </Button>
+      )
+    ) : null;
+
   return (
     <>
-      {controlledOpen === undefined &&
-        (trigger ? (
-          <button type="button" onClick={() => setOpen(true)} className="contents">
-            {trigger}
-          </button>
-        ) : (
-          <Button size="sm" onClick={() => setOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Adicionar atividade
-          </Button>
-        ))}
+      {uncontrolledTrigger}
 
       <ResponsiveFormContainer
         open={open}

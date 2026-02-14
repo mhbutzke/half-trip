@@ -213,6 +213,18 @@
     scroll-behavior: smooth;
   }
 
+  /* Typography scale */
+  .text-page-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+  .text-section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
   /* Form error shake animation */
   .animate-shake {
     animation: shake 0.3s ease-in-out;

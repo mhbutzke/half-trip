@@ -105,6 +105,10 @@ export function MobileNav() {
     return pathname.startsWith(href);
   };
 
+  const activeIndex = navigation.findIndex((item) =>
+    isActive(item.href, 'exact' in item ? item.exact : undefined)
+  );
+
   const handleNavClick = (item: NavItem, e: React.MouseEvent) => {
     if (item.href === '#more') {
       e.preventDefault();
@@ -115,10 +119,19 @@ export function MobileNav() {
   return (
     <>
       <nav
-        className="fixed bottom-0 left-0 right-0 z-50 overflow-hidden border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden"
+        className="fixed bottom-0 left-0 right-0 z-50 overflow-hidden border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden relative"
         role="navigation"
         aria-label="Navegação principal"
       >
+        {activeIndex >= 0 && (
+          <div
+            className="absolute top-0 h-0.5 bg-primary rounded-full transition-all duration-200 ease-out"
+            style={{
+              width: `${100 / navigation.length}%`,
+              left: `${(activeIndex / navigation.length) * 100}%`,
+            }}
+          />
+        )}
         <div className="mx-auto flex h-16 max-w-lg items-center justify-around px-2">
           {navigation.map((item) => {
             const Icon = item.icon;
@@ -133,14 +146,19 @@ export function MobileNav() {
                   onClick={(e) => handleNavClick(item, e)}
                   aria-expanded={moreOpen}
                   className={cn(
-                    'flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-0.5 rounded-lg px-3 py-1 transition-colors',
+                    'flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-0.5 rounded-lg px-3 py-1 transition-all duration-150 active:scale-[0.96]',
                     active
                       ? 'text-primary'
                       : 'text-muted-foreground active:bg-accent active:text-foreground'
                   )}
                 >
                   <Icon
-                    className={cn('h-5 w-5 shrink-0', active && 'text-primary')}
+                    className={cn(
+                      'h-5 w-5 shrink-0 transition-all duration-150',
+                      active && 'text-primary',
+                      moreOpen && 'rotate-90'
+                    )}
+                    strokeWidth={active ? 2.5 : 2}
                     aria-hidden="true"
                   />
                   <span
@@ -161,14 +179,18 @@ export function MobileNav() {
                 href={item.href}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-0.5 rounded-lg px-3 py-1 transition-colors',
+                  'flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-0.5 rounded-lg px-3 py-1 transition-all duration-150 active:scale-[0.96]',
                   active
                     ? 'text-primary'
                     : 'text-muted-foreground active:bg-accent active:text-foreground'
                 )}
               >
                 <Icon
-                  className={cn('h-5 w-5 shrink-0', active && 'text-primary')}
+                  className={cn(
+                    'h-5 w-5 shrink-0 transition-all duration-150',
+                    active && 'text-primary'
+                  )}
+                  strokeWidth={active ? 2.5 : 2}
                   aria-hidden="true"
                 />
                 <span

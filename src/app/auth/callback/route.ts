@@ -1,15 +1,20 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 import { routes } from '@/lib/routes';
+import { sendWelcomeEmail } from '@/lib/email/send-welcome-email';
+import { logError } from '@/lib/errors/logger';
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
+  const tokenHash = searchParams.get('token_hash');
   const type = searchParams.get('type');
   const redirectTo = searchParams.get('redirect');
 
+  const supabase = await createClient();
+
+  // PKCE flow (password recovery, magic links via Supabase default)
   if (code) {
-    const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
@@ -30,6 +35,32 @@ export async function GET(request: Request) {
     }
   }
 
-  // If there was an error or no code, redirect to login with error
+  // Token hash flow (from admin.generateLink: signup confirmation)
+  if (tokenHash && type) {
+    const { data, error } = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: type === 'signup' ? 'email' : (type as 'email'),
+    });
+
+    if (!error) {
+      // Fire-and-forget welcome email after successful signup confirmation
+      if (type === 'signup' && data?.user) {
+        const user = data.user;
+        sendWelcomeEmail({
+          userId: user.id,
+          userName: user.user_metadata?.name || '',
+          userEmail: user.email || '',
+        }).catch((err) => logError(err, { action: 'send-welcome-email', userId: user.id }));
+      }
+
+      if (redirectTo) {
+        const safeRedirect = redirectTo.startsWith('/') ? redirectTo : `/${redirectTo}`;
+        return NextResponse.redirect(`${origin}${safeRedirect}`);
+      }
+      return NextResponse.redirect(`${origin}${routes.trips()}`);
+    }
+  }
+
+  // If there was an error or no code/token, redirect to login with error
   return NextResponse.redirect(`${origin}${routes.login()}?error=auth_error`);
 }

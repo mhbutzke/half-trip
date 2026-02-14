@@ -11,6 +11,7 @@ const FROM_ADDRESSES: Record<EmailType, string> = {
   trip_reminder: 'Half Trip <lembretes@halftrip.com>',
   daily_summary: 'Half Trip <resumo@halftrip.com>',
   welcome: 'Half Trip <boas-vindas@halftrip.com>',
+  confirmation: 'Half Trip <confirme@halftrip.com>',
 };
 
 const PREFERENCE_COLUMN_MAP: Record<EmailType, string> = {
@@ -18,6 +19,7 @@ const PREFERENCE_COLUMN_MAP: Record<EmailType, string> = {
   trip_reminder: 'trip_reminder_emails',
   daily_summary: 'daily_summary_emails',
   welcome: 'welcome_emails',
+  confirmation: 'welcome_emails',
 };
 
 async function checkUserEmailPreference(userId: string, emailType: EmailType): Promise<boolean> {

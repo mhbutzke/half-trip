@@ -1,9 +1,10 @@
 'use server';
 
 import { createClient } from './server';
+import { createAdminClient } from './admin';
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
-import { sendWelcomeEmail } from '@/lib/email/send-welcome-email';
+import { sendConfirmationEmail } from '@/lib/email/send-confirmation-email';
 import { routes } from '@/lib/routes';
 import { logError } from '@/lib/errors/logger';
 
@@ -18,38 +19,60 @@ export async function signUp(
   password: string,
   redirectTo?: string
 ): Promise<AuthResult> {
-  const supabase = await createClient();
+  const adminClient = createAdminClient();
   const headersList = await headers();
   const origin = headersList.get('origin') || '';
 
-  // Build the callback URL with optional redirect
-  const callbackUrl = redirectTo
-    ? `${origin}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`
-    : `${origin}/auth/callback`;
-
-  const { data, error } = await supabase.auth.signUp({
+  // Use admin.generateLink to create user WITHOUT triggering Supabase's built-in
+  // email system (which has strict rate limits on the free tier)
+  const { data, error } = await adminClient.auth.admin.generateLink({
+    type: 'signup',
     email,
     password,
     options: {
       data: {
         name,
       },
-      emailRedirectTo: callbackUrl,
     },
   });
 
   if (error) {
-    if (error.message.includes('already registered')) {
+    if (
+      error.message.includes('already registered') ||
+      error.message.includes('already been registered')
+    ) {
       return { error: 'Este email já está cadastrado' };
+    }
+    if (error.message.toLowerCase().includes('rate limit')) {
+      return { error: 'Muitas tentativas. Aguarde alguns minutos e tente novamente.' };
     }
     return { error: error.message };
   }
 
-  // Fire-and-forget welcome email (don't block signup)
-  if (data.user?.id) {
-    sendWelcomeEmail({ userId: data.user.id, userName: name, userEmail: email }).catch((err) =>
-      logError(err, { action: 'send-welcome-email', userId: data.user!.id })
-    );
+  if (!data?.properties?.hashed_token || !data?.user) {
+    return { error: 'Erro ao criar conta. Tente novamente.' };
+  }
+
+  // Build the confirmation URL that points to our auth callback
+  const callbackParams = new URLSearchParams({
+    token_hash: data.properties.hashed_token,
+    type: 'signup',
+  });
+  if (redirectTo) {
+    callbackParams.set('redirect', redirectTo);
+  }
+  const confirmationUrl = `${origin}/auth/callback?${callbackParams.toString()}`;
+
+  // Send confirmation email via Resend (bypasses Supabase rate limits)
+  const emailResult = await sendConfirmationEmail({
+    userId: data.user.id,
+    userName: name,
+    userEmail: email,
+    confirmationUrl,
+  });
+
+  if (!emailResult.success) {
+    logError(emailResult.error, { action: 'send-confirmation-email', userId: data.user.id });
   }
 
   return { success: true };

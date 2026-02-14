@@ -114,7 +114,7 @@ function RegisterForm() {
           </CardDescription>
         </CardHeader>
         <CardFooter className="justify-center">
-          <Link href={routes.login()}>
+          <Link href={loginHref}>
             <Button variant="outline">Voltar para o login</Button>
           </Link>
         </CardFooter>

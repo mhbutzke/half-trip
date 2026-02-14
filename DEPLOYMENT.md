@@ -116,12 +116,15 @@ supabase db push
 
 In Vercel project settings, go to **Settings** → **Environment Variables** and add:
 
-| Variable Name                   | Value                          | Environment |
-| ------------------------------- | ------------------------------ | ----------- |
-| `NEXT_PUBLIC_SUPABASE_URL`      | Your Supabase Project URL      | Production  |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase anon key         | Production  |
-| `NEXT_PUBLIC_APP_URL`           | `https://your-app.vercel.app`  | Production  |
-| `RESEND_API_KEY`                | Your Resend API key (optional) | Production  |
+| Variable Name                   | Value                         | Environment |
+| ------------------------------- | ----------------------------- | ----------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Your Supabase Project URL     | Production  |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase anon key        | Production  |
+| `NEXT_PUBLIC_APP_URL`           | `https://your-app.vercel.app` | Production  |
+| `RESEND_API_KEY`                | Resend API key                | Production  |
+| `RESEND_WEBHOOK_SECRET`         | Resend webhook signing secret | Production  |
+| `UNSUBSCRIBE_SECRET`            | Secret for unsubscribe links  | Production  |
+| `SUPABASE_SERVICE_ROLE_KEY`     | Supabase service role key     | Production  |
 
 **Important Notes:**
 
@@ -165,6 +168,19 @@ To verify your domain:
 1. Go to **Domains** in Resend
 2. Click "Add Domain"
 3. Follow DNS verification steps
+
+### 3.4 Configure webhook + unsubscribe security
+
+1. Add your webhook endpoint in Resend:
+
+- URL: `https://your-app.vercel.app/api/webhooks/resend`
+- Events: at least `email.sent`, `email.delivered`, `email.bounced`, `email.complained`
+- Keep the signing secret and set it as `RESEND_WEBHOOK_SECRET`
+
+2. Set `SUPABASE_SERVICE_ROLE_KEY` in Vercel.  
+   The webhook updates `email_logs`, so it needs service-role credentials.
+
+3. Set a long, random `UNSUBSCRIBE_SECRET` used by unsubscribe links generated in emails.
 
 ## Step 4: Configure Custom Domain (Optional)
 

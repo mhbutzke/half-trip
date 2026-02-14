@@ -96,8 +96,11 @@ Half Trip é uma plataforma moderna para planejar viagens em grupo, compartilhar
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 
-   # Resend (opcional)
+   # Resend
    RESEND_API_KEY=your_resend_api_key
+   RESEND_WEBHOOK_SECRET=your_resend_webhook_secret
+   UNSUBSCRIBE_SECRET=your_unsubscribe_secret
+   SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 
    # App
    NEXT_PUBLIC_APP_URL=http://localhost:3000
@@ -133,6 +136,37 @@ Half Trip é uma plataforma moderna para planejar viagens em grupo, compartilhar
    ```
    http://localhost:3000
    ```
+
+## 📧 Notificações por email
+
+O Half Trip envia e-mails para:
+
+- Convites para viagens (`invite`)
+- Lembretes de viagem (`trip_reminder`)
+- Resumos diários (`daily_summary`)
+- Boas-vindas (`welcome`)
+- Confirmação de conta (`confirmation`)
+
+### Configuração
+
+- `RESEND_API_KEY`: envia e-mails via Resend.
+- `RESEND_WEBHOOK_SECRET`: valida eventos de entrega do webhook (`email.sent`, `email.delivered`, `email.bounced`, etc.).
+- `UNSUBSCRIBE_SECRET`: assina e valida links de cancelamento de inscrição.
+- `SUPABASE_SERVICE_ROLE_KEY`: necessário para operações de atualização de logs no webhook.
+
+Sem `RESEND_WEBHOOK_SECRET` e `UNSUBSCRIBE_SECRET`, o envio continua funcionando, mas sem segurança completa para webhook/cancelamento.
+
+### Fluxo atual
+
+- Envio centralizado em `src/lib/email/service.ts`.
+- Antes de enviar, o sistema verifica preferências em `user_email_preferences`.
+- Se o domínio não estiver verificado, ocorre fallback automático para `onboarding@resend.dev`.
+- Falha no envio inicial gera nova tentativa curta.
+- Todos os envios e erros ficam em `email_logs`.
+- Webhook de status está em `POST /api/webhooks/resend`.
+- Cancelamento de inscrição usa `/unsubscribe?token=...` e grava as preferências em `user_email_preferences`.
+
+Consulte [`docs/email-notifications.md`](docs/email-notifications.md) para o fluxo completo.
 
 ## 🧪 Testes
 

@@ -92,7 +92,17 @@ export async function updateSession(request: NextRequest) {
   // Redirect authenticated users away from auth pages (except reset-password which needs auth session)
   if (user && isAuthRoute) {
     const url = request.nextUrl.clone();
-    url.pathname = routes.trips();
+    const redirectParam = request.nextUrl.searchParams.get('redirect');
+
+    if (redirectParam) {
+      // Preserve the redirect parameter (e.g., user is already logged in and visits
+      // /login?redirect=/invite/code — redirect them to /invite/code directly)
+      const safeRedirect = redirectParam.startsWith('/') ? redirectParam : `/${redirectParam}`;
+      url.pathname = safeRedirect;
+      url.search = '';
+    } else {
+      url.pathname = routes.trips();
+    }
     return NextResponse.redirect(url);
   }
 

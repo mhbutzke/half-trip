@@ -11,6 +11,8 @@ import { logError } from '@/lib/errors/logger';
 export type AuthResult = {
   error?: string;
   success?: boolean;
+  userId?: string;
+  emailError?: boolean;
 };
 
 export async function signUp(
@@ -73,6 +75,57 @@ export async function signUp(
 
   if (!emailResult.success) {
     logError(emailResult.error, { action: 'send-confirmation-email', userId: data.user.id });
+    return {
+      success: true,
+      userId: data.user.id,
+      emailError: true,
+      error: 'Conta criada, mas houve um erro ao enviar o email de confirmação. Tente reenviar.',
+    };
+  }
+
+  return { success: true, userId: data.user.id };
+}
+
+export async function resendConfirmationEmail(email: string, name: string): Promise<AuthResult> {
+  const adminClient = createAdminClient();
+  const headersList = await headers();
+  const origin = headersList.get('origin') || '';
+
+  const { data, error } = await adminClient.auth.admin.generateLink({
+    type: 'signup',
+    email,
+    options: {
+      data: { name },
+    },
+  });
+
+  if (error) {
+    if (error.message.toLowerCase().includes('rate limit')) {
+      return { error: 'Muitas tentativas. Aguarde alguns minutos e tente novamente.' };
+    }
+    return { error: 'Erro ao reenviar email de confirmação.' };
+  }
+
+  if (!data?.properties?.hashed_token || !data?.user) {
+    return { error: 'Erro ao gerar link de confirmação.' };
+  }
+
+  const callbackParams = new URLSearchParams({
+    token_hash: data.properties.hashed_token,
+    type: 'signup',
+  });
+  const confirmationUrl = `${origin}/auth/callback?${callbackParams.toString()}`;
+
+  const emailResult = await sendConfirmationEmail({
+    userId: data.user.id,
+    userName: name,
+    userEmail: email,
+    confirmationUrl,
+  });
+
+  if (!emailResult.success) {
+    logError(emailResult.error, { action: 'resend-confirmation-email', userId: data.user.id });
+    return { error: 'Erro ao enviar email de confirmação. Tente novamente.' };
   }
 
   return { success: true };

@@ -33,5 +33,6 @@ export async function sendWelcomeEmail(params: {
     subject: 'Bem-vindo ao Half Trip!',
     htmlContent: emailHtml,
     metadata: { user_id: userId },
+    checkPreferences: false,
   });
 }

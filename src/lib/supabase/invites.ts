@@ -620,7 +620,19 @@ export async function sendEmailInvite(tripId: string, email: string): Promise<Em
     return format(parseDateOnly(dateString), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
   };
 
-  const unsubscribeUrl = getUnsubscribeFooterUrl(authUser.id, email.toLowerCase(), 'invite');
+  // Look up the recipient's user ID to generate a correct unsubscribe URL
+  const { data: recipientUser } = await supabase
+    .from('users')
+    .select('id')
+    .eq('email', email.toLowerCase())
+    .single();
+
+  const recipientUserId = recipientUser?.id;
+
+  // Only include unsubscribe URL if the recipient has an account
+  const unsubscribeUrl = recipientUserId
+    ? getUnsubscribeFooterUrl(recipientUserId, email.toLowerCase(), 'invite')
+    : undefined;
 
   const emailHtml = await render(
     InviteEmail({
@@ -638,6 +650,7 @@ export async function sendEmailInvite(tripId: string, email: string): Promise<Em
   const result = await sendEmail({
     emailType: 'invite',
     recipientEmail: email.toLowerCase(),
+    recipientUserId,
     subject: `Convite para viagem: ${trip.name}`,
     htmlContent: emailHtml,
     metadata: { trip_id: tripId, invite_code: inviteCode, inviter_id: authUser.id },
@@ -648,9 +661,8 @@ export async function sendEmailInvite(tripId: string, email: string): Promise<Em
     logError(result.error, { action: 'send-invite-email', tripId });
     revalidate.trip(tripId);
     return {
-      success: true,
+      error: 'Erro ao enviar o email de convite. O convite foi criado, tente reenviar.',
       invite,
-      error: 'Convite criado, mas houve um erro ao enviar o email.',
     };
   }
 

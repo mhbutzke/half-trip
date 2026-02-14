@@ -1,6 +1,6 @@
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { getResendClient } from './resend';
 import type { EmailType, SendEmailParams, SendEmailResult } from '@/types/email';
 import type { Json } from '@/types/database';
@@ -23,10 +23,10 @@ const PREFERENCE_COLUMN_MAP: Record<EmailType, string> = {
 };
 
 async function checkUserEmailPreference(userId: string, emailType: EmailType): Promise<boolean> {
-  const supabase = await createClient();
+  const adminClient = createAdminClient();
   const column = PREFERENCE_COLUMN_MAP[emailType];
 
-  const { data } = await supabase
+  const { data } = await adminClient
     .from('user_email_preferences')
     .select(column)
     .eq('user_id', userId)
@@ -49,20 +49,24 @@ async function logEmailAttempt(params: {
   metadata?: Record<string, unknown>;
   retryCount?: number;
 }): Promise<void> {
-  const supabase = await createClient();
+  try {
+    const adminClient = createAdminClient();
 
-  await supabase.from('email_logs').insert({
-    email_type: params.emailType,
-    recipient_email: params.recipientEmail,
-    recipient_user_id: params.recipientUserId || null,
-    subject: params.subject,
-    from_address: params.fromAddress,
-    resend_email_id: params.resendEmailId || null,
-    status: params.status,
-    error_message: params.errorMessage || null,
-    metadata: (params.metadata || {}) as Json,
-    retry_count: params.retryCount || 0,
-  });
+    await adminClient.from('email_logs').insert({
+      email_type: params.emailType,
+      recipient_email: params.recipientEmail,
+      recipient_user_id: params.recipientUserId || null,
+      subject: params.subject,
+      from_address: params.fromAddress,
+      resend_email_id: params.resendEmailId || null,
+      status: params.status,
+      error_message: params.errorMessage || null,
+      metadata: (params.metadata || {}) as Json,
+      retry_count: params.retryCount || 0,
+    });
+  } catch (err) {
+    logError(err, { action: 'log-email-attempt', emailType: params.emailType });
+  }
 }
 
 export async function sendEmail(params: SendEmailParams): Promise<SendEmailResult> {
@@ -113,8 +117,8 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
         metadata,
       });
 
-      // Simple retry after delay
-      await new Promise((resolve) => setTimeout(resolve, 30_000));
+      // Quick retry after short delay (avoid blocking server action for too long)
+      await new Promise((resolve) => setTimeout(resolve, 2_000));
 
       const { data: retryData, error: retryError } = await resend.emails.send({
         from: fromAddress,

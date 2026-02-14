@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { CheckCircle } from 'lucide-react';
 
 import { registerSchema, type RegisterInput } from '@/lib/validation/auth-schemas';
-import { signUp } from '@/lib/supabase/auth';
+import { signUp, resendConfirmationEmail } from '@/lib/supabase/auth';
 import { routes } from '@/lib/routes';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -70,6 +70,11 @@ function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [emailError, setEmailError] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState('');
+  const [registeredName, setRegisteredName] = useState('');
 
   const form = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
@@ -87,14 +92,37 @@ function RegisterForm() {
 
     const result = await signUp(data.name, data.email, data.password, redirectTo || undefined);
 
-    if (result.error) {
-      setError(result.error);
+    if (result.success) {
+      setRegisteredEmail(data.email);
+      setRegisteredName(data.name);
+      if (result.emailError) {
+        setEmailError(true);
+      }
+      setSuccess(true);
       setIsLoading(false);
       return;
     }
 
-    setSuccess(true);
+    if (result.error) {
+      setError(result.error);
+    }
     setIsLoading(false);
+  }
+
+  async function handleResend() {
+    setResending(true);
+    setError(null);
+    setResendSuccess(false);
+
+    const result = await resendConfirmationEmail(registeredEmail, registeredName);
+
+    if (result.success) {
+      setResendSuccess(true);
+      setEmailError(false);
+    } else {
+      setError(result.error || 'Erro ao reenviar email.');
+    }
+    setResending(false);
   }
 
   // Build login link with redirect param if present
@@ -108,12 +136,34 @@ function RegisterForm() {
             <CheckCircle className="h-6 w-6 text-primary" />
           </div>
           <CardTitle className="text-2xl">Conta criada!</CardTitle>
-          <CardDescription>
-            Enviamos um email de confirmação para você. Por favor, verifique sua caixa de entrada e
-            clique no link para ativar sua conta.
-          </CardDescription>
+          {emailError ? (
+            <CardDescription>
+              Sua conta foi criada, mas houve um erro ao enviar o email de confirmação. Clique
+              abaixo para reenviar.
+            </CardDescription>
+          ) : resendSuccess ? (
+            <CardDescription>
+              Email de confirmação reenviado! Verifique sua caixa de entrada e clique no link para
+              ativar sua conta.
+            </CardDescription>
+          ) : (
+            <CardDescription>
+              Enviamos um email de confirmação para você. Por favor, verifique sua caixa de entrada
+              e clique no link para ativar sua conta.
+            </CardDescription>
+          )}
+          {error && (
+            <div className="mt-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+              {error}
+            </div>
+          )}
         </CardHeader>
-        <CardFooter className="justify-center">
+        <CardFooter className="flex justify-center gap-2">
+          {emailError && (
+            <Button onClick={handleResend} loading={resending}>
+              Reenviar email
+            </Button>
+          )}
           <Link href={loginHref}>
             <Button variant="outline">Voltar para o login</Button>
           </Link>

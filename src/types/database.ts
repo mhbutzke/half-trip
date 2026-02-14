@@ -931,7 +931,7 @@ export type Database = {
       email_logs: {
         Row: {
           id: string;
-          email_type: 'invite' | 'trip_reminder' | 'daily_summary' | 'welcome';
+          email_type: 'invite' | 'trip_reminder' | 'daily_summary' | 'welcome' | 'confirmation';
           recipient_email: string;
           recipient_user_id: string | null;
           resend_email_id: string | null;
@@ -951,7 +951,7 @@ export type Database = {
         };
         Insert: {
           id?: string;
-          email_type: 'invite' | 'trip_reminder' | 'daily_summary' | 'welcome';
+          email_type: 'invite' | 'trip_reminder' | 'daily_summary' | 'welcome' | 'confirmation';
           recipient_email: string;
           recipient_user_id?: string | null;
           resend_email_id?: string | null;
@@ -971,7 +971,7 @@ export type Database = {
         };
         Update: {
           id?: string;
-          email_type?: 'invite' | 'trip_reminder' | 'daily_summary' | 'welcome';
+          email_type?: 'invite' | 'trip_reminder' | 'daily_summary' | 'welcome' | 'confirmation';
           recipient_email?: string;
           recipient_user_id?: string | null;
           resend_email_id?: string | null;

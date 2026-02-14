@@ -91,12 +91,11 @@ export async function resendConfirmationEmail(email: string, name: string): Prom
   const headersList = await headers();
   const origin = headersList.get('origin') || '';
 
+  // Use magiclink type to regenerate a verification link for existing unconfirmed users
+  // (signup type requires password and could change the user's existing password)
   const { data, error } = await adminClient.auth.admin.generateLink({
-    type: 'signup',
+    type: 'magiclink',
     email,
-    options: {
-      data: { name },
-    },
   });
 
   if (error) {
@@ -112,7 +111,7 @@ export async function resendConfirmationEmail(email: string, name: string): Prom
 
   const callbackParams = new URLSearchParams({
     token_hash: data.properties.hashed_token,
-    type: 'signup',
+    type: 'magiclink',
   });
   const confirmationUrl = `${origin}/auth/callback?${callbackParams.toString()}`;
 

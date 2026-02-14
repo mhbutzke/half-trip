@@ -25,7 +25,7 @@ export function BalanceContent({ summary, trip, currentUserId, isOrganizer }: Ba
   // Show empty state if no expenses
   if (summary.expenseCount === 0) {
     return (
-      <main className="container flex-1 space-y-6 px-4 py-6 pb-20 md:pb-6">
+      <main className="container flex-1 space-y-6 px-4 py-6 pb-20 md:pb-6 animate-in fade-in duration-200">
         <EmptyState
           icon={Receipt}
           title="Nenhuma despesa registrada"
@@ -46,7 +46,7 @@ export function BalanceContent({ summary, trip, currentUserId, isOrganizer }: Ba
   }
 
   return (
-    <main className="container flex-1 space-y-6 px-4 py-6 pb-20 md:pb-6">
+    <main className="container flex-1 space-y-6 px-4 py-6 pb-20 md:pb-6 animate-in fade-in duration-200">
       <TripSummary summary={summary} currentUserId={currentUserId} isOrganizer={isOrganizer} />
     </main>
   );

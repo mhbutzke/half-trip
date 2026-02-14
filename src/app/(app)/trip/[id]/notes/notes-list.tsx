@@ -90,7 +90,7 @@ export function NotesList({ tripId, initialNotes, userRole, currentUserId }: Not
           ]}
         />
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-4 animate-in fade-in duration-200">
           {notes.map((note) => (
             <NoteCard
               key={note.id}

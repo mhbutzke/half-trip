@@ -161,7 +161,7 @@ export function ExpensesList({
   return (
     <PullToRefresh onRefresh={handlePullRefresh}>
       {/* Controls */}
-      <div className="space-y-3">
+      <div className="space-y-3 animate-in fade-in duration-200">
         <div className="flex items-center gap-2">
           {/* Search */}
           <div className="relative flex-1">

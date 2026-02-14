@@ -48,7 +48,7 @@ export function ChecklistsContent({
           ]}
         />
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-4 animate-in fade-in duration-200">
           <div className="flex justify-end">
             <Button variant="outline" size="sm" onClick={() => setIsFormOpen(true)}>
               <Plus className="mr-2 h-4 w-4" aria-hidden="true" />

@@ -94,7 +94,7 @@ export function BudgetContent({
           ]}
         />
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-4 animate-in fade-in duration-200">
           {isOrganizer && (
             <div className="flex justify-end">
               <Button variant="outline" size="sm" onClick={() => setIsFormOpen(true)}>

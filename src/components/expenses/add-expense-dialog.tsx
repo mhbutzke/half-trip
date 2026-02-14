@@ -1,6 +1,15 @@
 'use client';
 
-import { useState, useMemo, useRef, useCallback } from 'react';
+import {
+  cloneElement,
+  isValidElement,
+  useState,
+  useMemo,
+  useRef,
+  useCallback,
+  type KeyboardEventHandler,
+  type MouseEventHandler,
+} from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -67,6 +76,10 @@ interface AddExpenseDialogProps {
   /** When provided, dialog operates in edit mode */
   expense?: ExpenseWithDetails | null;
 }
+
+type TriggerElementProps = {
+  onClick?: MouseEventHandler<HTMLElement>;
+};
 
 export function AddExpenseDialog({
   tripId,
@@ -256,6 +269,13 @@ export function AddExpenseDialog({
     }
   };
 
+  const handleTriggerKeyboard: KeyboardEventHandler<HTMLElement> = (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      setOpen(true);
+    }
+  };
+
   const handleNextToSplit = () => {
     const amount = parseAmount(form.getValues('amount') || '0');
     if (amount <= 0) {
@@ -286,19 +306,40 @@ export function AddExpenseDialog({
     split: 'Configure a divisão da despesa',
   };
 
+  const uncontrolledTrigger =
+    controlledOpen === undefined ? (
+      trigger ? (
+        isValidElement<TriggerElementProps>(trigger) ? (
+          cloneElement(trigger, {
+            onClick: (event) => {
+              trigger.props.onClick?.(event);
+              if (!event.defaultPrevented) {
+                setOpen(true);
+              }
+            },
+          })
+        ) : (
+          <span
+            role="button"
+            tabIndex={0}
+            className="contents"
+            onClick={() => setOpen(true)}
+            onKeyDown={handleTriggerKeyboard}
+          >
+            {trigger}
+          </span>
+        )
+      ) : (
+        <Button size="sm" className="h-11 sm:h-9" onClick={() => setOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Adicionar despesa
+        </Button>
+      )
+    ) : null;
+
   return (
     <>
-      {controlledOpen === undefined &&
-        (trigger ? (
-          <button type="button" onClick={() => setOpen(true)} className="contents">
-            {trigger}
-          </button>
-        ) : (
-          <Button size="sm" className="h-11 sm:h-9" onClick={() => setOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Adicionar despesa
-          </Button>
-        ))}
+      {uncontrolledTrigger}
 
       {/* Hidden file inputs */}
       <input

@@ -212,12 +212,31 @@
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
   }
+
+  /* Form error shake animation */
+  .animate-shake {
+    animation: shake 0.3s ease-in-out;
+  }
 }
 
 /* Prevent pull-to-refresh on mobile when not at top */
 @media (max-width: 768px) {
   html {
     overscroll-behavior-y: contain;
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25%,
+  75% {
+    transform: translateX(-4px);
+  }
+  50% {
+    transform: translateX(4px);
   }
 }
 

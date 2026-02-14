@@ -23,7 +23,7 @@ export function FAB({ icon: Icon, label, onClick, className }: FABProps) {
         'bottom-[calc(4rem+env(safe-area-inset-bottom)+0.75rem)]',
         'flex size-14 items-center justify-center rounded-full',
         'bg-primary text-primary-foreground shadow-lg',
-        'active:scale-95 transition-transform',
+        'active:scale-95 transition-[transform,box-shadow] duration-150 hover:shadow-xl',
         !reduced && 'animate-in fade-in zoom-in-75 duration-200',
         className
       )}

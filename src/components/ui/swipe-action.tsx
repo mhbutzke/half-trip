@@ -79,7 +79,9 @@ export function SwipeAction({
         <div
           className={cn(
             'relative z-10 bg-background',
-            !reducedMotion && offset === 0 && 'transition-transform duration-200'
+            !reducedMotion &&
+              offset === 0 &&
+              'transition-transform duration-250 ease-[cubic-bezier(0.34,1.56,0.64,1)]'
           )}
           style={{ transform: `translateX(${offset}px)` }}
           onTouchStart={handleTouchStart}

@@ -221,6 +221,23 @@
   }
 }
 
+/* Skeleton shimmer effect */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* View Transitions - page crossfade */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 150ms;
+  animation-timing-function: ease-out;
+}
+
 /* Global reduced-motion safety net */
 @media (prefers-reduced-motion: reduce) {
   *,

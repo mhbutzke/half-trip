@@ -18,9 +18,24 @@ const tabs = [
 export function FinancesTabBar({ tripId }: FinancesTabBarProps) {
   const pathname = usePathname();
 
+  const activeIndex = tabs.findIndex((tab) => {
+    const href = routes.trip[tab.key](tripId);
+    return pathname.startsWith(href);
+  });
+
   return (
-    <div className="sticky top-14 z-40 border-b bg-background/95 backdrop-blur md:hidden">
-      <div className="mx-auto flex max-w-lg">
+    <div className="sticky top-12 z-40 bg-background/95 px-4 py-2 backdrop-blur md:hidden">
+      <div className="relative mx-auto flex max-w-lg rounded-lg bg-muted p-1">
+        {/* Sliding pill indicator */}
+        {activeIndex >= 0 && (
+          <div
+            className="absolute bottom-1 top-1 rounded-md bg-background shadow-sm transition-all duration-200 ease-out"
+            style={{
+              width: `${100 / tabs.length}%`,
+              left: `calc(${(activeIndex / tabs.length) * 100}% + 0px)`,
+            }}
+          />
+        )}
         {tabs.map((tab) => {
           const href = routes.trip[tab.key](tripId);
           const isActive = pathname.startsWith(href);
@@ -30,10 +45,8 @@ export function FinancesTabBar({ tripId }: FinancesTabBarProps) {
               key={tab.key}
               href={href}
               className={cn(
-                'flex h-11 flex-1 items-center justify-center text-center text-sm font-medium transition-colors',
-                isActive
-                  ? 'border-b-2 border-primary text-primary'
-                  : 'text-muted-foreground hover:text-foreground'
+                'relative z-10 flex h-8 flex-1 items-center justify-center text-center text-sm transition-colors',
+                isActive ? 'font-semibold text-foreground' : 'text-muted-foreground'
               )}
             >
               {tab.label}

@@ -3,14 +3,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { ResponsiveFormContainer } from '@/components/ui/responsive-form-container';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -110,66 +103,65 @@ export function BudgetFormDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[400px]">
-        <DialogHeader>
-          <DialogTitle>{isEditing ? 'Editar Orçamento' : 'Definir Orçamento'}</DialogTitle>
-          <DialogDescription>
-            {isEditing
-              ? 'Altere o valor do orçamento para esta categoria.'
-              : 'Defina um limite de gastos para a viagem ou categoria.'}
-          </DialogDescription>
-        </DialogHeader>
+    <ResponsiveFormContainer
+      open={open}
+      onOpenChange={onOpenChange}
+      title={isEditing ? 'Editar Orçamento' : 'Definir Orçamento'}
+      description={
+        isEditing
+          ? 'Altere o valor do orçamento para esta categoria.'
+          : 'Defina um limite de gastos para a viagem ou categoria.'
+      }
+      className="sm:max-w-[400px]"
+    >
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="budget-category">Categoria</Label>
+          <Select
+            value={form.watch('category')}
+            onValueChange={(value) =>
+              form.setValue('category', value as BudgetFormValues['category'])
+            }
+            disabled={isEditing}
+          >
+            <SelectTrigger id="budget-category">
+              <SelectValue placeholder="Selecione uma categoria" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableCategories.map((cat) => (
+                <SelectItem key={cat} value={cat}>
+                  {budgetCategoryLabels[cat]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {form.formState.errors.category && (
+            <p className="text-sm text-destructive">{form.formState.errors.category.message}</p>
+          )}
+        </div>
 
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="budget-category">Categoria</Label>
-            <Select
-              value={form.watch('category')}
-              onValueChange={(value) =>
-                form.setValue('category', value as BudgetFormValues['category'])
-              }
-              disabled={isEditing}
-            >
-              <SelectTrigger id="budget-category">
-                <SelectValue placeholder="Selecione uma categoria" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableCategories.map((cat) => (
-                  <SelectItem key={cat} value={cat}>
-                    {budgetCategoryLabels[cat]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {form.formState.errors.category && (
-              <p className="text-sm text-destructive">{form.formState.errors.category.message}</p>
-            )}
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="budget-amount">Valor (R$)</Label>
+          <Input id="budget-amount" {...budgetAmountInput} />
+          {form.formState.errors.amount && (
+            <p className="text-sm text-destructive">{form.formState.errors.amount.message}</p>
+          )}
+        </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="budget-amount">Valor (R$)</Label>
-            <Input id="budget-amount" {...budgetAmountInput} />
-            {form.formState.errors.amount && (
-              <p className="text-sm text-destructive">{form.formState.errors.amount.message}</p>
-            )}
-          </div>
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isSubmitting}
-            >
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Salvando...' : isEditing ? 'Atualizar' : 'Definir'}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+        <div className="flex flex-col-reverse gap-2 pt-4 sm:flex-row sm:justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isSubmitting}
+          >
+            Cancelar
+          </Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Salvando...' : isEditing ? 'Atualizar' : 'Definir'}
+          </Button>
+        </div>
+      </form>
+    </ResponsiveFormContainer>
   );
 }

@@ -3,14 +3,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { ResponsiveFormContainer } from '@/components/ui/responsive-form-container';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -77,62 +70,61 @@ export function ChecklistFormDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[400px]">
-        <DialogHeader>
-          <DialogTitle>Nova Checklist</DialogTitle>
-          <DialogDescription>Crie uma lista de itens para organizar a viagem.</DialogDescription>
-        </DialogHeader>
+    <ResponsiveFormContainer
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Nova Checklist"
+      description="Crie uma lista de itens para organizar a viagem."
+      className="sm:max-w-[400px]"
+    >
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="checklist-name">Nome</Label>
+          <Input
+            id="checklist-name"
+            placeholder="Ex: Lista de bagagem"
+            {...form.register('name')}
+          />
+          {form.formState.errors.name && (
+            <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
+          )}
+        </div>
 
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="checklist-name">Nome</Label>
-            <Input
-              id="checklist-name"
-              placeholder="Ex: Lista de bagagem"
-              {...form.register('name')}
-            />
-            {form.formState.errors.name && (
-              <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
-            )}
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="checklist-category">Categoria</Label>
+          <Select
+            value={form.watch('category')}
+            onValueChange={(value) =>
+              form.setValue('category', value as ChecklistFormValues['category'])
+            }
+          >
+            <SelectTrigger id="checklist-category">
+              <SelectValue placeholder="Selecione" />
+            </SelectTrigger>
+            <SelectContent>
+              {checklistCategories.map((cat) => (
+                <SelectItem key={cat} value={cat}>
+                  {checklistCategoryLabels[cat]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="checklist-category">Categoria</Label>
-            <Select
-              value={form.watch('category')}
-              onValueChange={(value) =>
-                form.setValue('category', value as ChecklistFormValues['category'])
-              }
-            >
-              <SelectTrigger id="checklist-category">
-                <SelectValue placeholder="Selecione" />
-              </SelectTrigger>
-              <SelectContent>
-                {checklistCategories.map((cat) => (
-                  <SelectItem key={cat} value={cat}>
-                    {checklistCategoryLabels[cat]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isSubmitting}
-            >
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Criando...' : 'Criar'}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+        <div className="flex flex-col-reverse gap-2 pt-4 sm:flex-row sm:justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isSubmitting}
+          >
+            Cancelar
+          </Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Criando...' : 'Criar'}
+          </Button>
+        </div>
+      </form>
+    </ResponsiveFormContainer>
   );
 }

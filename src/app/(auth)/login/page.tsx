@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Eye, EyeOff } from 'lucide-react';
 
 import { loginSchema, type LoginInput } from '@/lib/validation/auth-schemas';
 import { signIn } from '@/lib/supabase/auth';
@@ -64,6 +65,7 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(
     authError === 'auth_error' ? 'Ocorreu um erro na autenticação. Tente novamente.' : null
   );
+  const [showPassword, setShowPassword] = useState(false);
 
   // Build register link with redirect param if present
   const registerHref =
@@ -143,13 +145,30 @@ function LoginForm() {
                     </Link>
                   </div>
                   <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="********"
-                      autoComplete="current-password"
-                      disabled={isLoading}
-                      {...field}
-                    />
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="********"
+                        autoComplete="current-password"
+                        disabled={isLoading}
+                        {...field}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                        onClick={() => setShowPassword(!showPassword)}
+                        aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                        tabIndex={-1}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                        )}
+                      </Button>
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>

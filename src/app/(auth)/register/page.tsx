@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, Eye, EyeOff } from 'lucide-react';
 
 import { registerSchema, type RegisterInput } from '@/lib/validation/auth-schemas';
 import { signUp, resendConfirmationEmail } from '@/lib/supabase/auth';
@@ -75,6 +75,8 @@ function RegisterForm() {
   const [resendSuccess, setResendSuccess] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState('');
   const [registeredName, setRegisteredName] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const form = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
@@ -105,6 +107,13 @@ function RegisterForm() {
 
     if (result.error) {
       setError(result.error);
+      // If email already exists, scroll to error and suggest login
+      if (result.error.includes('já está cadastrado')) {
+        form.setError('email', {
+          type: 'manual',
+          message: 'Este email já possui uma conta',
+        });
+      }
     }
     setIsLoading(false);
   }
@@ -132,40 +141,44 @@ function RegisterForm() {
     return (
       <Card>
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <CheckCircle className="h-6 w-6 text-primary" />
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 animate-in zoom-in duration-300">
+            <CheckCircle className="h-8 w-8 text-primary" />
           </div>
-          <CardTitle className="text-2xl">Conta criada!</CardTitle>
+          <CardTitle className="text-2xl">Conta criada com sucesso! 🎉</CardTitle>
           {emailError ? (
-            <CardDescription>
+            <CardDescription className="mt-2">
               Sua conta foi criada, mas houve um erro ao enviar o email de confirmação. Clique
-              abaixo para reenviar.
+              abaixo para tentar novamente.
             </CardDescription>
           ) : resendSuccess ? (
-            <CardDescription>
-              Email de confirmação reenviado! Verifique sua caixa de entrada e clique no link para
-              ativar sua conta.
+            <CardDescription className="mt-2">
+              Email de confirmação reenviado! Verifique sua caixa de entrada (e a pasta de spam) e
+              clique no link para ativar sua conta.
             </CardDescription>
           ) : (
-            <CardDescription>
-              Enviamos um email de confirmação para você. Por favor, verifique sua caixa de entrada
-              e clique no link para ativar sua conta.
+            <CardDescription className="mt-2">
+              Enviamos um email de confirmação para <strong>{registeredEmail}</strong>.
+              <br />
+              Verifique sua caixa de entrada (e a pasta de spam) e clique no link para ativar sua
+              conta e começar a planejar suas viagens!
             </CardDescription>
           )}
           {error && (
-            <div className="mt-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+            <div className="mt-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
               {error}
             </div>
           )}
         </CardHeader>
-        <CardFooter className="flex justify-center gap-2">
+        <CardFooter className="flex flex-col gap-2 sm:flex-row sm:justify-center">
           {emailError && (
             <Button onClick={handleResend} loading={resending}>
               Reenviar email
             </Button>
           )}
           <Link href={loginHref}>
-            <Button variant="outline">Voltar para o login</Button>
+            <Button variant={emailError ? 'outline' : 'default'}>
+              {emailError ? 'Voltar para o login' : 'Ir para o login'}
+            </Button>
           </Link>
         </CardFooter>
       </Card>
@@ -184,6 +197,19 @@ function RegisterForm() {
             {error && (
               <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
                 {error}
+                {error.includes('já está cadastrado') && (
+                  <>
+                    {' '}
+                    <Link href={loginHref} className="font-medium underline">
+                      Fazer login
+                    </Link>
+                    {' ou '}
+                    <Link href={routes.forgotPassword()} className="font-medium underline">
+                      recuperar senha
+                    </Link>
+                    .
+                  </>
+                )}
               </div>
             )}
 
@@ -234,13 +260,30 @@ function RegisterForm() {
                 <FormItem>
                   <FormLabel>Senha</FormLabel>
                   <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="********"
-                      autoComplete="new-password"
-                      disabled={isLoading}
-                      {...field}
-                    />
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="********"
+                        autoComplete="new-password"
+                        disabled={isLoading}
+                        {...field}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                        onClick={() => setShowPassword(!showPassword)}
+                        aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                        tabIndex={-1}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                        )}
+                      </Button>
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -254,13 +297,30 @@ function RegisterForm() {
                 <FormItem>
                   <FormLabel>Confirmar senha</FormLabel>
                   <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="********"
-                      autoComplete="new-password"
-                      disabled={isLoading}
-                      {...field}
-                    />
+                    <div className="relative">
+                      <Input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        placeholder="********"
+                        autoComplete="new-password"
+                        disabled={isLoading}
+                        {...field}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        aria-label={showConfirmPassword ? 'Ocultar confirmação de senha' : 'Mostrar confirmação de senha'}
+                        tabIndex={-1}
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                        )}
+                      </Button>
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>

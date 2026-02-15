@@ -14,10 +14,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { activityCategoryList } from '@/lib/utils/activity-categories';
 import { transportTypeList } from '@/lib/utils/transport-types';
 import { DurationInput } from './duration-input';
 import { LocationAutocomplete, type LocationCoords } from './location-autocomplete';
+import { ActivityCategorySelector } from './activity-category-selector';
 import type { ActivityLink } from '@/types/database';
 
 function RequiredMark() {
@@ -103,26 +103,9 @@ export function ActivityFormFields({
               Categoria
               <RequiredMark />
             </FormLabel>
-            <Select onValueChange={field.onChange} value={field.value}>
-              <FormControl>
-                <SelectTrigger className="w-full" aria-required="true">
-                  <SelectValue placeholder="Selecione a categoria" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                {activityCategoryList.map((category) => {
-                  const Icon = category.icon;
-                  return (
-                    <SelectItem key={category.value} value={category.value}>
-                      <span className="flex items-center gap-2">
-                        <Icon className={`h-4 w-4 ${category.color}`} aria-hidden="true" />
-                        {category.label}
-                      </span>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
+            <FormControl>
+              <ActivityCategorySelector value={field.value} onChange={field.onChange} />
+            </FormControl>
             <FormMessage />
           </FormItem>
         )}

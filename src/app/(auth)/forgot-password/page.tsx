@@ -60,13 +60,14 @@ export default function ForgotPasswordPage() {
     return (
       <Card>
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <Mail className="h-6 w-6 text-primary" />
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 animate-in zoom-in duration-300">
+            <Mail className="h-8 w-8 text-primary" />
           </div>
-          <CardTitle className="text-2xl">Email enviado!</CardTitle>
-          <CardDescription>
-            Se existe uma conta com esse email, você receberá um link para redefinir sua senha. Por
-            favor, verifique sua caixa de entrada.
+          <CardTitle className="text-2xl">Email enviado! 📧</CardTitle>
+          <CardDescription className="mt-2">
+            Se existe uma conta com esse email, você receberá um link para redefinir sua senha.
+            <br />
+            Por favor, verifique sua caixa de entrada (e a pasta de spam).
           </CardDescription>
         </CardHeader>
         <CardFooter className="justify-center">

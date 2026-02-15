@@ -35,6 +35,14 @@ const AddExpenseDialog = dynamic(
   { ssr: false }
 );
 
+const QuickAddExpense = dynamic(
+  () =>
+    import('@/components/expenses/quick-add-expense').then((mod) => ({
+      default: mod.QuickAddExpense,
+    })),
+  { ssr: false }
+);
+
 interface ExpensesListProps {
   tripId: string;
   baseCurrency: string;
@@ -60,7 +68,9 @@ export function ExpensesList({
   const [expenses, setExpenses] = useState<ExpenseWithDetails[]>(initialExpenses);
   const [deletingExpense, setDeletingExpense] = useState<ExpenseWithDetails | null>(null);
   const [editingExpense, setEditingExpense] = useState<ExpenseWithDetails | null>(null);
+  const [duplicatingExpense, setDuplicatingExpense] = useState<ExpenseWithDetails | null>(null);
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
 
   const handleExpenseAdded = () => {
     router.refresh();
@@ -90,6 +100,17 @@ export function ExpensesList({
   // Handle edit expense via dialog
   const handleEditExpense = (expense: ExpenseWithDetails) => {
     setEditingExpense(expense);
+  };
+
+  // Handle duplicate expense
+  const handleDuplicateExpense = (expense: ExpenseWithDetails) => {
+    // Set today's date for the duplicate
+    const duplicatedExpense = {
+      ...expense,
+      date: new Date().toISOString().split('T')[0],
+    };
+    setDuplicatingExpense(duplicatedExpense);
+    toast.success('Despesa duplicada! Ajuste a data e valor se necessário.');
   };
 
   // Handle expense deleted
@@ -363,15 +384,27 @@ export function ExpensesList({
               onEdit={handleEditExpense}
               onDelete={(exp) => setDeletingExpense(exp)}
               onSwipeDelete={handleSwipeDelete}
+              onDuplicate={handleDuplicateExpense}
             />
           ))}
         </div>
       )}
 
-      {/* Mobile FAB */}
+      {/* Mobile FAB - Quick Add */}
       {expenses.length > 0 && (
-        <FAB icon={Plus} label="Adicionar despesa" onClick={() => setIsAddOpen(true)} />
+        <FAB icon={Plus} label="Adicionar rápido" onClick={() => setIsQuickAddOpen(true)} />
       )}
+
+      {/* Quick Add Dialog */}
+      <QuickAddExpense
+        tripId={tripId}
+        members={members}
+        currentUserId={currentUserId}
+        baseCurrency={baseCurrency}
+        open={isQuickAddOpen}
+        onOpenChange={setIsQuickAddOpen}
+        onSuccess={handleExpenseAdded}
+      />
 
       <AddExpenseDialog
         tripId={tripId}
@@ -394,6 +427,23 @@ export function ExpensesList({
           open={!!editingExpense}
           onOpenChange={(open) => !open && setEditingExpense(null)}
           onSuccess={handleExpenseAdded}
+        />
+      )}
+
+      {/* Duplicate expense dialog */}
+      {duplicatingExpense && (
+        <AddExpenseDialog
+          tripId={tripId}
+          members={members}
+          currentUserId={currentUserId}
+          baseCurrency={baseCurrency}
+          expense={duplicatingExpense}
+          open={!!duplicatingExpense}
+          onOpenChange={(open) => !open && setDuplicatingExpense(null)}
+          onSuccess={() => {
+            handleExpenseAdded();
+            setDuplicatingExpense(null);
+          }}
         />
       )}
 

@@ -15,6 +15,7 @@ interface ExpenseDateGroupProps {
   onEdit: (expense: ExpenseWithDetails) => void;
   onDelete: (expense: ExpenseWithDetails) => void;
   onSwipeDelete: (expense: ExpenseWithDetails) => void;
+  onDuplicate: (expense: ExpenseWithDetails) => void;
 }
 
 export function ExpenseDateGroup({
@@ -25,6 +26,7 @@ export function ExpenseDateGroup({
   onEdit,
   onDelete,
   onSwipeDelete,
+  onDuplicate,
 }: ExpenseDateGroupProps) {
   const dayTotal = expenses.reduce((sum, exp) => sum + exp.amount * (exp.exchange_rate ?? 1), 0);
 
@@ -54,6 +56,7 @@ export function ExpenseDateGroup({
               canEdit={canEditExpense(expense)}
               onEdit={() => onEdit(expense)}
               onDelete={() => onDelete(expense)}
+              onDuplicate={() => onDuplicate(expense)}
             />
           </SwipeAction>
         ))}

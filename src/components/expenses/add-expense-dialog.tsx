@@ -7,6 +7,7 @@ import {
   useMemo,
   useRef,
   useCallback,
+  useEffect,
   type KeyboardEventHandler,
   type MouseEventHandler,
 } from 'react';
@@ -28,6 +29,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ResponsiveFormContainer } from '@/components/ui/responsive-form-container';
 import { AvatarSelector } from '@/components/ui/avatar-selector';
+import { RequiredMark } from '@/components/ui/required-mark';
 import {
   Form,
   FormControl,
@@ -46,11 +48,13 @@ import {
 import {
   expenseFormSchema,
   type ExpenseFormValues,
-  expenseCategories,
   splitTypes,
   parseAmount,
   formatAmountInput,
 } from '@/lib/validation/expense-schemas';
+import { CategorySelector } from './category-selector';
+import { SplitPreview } from './split-preview';
+import { suggestCategory } from '@/lib/utils/smart-categories';
 import { createExpense, updateExpense } from '@/lib/supabase/expenses';
 import { uploadReceipt } from '@/lib/supabase/receipts';
 import { useDialogState } from '@/hooks/use-dialog-state';
@@ -139,8 +143,20 @@ export function AddExpenseDialog({
   const watchSplitType = form.watch('split_type');
   const watchSelectedMembers = form.watch('selected_members');
   const watchAmount = form.watch('amount');
+  const watchDescription = form.watch('description');
+  const watchCategory = form.watch('category');
 
   const { calculateSplits } = useExpenseSplits(baseCurrency);
+
+  // Auto-suggest category based on description (only if category is still 'other' and not editing)
+  useEffect(() => {
+    if (!isEditing && watchDescription && watchCategory === 'other') {
+      const suggested = suggestCategory(watchDescription);
+      if (suggested) {
+        form.setValue('category', suggested);
+      }
+    }
+  }, [watchDescription, watchCategory, isEditing, form]);
 
   const avatarParticipants = members.map((m) => ({
     id: m.user_id,
@@ -503,7 +519,9 @@ export function AddExpenseDialog({
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Descrição</FormLabel>
+                      <FormLabel>
+                        Descrição<RequiredMark />
+                      </FormLabel>
                       <FormControl>
                         <Input placeholder="Ex: Jantar no restaurante" {...field} autoFocus />
                       </FormControl>
@@ -515,6 +533,25 @@ export function AddExpenseDialog({
                 {/* Amount + Currency + Exchange Rate */}
                 <CurrencyAmountInput form={form} baseCurrency={baseCurrency} variant="compact" />
 
+                {/* Split Preview (if amount > 0) */}
+                {parseAmount(watchAmount || '0') > 0 && watchSelectedMembers.length > 0 && (
+                  <SplitPreview
+                    splits={watchSelectedMembers.map((userId) => {
+                      const member = members.find((m) => m.user_id === userId);
+                      const amount = parseAmount(watchAmount || '0') / watchSelectedMembers.length;
+                      return {
+                        userId,
+                        userName: member?.users.name || 'Desconhecido',
+                        userAvatar: member?.users.avatar_url || null,
+                        amount,
+                        isPayer: userId === form.watch('paid_by'),
+                      };
+                    })}
+                    currency={form.watch('currency')}
+                    totalAmount={parseAmount(watchAmount || '0')}
+                  />
+                )}
+
                 {/* Date and Category */}
                 <div className="grid grid-cols-2 gap-3">
                   <FormField
@@ -522,7 +559,9 @@ export function AddExpenseDialog({
                     name="date"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Data</FormLabel>
+                        <FormLabel>
+                          Data<RequiredMark />
+                        </FormLabel>
                         <FormControl>
                           <Input type="date" {...field} />
                         </FormControl>
@@ -536,21 +575,12 @@ export function AddExpenseDialog({
                     name="category"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Categoria</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Selecione" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {expenseCategories.map((cat) => (
-                              <SelectItem key={cat.value} value={cat.value}>
-                                {cat.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <FormLabel>
+                          Categoria<RequiredMark />
+                        </FormLabel>
+                        <FormControl>
+                          <CategorySelector value={field.value} onChange={field.onChange} />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}

@@ -9,8 +9,9 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Progress } from '@/components/ui/progress';
 import { ResponsiveFormContainer } from '@/components/ui/responsive-form-container';
+import { StepIndicator } from '@/components/ui/step-indicator';
+import { RequiredMark } from '@/components/ui/required-mark';
 import {
   Form,
   FormControl,
@@ -47,6 +48,7 @@ export function CreateTripDialog({
 }: CreateTripDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const router = useRouter();
 
   const {
@@ -59,6 +61,7 @@ export function CreateTripDialog({
     onClose: () => {
       form.reset();
       setStep(1);
+      setCompletedSteps(new Set());
     },
   });
 
@@ -103,6 +106,7 @@ export function CreateTripDialog({
       setOpen(false);
       form.reset();
       setStep(1);
+      setCompletedSteps(new Set());
       onSuccess?.();
 
       if (result.tripId) {
@@ -125,7 +129,10 @@ export function CreateTripDialog({
     let valid = false;
     if (step === 1) valid = await form.trigger(['name', 'destination']);
     if (step === 2) valid = await form.trigger(['start_date', 'end_date']);
-    if (valid) setStep((s) => (s + 1) as 2 | 3);
+    if (valid) {
+      setCompletedSteps((prev) => new Set(prev).add(step));
+      setStep((s) => (s + 1) as 2 | 3);
+    }
   };
 
   const stepTitles = {
@@ -133,6 +140,12 @@ export function CreateTripDialog({
     2: 'Quando',
     3: 'Configurações',
   };
+
+  const steps = [
+    { label: 'Sua viagem', description: 'Nome e destino' },
+    { label: 'Quando', description: 'Datas' },
+    { label: 'Configurações', description: 'Moeda e transporte' },
+  ];
 
   return (
     <>
@@ -154,7 +167,12 @@ export function CreateTripDialog({
         title={stepTitles[step]}
         description="Preencha os dados da viagem. Você poderá convidar participantes depois."
       >
-        <Progress value={(step / 3) * 100} className="mb-4" />
+        <StepIndicator
+          steps={steps}
+          currentStep={step}
+          completedSteps={completedSteps}
+          className="mb-6"
+        />
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -166,7 +184,9 @@ export function CreateTripDialog({
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nome da viagem</FormLabel>
+                      <FormLabel>
+                        Nome da viagem<RequiredMark />
+                      </FormLabel>
                       <FormControl>
                         <Input placeholder="Ex: Férias na praia" {...field} />
                       </FormControl>
@@ -180,7 +200,9 @@ export function CreateTripDialog({
                   name="destination"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Destino</FormLabel>
+                      <FormLabel>
+                        Destino<RequiredMark />
+                      </FormLabel>
                       <FormControl>
                         <LocationAutocomplete
                           value={field.value}
@@ -226,7 +248,9 @@ export function CreateTripDialog({
                     name="start_date"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Data de início</FormLabel>
+                        <FormLabel>
+                          Data de início<RequiredMark />
+                        </FormLabel>
                         <FormControl>
                           <Input type="date" {...field} />
                         </FormControl>
@@ -240,7 +264,9 @@ export function CreateTripDialog({
                     name="end_date"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Data de término</FormLabel>
+                        <FormLabel>
+                          Data de término<RequiredMark />
+                        </FormLabel>
                         <FormControl>
                           <Input type="date" {...field} />
                         </FormControl>

@@ -3,7 +3,7 @@
 import { memo } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { MoreHorizontal, Pencil, Share2, Trash2, Users } from 'lucide-react';
+import { MoreHorizontal, Pencil, Share2, Trash2, Users, Copy } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -28,6 +28,7 @@ interface ExpenseCardProps {
   canEdit: boolean;
   onEdit?: () => void;
   onDelete: () => void;
+  onDuplicate?: () => void;
 }
 
 export const ExpenseCard = memo(function ExpenseCard({
@@ -36,6 +37,7 @@ export const ExpenseCard = memo(function ExpenseCard({
   canEdit,
   onEdit,
   onDelete,
+  onDuplicate,
 }: ExpenseCardProps) {
   const isForeignCurrency = baseCurrency && expense.currency !== baseCurrency;
   const convertedAmount = expense.amount * (expense.exchange_rate ?? 1);
@@ -112,6 +114,12 @@ export const ExpenseCard = memo(function ExpenseCard({
                     <Share2 className="mr-2 h-4 w-4" aria-hidden="true" />
                     Compartilhar
                   </DropdownMenuItem>
+                  {onDuplicate && (
+                    <DropdownMenuItem onClick={onDuplicate}>
+                      <Copy className="mr-2 h-4 w-4" aria-hidden="true" />
+                      Duplicar
+                    </DropdownMenuItem>
+                  )}
                   {onEdit && (
                     <DropdownMenuItem onClick={onEdit}>
                       <Pencil className="mr-2 h-4 w-4" aria-hidden="true" />
@@ -146,7 +154,7 @@ export const ExpenseCard = memo(function ExpenseCard({
                   <div className="space-y-1">
                     {expense.expense_splits.map((split) => (
                       <div key={split.id} className="flex items-center justify-between gap-4">
-                        <span>{split.users.name}</span>
+                        <span>{split.users?.name || 'Desconhecido'}</span>
                         <span className="font-medium">
                           {formatAmount(split.amount, expense.currency)}
                         </span>

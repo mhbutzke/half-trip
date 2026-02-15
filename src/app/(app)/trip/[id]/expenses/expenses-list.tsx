@@ -92,9 +92,9 @@ export function ExpensesList({
     setExpenses(initialExpenses);
   }, [initialExpenses]);
 
-  // Check if user can edit an expense
+  // Check if user can edit an expense (paid_by is more intuitive than created_by)
   const canEditExpense = (expense: ExpenseWithDetails) => {
-    return permissions.canOnOwn('EDIT', expense.created_by);
+    return permissions.canOnOwn('EDIT', expense.paid_by);
   };
 
   // Handle edit expense via dialog

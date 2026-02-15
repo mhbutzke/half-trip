@@ -24,8 +24,8 @@ export function ScrollToTop() {
     <button
       onClick={scrollToTop}
       className={cn(
-        'fixed right-4 z-40 flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-all duration-200 active:scale-95 md:hidden',
-        'bottom-[calc(5rem+env(safe-area-inset-bottom))]',
+        'fixed right-4 z-[35] flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-all duration-200 active:scale-95 md:hidden',
+        'bottom-[calc(4rem+env(safe-area-inset-bottom)+4.75rem)]',
         visible ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0'
       )}
       aria-label="Voltar ao topo"

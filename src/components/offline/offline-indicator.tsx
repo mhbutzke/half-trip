@@ -27,7 +27,7 @@ export function OfflineIndicator({ className }: OfflineIndicatorProps) {
         type="button"
         onClick={() => setExpanded((prev) => !prev)}
         className={cn(
-          'fixed top-0 left-0 right-0 z-50 h-1 bg-warning animate-pulse',
+          'fixed top-0 left-0 right-0 z-[55] h-1 bg-warning animate-pulse',
           'cursor-pointer',
           className
         )}
@@ -38,7 +38,7 @@ export function OfflineIndicator({ className }: OfflineIndicatorProps) {
       {expanded && (
         <div
           className={cn(
-            'fixed top-1 left-1/2 z-50 -translate-x-1/2',
+            'fixed top-1 left-1/2 z-[55] -translate-x-1/2',
             'flex items-center gap-2 rounded-full',
             'bg-warning/95 px-4 py-2 text-sm font-medium text-warning-foreground',
             'shadow-lg backdrop-blur-sm',

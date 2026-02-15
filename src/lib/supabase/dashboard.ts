@@ -92,19 +92,24 @@ export async function getDashboardData(tripId: string): Promise<DashboardData | 
       }
     : null;
 
-  // Trip progress
-  const startDate = new Date(trip.start_date);
-  const endDate = new Date(trip.end_date);
-  const today = new Date();
+  // Trip progress — normalize dates to local midnight to avoid timezone off-by-one
+  const normalizeToMidnight = (d: Date) => {
+    const normalized = new Date(d);
+    normalized.setHours(0, 0, 0, 0);
+    return normalized;
+  };
+  const startDate = normalizeToMidnight(new Date(trip.start_date));
+  const endDate = normalizeToMidnight(new Date(trip.end_date));
+  const today = normalizeToMidnight(new Date());
   const totalDays = Math.max(
     1,
-    Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
+    Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
   );
   const currentDay = Math.max(
     0,
     Math.min(
       totalDays,
-      Math.ceil((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
+      Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
     )
   );
 

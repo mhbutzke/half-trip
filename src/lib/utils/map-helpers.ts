@@ -63,6 +63,53 @@ export function getMapBounds(
   };
 }
 
+const DAY_COLORS = [
+  '#0d9488', // teal-600
+  '#4f46e5', // indigo-600
+  '#d97706', // amber-600
+  '#e11d48', // rose-600
+  '#059669', // emerald-600
+  '#7c3aed', // violet-600
+  '#ea580c', // orange-600
+  '#0284c7', // sky-600
+];
+
+export function getDayColor(dayIndex: number): string {
+  return DAY_COLORS[dayIndex % DAY_COLORS.length];
+}
+
+export function groupActivitiesWithCoordsByDate<
+  T extends {
+    coords: { lat: number; lng: number };
+    date: string;
+    sort_order: number;
+    start_time: string | null;
+  },
+>(activities: T[]): Map<string, T[]> {
+  const grouped = new Map<string, T[]>();
+
+  for (const activity of activities) {
+    const existing = grouped.get(activity.date);
+    if (existing) {
+      existing.push(activity);
+    } else {
+      grouped.set(activity.date, [activity]);
+    }
+  }
+
+  for (const [, dayActivities] of grouped) {
+    dayActivities.sort((a, b) => {
+      if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order;
+      if (a.start_time && b.start_time) return a.start_time.localeCompare(b.start_time);
+      if (a.start_time) return -1;
+      if (b.start_time) return 1;
+      return 0;
+    });
+  }
+
+  return grouped;
+}
+
 const MARKER_COLORS: Record<ActivityCategory, string> = {
   transport: '#2563eb',
   accommodation: '#9333ea',

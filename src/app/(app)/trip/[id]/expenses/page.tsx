@@ -1,8 +1,9 @@
 import { Suspense } from 'react';
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { getTripById, getTripMembers, getUserRoleInTrip } from '@/lib/supabase/trips';
+import { getTripById, getUserRoleInTrip } from '@/lib/supabase/trips';
 import { getTripExpenses } from '@/lib/supabase/expenses';
+import { getTripParticipants } from '@/lib/supabase/participants';
 import { PageContainer } from '@/components/layout/page-container';
 import { FinancesTabBar } from '@/components/layout/finances-tab-bar';
 import { ExpensesList } from './expenses-list';
@@ -36,8 +37,8 @@ async function ExpensesContent({ tripId }: { tripId: string }) {
 
   return (
     <div className="space-y-6">
-      <FinancesTabBar tripId={tripId} />
       <ExpensesHeader tripId={tripId} tripName={trip.name} />
+      <FinancesTabBar tripId={tripId} />
       <ExpensesList
         tripId={tripId}
         baseCurrency={trip.base_currency}
@@ -54,7 +55,7 @@ export default async function ExpensesPage({ params }: ExpensesPageProps) {
   const { id } = await params;
 
   return (
-    <PageContainer>
+    <PageContainer className="pt-2 md:pt-6">
       <Suspense fallback={<ExpensesSkeleton />}>
         <ExpensesContent tripId={id} />
       </Suspense>

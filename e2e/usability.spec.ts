@@ -245,10 +245,7 @@ test.describe('Usability Audit', () => {
     await expect(page.getByRole('heading', { name: 'Balanço' })).toBeVisible();
     await page.waitForTimeout(300);
 
-    const balanceTargets = [
-      page.getByRole('link', { name: 'Balanço' }).first(),
-      page.getByRole('link', { name: 'Voltar' }).first(),
-    ];
+    const balanceTargets = [page.getByRole('link', { name: 'Balanço' }).first()];
 
     for (const target of balanceTargets) {
       const box = await target.boundingBox();

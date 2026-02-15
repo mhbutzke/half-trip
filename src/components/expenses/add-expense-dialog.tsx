@@ -28,6 +28,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ResponsiveFormContainer } from '@/components/ui/responsive-form-container';
 import { AvatarSelector } from '@/components/ui/avatar-selector';
+import { RequiredMark } from '@/components/ui/required-mark';
 import {
   Form,
   FormControl,
@@ -504,7 +505,7 @@ export function AddExpenseDialog({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
-                        Descrição <span className="text-destructive">*</span>
+                        Descrição<RequiredMark />
                       </FormLabel>
                       <FormControl>
                         <Input placeholder="Ex: Jantar no restaurante" {...field} autoFocus />
@@ -525,7 +526,7 @@ export function AddExpenseDialog({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>
-                          Data <span className="text-destructive">*</span>
+                          Data<RequiredMark />
                         </FormLabel>
                         <FormControl>
                           <Input type="date" {...field} />
@@ -541,7 +542,7 @@ export function AddExpenseDialog({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>
-                          Categoria <span className="text-destructive">*</span>
+                          Categoria<RequiredMark />
                         </FormLabel>
                         <FormControl>
                           <CategorySelector value={field.value} onChange={field.onChange} />

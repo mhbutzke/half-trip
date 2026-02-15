@@ -4,13 +4,14 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, ArrowRight, ArrowLeft, Check } from 'lucide-react';
+import { Plus, ArrowRight, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Progress } from '@/components/ui/progress';
 import { ResponsiveFormContainer } from '@/components/ui/responsive-form-container';
+import { StepIndicator } from '@/components/ui/step-indicator';
+import { RequiredMark } from '@/components/ui/required-mark';
 import {
   Form,
   FormControl,
@@ -140,6 +141,12 @@ export function CreateTripDialog({
     3: 'Configurações',
   };
 
+  const steps = [
+    { label: 'Sua viagem', description: 'Nome e destino' },
+    { label: 'Quando', description: 'Datas' },
+    { label: 'Configurações', description: 'Moeda e transporte' },
+  ];
+
   return (
     <>
       {controlledOpen === undefined &&
@@ -160,40 +167,12 @@ export function CreateTripDialog({
         title={stepTitles[step]}
         description="Preencha os dados da viagem. Você poderá convidar participantes depois."
       >
-        {/* Step Indicator */}
-        <div className="mb-6 flex items-center justify-between">
-          {[1, 2, 3].map((s, idx) => (
-            <div key={s} className="flex flex-1 items-center">
-              <div className="flex flex-col items-center gap-2">
-                <div
-                  className={`flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all ${
-                    s === step
-                      ? 'border-primary bg-primary text-primary-foreground'
-                      : completedSteps.has(s)
-                        ? 'border-primary bg-primary text-primary-foreground'
-                        : 'border-muted bg-background text-muted-foreground'
-                  }`}
-                >
-                  {completedSteps.has(s) ? (
-                    <Check className="h-4 w-4" />
-                  ) : (
-                    <span className="text-sm font-medium">{s}</span>
-                  )}
-                </div>
-                <span className="text-xs text-muted-foreground hidden sm:block">
-                  {stepTitles[s as 1 | 2 | 3]}
-                </span>
-              </div>
-              {idx < 2 && (
-                <div
-                  className={`mx-2 h-0.5 flex-1 transition-all ${
-                    completedSteps.has(s) ? 'bg-primary' : 'bg-muted'
-                  }`}
-                />
-              )}
-            </div>
-          ))}
-        </div>
+        <StepIndicator
+          steps={steps}
+          currentStep={step}
+          completedSteps={completedSteps}
+          className="mb-6"
+        />
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -206,7 +185,7 @@ export function CreateTripDialog({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
-                        Nome da viagem <span className="text-destructive">*</span>
+                        Nome da viagem<RequiredMark />
                       </FormLabel>
                       <FormControl>
                         <Input placeholder="Ex: Férias na praia" {...field} />
@@ -222,7 +201,7 @@ export function CreateTripDialog({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
-                        Destino <span className="text-destructive">*</span>
+                        Destino<RequiredMark />
                       </FormLabel>
                       <FormControl>
                         <LocationAutocomplete
@@ -270,7 +249,7 @@ export function CreateTripDialog({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>
-                          Data de início <span className="text-destructive">*</span>
+                          Data de início<RequiredMark />
                         </FormLabel>
                         <FormControl>
                           <Input type="date" {...field} />
@@ -286,7 +265,7 @@ export function CreateTripDialog({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>
-                          Data de término <span className="text-destructive">*</span>
+                          Data de término<RequiredMark />
                         </FormLabel>
                         <FormControl>
                           <Input type="date" {...field} />

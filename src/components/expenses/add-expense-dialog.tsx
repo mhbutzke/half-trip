@@ -46,11 +46,11 @@ import {
 import {
   expenseFormSchema,
   type ExpenseFormValues,
-  expenseCategories,
   splitTypes,
   parseAmount,
   formatAmountInput,
 } from '@/lib/validation/expense-schemas';
+import { CategorySelector } from './category-selector';
 import { createExpense, updateExpense } from '@/lib/supabase/expenses';
 import { uploadReceipt } from '@/lib/supabase/receipts';
 import { useDialogState } from '@/hooks/use-dialog-state';
@@ -503,7 +503,9 @@ export function AddExpenseDialog({
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Descrição</FormLabel>
+                      <FormLabel>
+                        Descrição <span className="text-destructive">*</span>
+                      </FormLabel>
                       <FormControl>
                         <Input placeholder="Ex: Jantar no restaurante" {...field} autoFocus />
                       </FormControl>
@@ -522,7 +524,9 @@ export function AddExpenseDialog({
                     name="date"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Data</FormLabel>
+                        <FormLabel>
+                          Data <span className="text-destructive">*</span>
+                        </FormLabel>
                         <FormControl>
                           <Input type="date" {...field} />
                         </FormControl>
@@ -536,21 +540,12 @@ export function AddExpenseDialog({
                     name="category"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Categoria</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Selecione" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {expenseCategories.map((cat) => (
-                              <SelectItem key={cat.value} value={cat.value}>
-                                {cat.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <FormLabel>
+                          Categoria <span className="text-destructive">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <CategorySelector value={field.value} onChange={field.onChange} />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}

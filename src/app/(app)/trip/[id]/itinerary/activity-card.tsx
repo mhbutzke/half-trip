@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, memo } from 'react';
+import { PlaceDetailsCard } from '@/components/activities/place-details-card';
 import {
   Clock,
   MapPin,
@@ -143,6 +144,9 @@ export const ActivityCard = memo(function ActivityCard({
                     <Navigation className="h-3.5 w-3.5" aria-hidden="true" />
                     Abrir no Maps
                   </a>
+                )}
+                {meta?.location_place_id && (
+                  <PlaceDetailsCard placeId={meta.location_place_id} compact />
                 )}
 
                 {/* Flight Details */}

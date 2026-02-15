@@ -931,7 +931,13 @@ export type Database = {
       email_logs: {
         Row: {
           id: string;
-          email_type: 'invite' | 'trip_reminder' | 'daily_summary' | 'welcome' | 'confirmation';
+          email_type:
+            | 'invite'
+            | 'trip_reminder'
+            | 'daily_summary'
+            | 'welcome'
+            | 'confirmation'
+            | 'password_reset';
           recipient_email: string;
           recipient_user_id: string | null;
           resend_email_id: string | null;
@@ -951,7 +957,13 @@ export type Database = {
         };
         Insert: {
           id?: string;
-          email_type: 'invite' | 'trip_reminder' | 'daily_summary' | 'welcome' | 'confirmation';
+          email_type:
+            | 'invite'
+            | 'trip_reminder'
+            | 'daily_summary'
+            | 'welcome'
+            | 'confirmation'
+            | 'password_reset';
           recipient_email: string;
           recipient_user_id?: string | null;
           resend_email_id?: string | null;
@@ -971,7 +983,13 @@ export type Database = {
         };
         Update: {
           id?: string;
-          email_type?: 'invite' | 'trip_reminder' | 'daily_summary' | 'welcome' | 'confirmation';
+          email_type?:
+            | 'invite'
+            | 'trip_reminder'
+            | 'daily_summary'
+            | 'welcome'
+            | 'confirmation'
+            | 'password_reset';
           recipient_email?: string;
           recipient_user_id?: string | null;
           resend_email_id?: string | null;
@@ -1037,6 +1055,54 @@ export type Database = {
             referencedColumns: ['id'];
           },
         ];
+      };
+      place_details_cache: {
+        Row: {
+          place_id: string;
+          name: string | null;
+          formatted_address: string | null;
+          rating: number | null;
+          user_ratings_total: number | null;
+          website: string | null;
+          formatted_phone_number: string | null;
+          opening_hours: Json;
+          photo_references: Json;
+          price_level: number | null;
+          types: string[] | null;
+          fetched_at: string;
+          expires_at: string;
+        };
+        Insert: {
+          place_id: string;
+          name?: string | null;
+          formatted_address?: string | null;
+          rating?: number | null;
+          user_ratings_total?: number | null;
+          website?: string | null;
+          formatted_phone_number?: string | null;
+          opening_hours?: Json;
+          photo_references?: Json;
+          price_level?: number | null;
+          types?: string[] | null;
+          fetched_at?: string;
+          expires_at?: string;
+        };
+        Update: {
+          place_id?: string;
+          name?: string | null;
+          formatted_address?: string | null;
+          rating?: number | null;
+          user_ratings_total?: number | null;
+          website?: string | null;
+          formatted_phone_number?: string | null;
+          opening_hours?: Json;
+          photo_references?: Json;
+          price_level?: number | null;
+          types?: string[] | null;
+          fetched_at?: string;
+          expires_at?: string;
+        };
+        Relationships: [];
       };
     };
     Views: {

@@ -45,6 +45,15 @@
 - ✅ Indicadores de campos obrigatórios
 - ✅ Melhor organização dos campos
 
+### Componentes Reutilizáveis (Fase 2)
+
+#### 1. Design System
+- ✅ StepIndicator component para wizards multi-step
+- ✅ RequiredMark component para campos obrigatórios
+- ✅ CategorySelector pattern para seleção visual
+- ✅ Consistência visual em toda aplicação
+- ✅ Melhor acessibilidade com aria-labels
+
 ## 📋 Próximas Melhorias Sugeridas
 
 ### Gerenciamento de Viagens
@@ -77,9 +86,11 @@
 - [ ] Filtros visuais (período, categoria, participante)
 - [ ] Ações inline (editar, excluir) sem abrir dialog
 
-### Itinerário
+### Itinerário (Fase 2)
 
 #### 1. Criar Atividade
+- ✅ Seletor visual de categorias com ícones coloridos
+- ✅ Interface mais intuitiva
 - [ ] Seletor de horário mais intuitivo
 - [ ] Sugestões de atividades por tipo de viagem
 - [ ] Preview do local no mapa (se endereço fornecido)
@@ -171,4 +182,21 @@
 
 **Última atualização:** 15/02/2026
 **Branch:** feat/auth-ux-improvements
-**Status:** Fase 1 concluída ✅
+**Status:** Fase 1 e 2 concluídas ✅
+
+## 📈 Progresso Geral
+
+- ✅ **Fase 1 - Autenticação:** 100% completo
+- ✅ **Fase 2 - Viagens, Despesas e Itinerário:** 100% completo
+- 🚧 **Fase 3 - Balanço e Gráficos:** 0% (planejado)
+- 🚧 **Fase 4 - Polish Global:** 0% (planejado)
+
+### Commits Realizados (8 total)
+1. feat(auth): login e registro
+2. feat(auth): recuperação de senha
+3. docs: documento de melhorias
+4. feat(trips): criação de viagem
+5. feat(expenses): formulário de despesas
+6. docs: atualização de progresso
+7. feat(itinerary): formulário de atividades
+8. refactor: componentes reutilizáveis

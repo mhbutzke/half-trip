@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Plus, ArrowRight, ArrowLeft, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -47,6 +47,7 @@ export function CreateTripDialog({
 }: CreateTripDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const router = useRouter();
 
   const {
@@ -59,6 +60,7 @@ export function CreateTripDialog({
     onClose: () => {
       form.reset();
       setStep(1);
+      setCompletedSteps(new Set());
     },
   });
 
@@ -103,6 +105,7 @@ export function CreateTripDialog({
       setOpen(false);
       form.reset();
       setStep(1);
+      setCompletedSteps(new Set());
       onSuccess?.();
 
       if (result.tripId) {
@@ -125,7 +128,10 @@ export function CreateTripDialog({
     let valid = false;
     if (step === 1) valid = await form.trigger(['name', 'destination']);
     if (step === 2) valid = await form.trigger(['start_date', 'end_date']);
-    if (valid) setStep((s) => (s + 1) as 2 | 3);
+    if (valid) {
+      setCompletedSteps((prev) => new Set(prev).add(step));
+      setStep((s) => (s + 1) as 2 | 3);
+    }
   };
 
   const stepTitles = {
@@ -154,7 +160,40 @@ export function CreateTripDialog({
         title={stepTitles[step]}
         description="Preencha os dados da viagem. Você poderá convidar participantes depois."
       >
-        <Progress value={(step / 3) * 100} className="mb-4" />
+        {/* Step Indicator */}
+        <div className="mb-6 flex items-center justify-between">
+          {[1, 2, 3].map((s, idx) => (
+            <div key={s} className="flex flex-1 items-center">
+              <div className="flex flex-col items-center gap-2">
+                <div
+                  className={`flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all ${
+                    s === step
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : completedSteps.has(s)
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : 'border-muted bg-background text-muted-foreground'
+                  }`}
+                >
+                  {completedSteps.has(s) ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <span className="text-sm font-medium">{s}</span>
+                  )}
+                </div>
+                <span className="text-xs text-muted-foreground hidden sm:block">
+                  {stepTitles[s as 1 | 2 | 3]}
+                </span>
+              </div>
+              {idx < 2 && (
+                <div
+                  className={`mx-2 h-0.5 flex-1 transition-all ${
+                    completedSteps.has(s) ? 'bg-primary' : 'bg-muted'
+                  }`}
+                />
+              )}
+            </div>
+          ))}
+        </div>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -166,7 +205,9 @@ export function CreateTripDialog({
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nome da viagem</FormLabel>
+                      <FormLabel>
+                        Nome da viagem <span className="text-destructive">*</span>
+                      </FormLabel>
                       <FormControl>
                         <Input placeholder="Ex: Férias na praia" {...field} />
                       </FormControl>
@@ -180,7 +221,9 @@ export function CreateTripDialog({
                   name="destination"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Destino</FormLabel>
+                      <FormLabel>
+                        Destino <span className="text-destructive">*</span>
+                      </FormLabel>
                       <FormControl>
                         <LocationAutocomplete
                           value={field.value}
@@ -226,7 +269,9 @@ export function CreateTripDialog({
                     name="start_date"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Data de início</FormLabel>
+                        <FormLabel>
+                          Data de início <span className="text-destructive">*</span>
+                        </FormLabel>
                         <FormControl>
                           <Input type="date" {...field} />
                         </FormControl>
@@ -240,7 +285,9 @@ export function CreateTripDialog({
                     name="end_date"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Data de término</FormLabel>
+                        <FormLabel>
+                          Data de término <span className="text-destructive">*</span>
+                        </FormLabel>
                         <FormControl>
                           <Input type="date" {...field} />
                         </FormControl>

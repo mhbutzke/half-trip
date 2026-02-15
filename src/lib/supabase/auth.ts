@@ -5,6 +5,7 @@ import { createAdminClient } from './admin';
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { sendConfirmationEmail } from '@/lib/email/send-confirmation-email';
+import { sendPasswordResetEmail } from '@/lib/email/send-password-reset-email';
 import { routes } from '@/lib/routes';
 import { logError } from '@/lib/errors/logger';
 
@@ -158,18 +159,43 @@ export async function signOut(): Promise<void> {
 }
 
 export async function forgotPassword(email: string): Promise<AuthResult> {
-  const supabase = await createClient();
+  const adminClient = createAdminClient();
   const headersList = await headers();
   const origin = headersList.get('origin') || '';
 
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${origin}/auth/callback?type=recovery`,
+  const { data, error } = await adminClient.auth.admin.generateLink({
+    type: 'recovery',
+    email,
   });
 
   if (error) {
-    return { error: error.message };
+    if (error.message.toLowerCase().includes('rate limit')) {
+      return { error: 'Muitas tentativas. Aguarde alguns minutos e tente novamente.' };
+    }
+    // Don't reveal if email exists or not
+    return { success: true };
   }
 
+  if (!data?.properties?.hashed_token) {
+    return { success: true };
+  }
+
+  const callbackParams = new URLSearchParams({
+    token_hash: data.properties.hashed_token,
+    type: 'recovery',
+  });
+  const resetUrl = `${origin}/auth/callback?${callbackParams.toString()}`;
+
+  const emailResult = await sendPasswordResetEmail({
+    userEmail: email,
+    resetUrl,
+  });
+
+  if (!emailResult.success) {
+    logError(emailResult.error, { action: 'send-password-reset-email', email });
+  }
+
+  // Always return success to not reveal if email exists
   return { success: true };
 }
 

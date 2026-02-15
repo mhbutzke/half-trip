@@ -35,11 +35,13 @@ export async function GET(request: Request) {
     }
   }
 
-  // Token hash flow (from admin.generateLink: signup confirmation)
+  // Token hash flow (from admin.generateLink: signup confirmation, password recovery)
   if (tokenHash && type) {
+    const otpType =
+      type === 'signup' ? 'email' : type === 'recovery' ? 'recovery' : (type as 'email');
     const { data, error } = await supabase.auth.verifyOtp({
       token_hash: tokenHash,
-      type: type === 'signup' ? 'email' : (type as 'email'),
+      type: otpType,
     });
 
     if (!error) {
@@ -51,6 +53,11 @@ export async function GET(request: Request) {
           userName: user.user_metadata?.name || '',
           userEmail: user.email || '',
         }).catch((err) => logError(err, { action: 'send-welcome-email', userId: user.id }));
+      }
+
+      // Password recovery: redirect to reset password page
+      if (type === 'recovery') {
+        return NextResponse.redirect(`${origin}${routes.resetPassword()}`);
       }
 
       if (redirectTo) {

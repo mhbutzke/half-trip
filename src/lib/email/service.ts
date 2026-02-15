@@ -12,6 +12,7 @@ const FROM_ADDRESSES: Record<EmailType, string> = {
   daily_summary: 'Half Trip <resumo@halftrip.com>',
   welcome: 'Half Trip <boas-vindas@halftrip.com>',
   confirmation: 'Half Trip <confirme@halftrip.com>',
+  password_reset: 'Half Trip <seguranca@halftrip.com>',
 };
 
 const SANDBOX_FROM_ADDRESS = 'Half Trip <onboarding@resend.dev>';
@@ -22,6 +23,7 @@ const PREFERENCE_COLUMN_MAP: Record<EmailType, string> = {
   daily_summary: 'daily_summary_emails',
   welcome: 'welcome_emails',
   confirmation: 'welcome_emails',
+  password_reset: 'welcome_emails',
 };
 
 async function checkUserEmailPreference(userId: string, emailType: EmailType): Promise<boolean> {

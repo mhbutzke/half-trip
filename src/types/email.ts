@@ -1,4 +1,10 @@
-export type EmailType = 'invite' | 'trip_reminder' | 'daily_summary' | 'welcome' | 'confirmation';
+export type EmailType =
+  | 'invite'
+  | 'trip_reminder'
+  | 'daily_summary'
+  | 'welcome'
+  | 'confirmation'
+  | 'password_reset';
 
 export type EmailStatus = 'pending' | 'sent' | 'delivered' | 'bounced' | 'complained' | 'failed';
 

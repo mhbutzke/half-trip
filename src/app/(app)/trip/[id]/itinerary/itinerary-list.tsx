@@ -551,6 +551,7 @@ export function ItineraryList({
         /* Map View */
         <TripActivityMap
           activities={visibleActivities}
+          tripDays={tripDays}
           onActivitySelect={(a) => handleActivityClick(a as ActivityWithCreator)}
           className="h-[calc(100vh-16rem)] min-h-[400px] md:h-[calc(100vh-20rem)]"
         />

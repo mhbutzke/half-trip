@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { GoogleMap, MarkerF } from '@react-google-maps/api';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { GoogleMap, MarkerF, PolylineF } from '@react-google-maps/api';
+import { format, parseISO } from 'date-fns';
 import { useGoogleMaps } from './google-maps-provider';
 import { ActivityInfoWindow } from './activity-info-window';
 import { MapMissingLocationsBanner } from './map-missing-locations-banner';
@@ -9,6 +10,8 @@ import {
   extractActivitiesWithCoords,
   getMapBounds,
   getMarkerColor,
+  getDayColor,
+  groupActivitiesWithCoordsByDate,
   darkModeMapStyles,
 } from '@/lib/utils/map-helpers';
 import { MapPin } from 'lucide-react';
@@ -22,28 +25,63 @@ interface TripActivityMapProps {
     category: ActivityCategory;
     location: string | null;
     start_time: string | null;
+    date: string;
+    sort_order: number;
     metadata: unknown;
     [key: string]: unknown;
   }[];
+  tripDays?: string[];
   onActivitySelect?: (activity: {
     id: string;
     title: string;
     category: ActivityCategory;
     location: string | null;
     start_time: string | null;
+    date: string;
+    sort_order: number;
     metadata: unknown;
     [key: string]: unknown;
   }) => void;
   className?: string;
 }
 
-export function TripActivityMap({ activities, onActivitySelect, className }: TripActivityMapProps) {
+export function TripActivityMap({
+  activities,
+  tripDays,
+  onActivitySelect,
+  className,
+}: TripActivityMapProps) {
   const { isLoaded, loadError } = useGoogleMaps();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
+  const [selectedDay, setSelectedDay] = useState<string | 'all'>('all');
 
   const activitiesWithCoords = extractActivitiesWithCoords(activities);
-  const selectedActivity = activitiesWithCoords.find((a) => a.id === selectedId);
+
+  // Agrupar atividades por dia
+  const activitiesByDay = useMemo(
+    () => groupActivitiesWithCoordsByDate(activitiesWithCoords),
+    [activitiesWithCoords]
+  );
+
+  // Dias disponíveis no mapa (com pelo menos 1 atividade com coords)
+  const availableDays = useMemo(() => {
+    return Array.from(activitiesByDay.keys()).sort();
+  }, [activitiesByDay]);
+
+  // Atividades filtradas por dia selecionado
+  const filteredActivities = useMemo(() => {
+    if (selectedDay === 'all') return activitiesWithCoords;
+    return activitiesByDay.get(selectedDay) || [];
+  }, [selectedDay, activitiesWithCoords, activitiesByDay]);
+
+  // Dias visíveis para polylines
+  const visibleDays = useMemo(() => {
+    if (selectedDay === 'all') return availableDays;
+    return availableDays.filter((d) => d === selectedDay);
+  }, [selectedDay, availableDays]);
+
+  const selectedActivity = filteredActivities.find((a) => a.id === selectedId);
 
   const isDark =
     typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
@@ -52,17 +90,17 @@ export function TripActivityMap({ activities, onActivitySelect, className }: Tri
     mapRef.current = map;
   }, []);
 
-  // Fit bounds when activities change
+  // Fit bounds when filtered activities change
   useEffect(() => {
-    if (!mapRef.current || activitiesWithCoords.length === 0) return;
+    if (!mapRef.current || filteredActivities.length === 0) return;
 
-    const bounds = getMapBounds(activitiesWithCoords);
+    const bounds = getMapBounds(filteredActivities);
     if (!bounds) return;
 
-    if (activitiesWithCoords.length === 1) {
+    if (filteredActivities.length === 1) {
       mapRef.current.setCenter({
-        lat: activitiesWithCoords[0].coords.lat,
-        lng: activitiesWithCoords[0].coords.lng,
+        lat: filteredActivities[0].coords.lat,
+        lng: filteredActivities[0].coords.lng,
       });
       mapRef.current.setZoom(15);
     } else {
@@ -72,7 +110,7 @@ export function TripActivityMap({ activities, onActivitySelect, className }: Tri
       );
       mapRef.current.fitBounds(gBounds, 50);
     }
-  }, [activitiesWithCoords]);
+  }, [filteredActivities]);
 
   if (loadError) {
     return (
@@ -128,6 +166,51 @@ export function TripActivityMap({ activities, onActivitySelect, className }: Tri
 
   return (
     <div className="space-y-2">
+      {availableDays.length > 1 && (
+        <div className="flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Filtro por dia">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={selectedDay === 'all'}
+            className={cn(
+              'inline-flex h-8 flex-shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition-colors',
+              selectedDay === 'all'
+                ? 'border-primary bg-primary text-primary-foreground'
+                : 'border-border bg-background text-muted-foreground hover:bg-muted'
+            )}
+            onClick={() => setSelectedDay('all')}
+          >
+            Todos
+          </button>
+          {availableDays.map((date, index) => {
+            const dayNumber = tripDays ? tripDays.indexOf(date) + 1 : index + 1;
+            const color = getDayColor(index);
+            return (
+              <button
+                key={date}
+                type="button"
+                role="tab"
+                aria-selected={selectedDay === date}
+                className={cn(
+                  'inline-flex h-8 flex-shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition-colors',
+                  selectedDay === date
+                    ? 'border-primary bg-primary text-primary-foreground'
+                    : 'border-border bg-background text-muted-foreground hover:bg-muted'
+                )}
+                onClick={() => setSelectedDay(date)}
+              >
+                <span
+                  className="h-2.5 w-2.5 rounded-full"
+                  style={{ backgroundColor: color }}
+                  aria-hidden="true"
+                />
+                {dayNumber > 0 ? `Dia ${dayNumber}` : format(parseISO(date), 'dd/MM')}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       <GoogleMap
         mapContainerClassName={cn('rounded-lg border', className)}
         center={center}
@@ -143,7 +226,7 @@ export function TripActivityMap({ activities, onActivitySelect, className }: Tri
           styles: isDark ? darkModeMapStyles : undefined,
         }}
       >
-        {activitiesWithCoords.map((activity) => (
+        {filteredActivities.map((activity) => (
           <MarkerF
             key={activity.id}
             position={activity.coords}
@@ -158,6 +241,38 @@ export function TripActivityMap({ activities, onActivitySelect, className }: Tri
             }}
           />
         ))}
+
+        {visibleDays.map((date) => {
+          const dayActivities = activitiesByDay.get(date);
+          if (!dayActivities || dayActivities.length < 2) return null;
+          const dayIndex = availableDays.indexOf(date);
+          const color = getDayColor(dayIndex);
+          const path = dayActivities.map((a) => ({ lat: a.coords.lat, lng: a.coords.lng }));
+          return (
+            <PolylineF
+              key={`route-${date}`}
+              path={path}
+              options={{
+                strokeColor: color,
+                strokeOpacity: 0.8,
+                strokeWeight: 3,
+                geodesic: true,
+                icons: [
+                  {
+                    icon: {
+                      path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                      scale: 2.5,
+                      fillColor: color,
+                      fillOpacity: 0.7,
+                      strokeWeight: 0,
+                    },
+                    repeat: '80px',
+                  },
+                ],
+              }}
+            />
+          );
+        })}
 
         {selectedActivity && (
           <ActivityInfoWindow

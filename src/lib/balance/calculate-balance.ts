@@ -5,8 +5,11 @@
  * It takes expenses and their splits, and calculates how much each participant
  * has paid vs. owes, producing a net balance for each person.
  *
+ * All references use participantId (trip_participants.id), supporting both
+ * registered users and guests.
+ *
  * Algorithm:
- * 1. Initialize balance tracking for each trip member
+ * 1. Initialize balance tracking for each trip participant
  * 2. For each expense, add the amount to the payer's "totalPaid"
  * 3. For each expense split, add the split amount to the participant's "totalOwed"
  * 4. Calculate net balance = totalPaid - totalOwed for each participant
@@ -21,7 +24,7 @@ import type {
   BalanceCalculationResult,
   ExpenseData,
   ParticipantBalance,
-  TripMemberData,
+  ParticipantData,
   PersistedSettlement,
 } from './types';
 
@@ -29,21 +32,22 @@ import type {
  * Calculate balances for all participants in a trip
  *
  * @param expenses - Array of expenses with their splits
- * @param members - Array of trip members
+ * @param participants - Array of trip participants (members + guests)
  * @returns Balance calculation result with participant balances and totals
  */
 export function calculateBalances(
   expenses: ExpenseData[],
-  members: TripMemberData[]
+  participants: ParticipantData[]
 ): BalanceCalculationResult {
-  // Initialize balance tracking for each member
+  // Initialize balance tracking for each participant
   const balanceMap = new Map<string, ParticipantBalance>();
 
-  for (const member of members) {
-    balanceMap.set(member.userId, {
-      userId: member.userId,
-      userName: member.userName,
-      userAvatar: member.userAvatar,
+  for (const participant of participants) {
+    balanceMap.set(participant.participantId, {
+      participantId: participant.participantId,
+      participantName: participant.participantName,
+      participantAvatar: participant.participantAvatar,
+      participantType: participant.participantType,
       totalPaid: 0,
       totalOwed: 0,
       netBalance: 0,
@@ -61,7 +65,7 @@ export function calculateBalances(
     totalExpenses += convertedAmount;
 
     // Add converted expense amount to payer's totalPaid
-    const payer = balanceMap.get(expense.paidById);
+    const payer = balanceMap.get(expense.paidByParticipantId);
     if (payer) {
       payer.totalPaid += convertedAmount;
     }
@@ -69,7 +73,7 @@ export function calculateBalances(
     // Add split amounts converted to base currency
     // Use ratio to avoid rounding errors from converting each split independently
     for (const split of expense.splits) {
-      const participant = balanceMap.get(split.userId);
+      const participant = balanceMap.get(split.participantId);
       if (participant) {
         const splitRatio = expense.amount > 0 ? split.amount / expense.amount : 0;
         participant.totalOwed += convertedAmount * splitRatio;
@@ -86,12 +90,14 @@ export function calculateBalances(
 
   // Convert map to array and sort by net balance (descending)
   // This puts people who are owed money at the top
-  const participants = Array.from(balanceMap.values()).sort((a, b) => b.netBalance - a.netBalance);
+  const participantBalances = Array.from(balanceMap.values()).sort(
+    (a, b) => b.netBalance - a.netBalance
+  );
 
   return {
-    participants,
+    participants: participantBalances,
     totalExpenses,
-    participantCount: members.length,
+    participantCount: participants.length,
   };
 }
 
@@ -100,36 +106,36 @@ export function calculateBalances(
  * This function adjusts balances based on settlements that have already been made
  *
  * @param expenses - Array of expenses with their splits
- * @param members - Array of trip members
+ * @param participants - Array of trip participants
  * @param settledSettlements - Array of settlements that have already been settled
  * @returns Balance calculation result with adjusted participant balances
  */
 export function calculateBalancesWithSettlements(
   expenses: ExpenseData[],
-  members: TripMemberData[],
+  participants: ParticipantData[],
   settledSettlements: PersistedSettlement[]
 ): BalanceCalculationResult {
   // First calculate base balances from expenses
-  const result = calculateBalances(expenses, members);
+  const result = calculateBalances(expenses, participants);
 
   // Adjust balances based on settled settlements
   // If A paid B $50, then:
   // - A's balance increases by $50 (they spent money on the settlement)
   // - B's balance decreases by $50 (they received money from the settlement)
-  const balanceMap = new Map(result.participants.map((p) => [p.userId, p]));
+  const balanceMap = new Map(result.participants.map((p) => [p.participantId, p]));
 
   for (const settlement of settledSettlements) {
-    const fromUser = balanceMap.get(settlement.fromUserId);
-    const toUser = balanceMap.get(settlement.toUserId);
+    const fromParticipant = balanceMap.get(settlement.fromParticipantId);
+    const toParticipant = balanceMap.get(settlement.toParticipantId);
 
-    if (fromUser && toUser) {
-      // The person who sent money (fromUser) has effectively "paid" more
-      fromUser.totalPaid += settlement.amount;
-      fromUser.netBalance += settlement.amount;
+    if (fromParticipant && toParticipant) {
+      // The person who sent money has effectively "paid" more
+      fromParticipant.totalPaid += settlement.amount;
+      fromParticipant.netBalance += settlement.amount;
 
-      // The person who received money (toUser) has effectively "owed" less
-      toUser.totalOwed += settlement.amount;
-      toUser.netBalance -= settlement.amount;
+      // The person who received money has effectively "owed" less
+      toParticipant.totalOwed += settlement.amount;
+      toParticipant.netBalance -= settlement.amount;
     }
   }
 

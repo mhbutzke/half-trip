@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getTripById, getTripMembers, getUserRoleInTrip } from '@/lib/supabase/trips';
 import { getTripInvites, getEmailInvites } from '@/lib/supabase/invites';
+import { getTripParticipants } from '@/lib/supabase/participants';
 import { PageContainer } from '@/components/layout/page-container';
 import { ParticipantsList } from './participants-list';
 import { ParticipantsHeader } from './participants-header';
@@ -23,13 +24,15 @@ async function ParticipantsContent({ tripId }: { tripId: string }) {
     redirect(routes.login());
   }
 
-  const [trip, members, userRole, linkInvites, emailInvites] = await Promise.all([
-    getTripById(tripId),
-    getTripMembers(tripId),
-    getUserRoleInTrip(tripId),
-    getTripInvites(tripId),
-    getEmailInvites(tripId),
-  ]);
+  const [trip, members, userRole, linkInvites, emailInvites, participantsResult] =
+    await Promise.all([
+      getTripById(tripId),
+      getTripMembers(tripId),
+      getUserRoleInTrip(tripId),
+      getTripInvites(tripId),
+      getEmailInvites(tripId),
+      getTripParticipants(tripId),
+    ]);
 
   if (!trip) {
     notFound();
@@ -37,6 +40,9 @@ async function ParticipantsContent({ tripId }: { tripId: string }) {
 
   // Combine and deduplicate invites (link invites without email)
   const pendingInvites = [...linkInvites.filter((inv) => !inv.email), ...emailInvites];
+
+  // Filter only guests from participants
+  const guests = (participantsResult.data ?? []).filter((p) => p.type === 'guest');
 
   return (
     <div className="space-y-6">
@@ -48,6 +54,7 @@ async function ParticipantsContent({ tripId }: { tripId: string }) {
       />
       <ParticipantsList
         members={members}
+        guests={guests}
         pendingInvites={pendingInvites}
         userRole={userRole}
         currentUserId={user.id}

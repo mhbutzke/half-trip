@@ -2,7 +2,7 @@ import { render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { Button } from '@/components/ui/button';
 import { AddExpenseDialog } from './add-expense-dialog';
-import type { TripMemberWithUser } from '@/lib/supabase/trips';
+import type { TripParticipantResolved } from '@/lib/supabase/participants';
 
 vi.mock('@/components/ui/responsive-form-container', () => ({
   ResponsiveFormContainer: ({ open, children }: { open: boolean; children: React.ReactNode }) => (
@@ -21,19 +21,27 @@ vi.mock('@/lib/supabase/receipts', () => ({
 
 describe('AddExpenseDialog trigger rendering', () => {
   it('does not render nested buttons when trigger is already a button', () => {
-    const members = [
+    const participants: TripParticipantResolved[] = [
       {
-        user_id: 'user-1',
-        users: { name: 'User One', avatar_url: null },
+        id: 'participant-1',
+        tripId: 'trip-1',
+        type: 'member',
+        userId: 'user-1',
+        displayName: 'User One',
+        displayEmail: 'user1@test.com',
+        displayAvatar: null,
+        groupId: null,
+        role: 'organizer',
       },
-    ] as unknown as TripMemberWithUser[];
+    ];
 
     const { container } = render(
       <AddExpenseDialog
         tripId="trip-1"
         currentUserId="user-1"
+        currentParticipantId="participant-1"
         baseCurrency="BRL"
-        members={members}
+        participants={participants}
         trigger={<Button className="hidden sm:flex">Adicionar</Button>}
       />
     );

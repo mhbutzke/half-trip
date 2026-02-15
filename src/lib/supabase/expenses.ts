@@ -39,17 +39,27 @@ export async function createExpense(input: CreateExpenseInput): Promise<ExpenseR
     return { error: 'Você não é membro desta viagem' };
   }
 
-  // Validate that paid_by is a trip member
-  const { data: paidByMember } = await supabase
-    .from('trip_members')
-    .select('id')
-    .eq('trip_id', input.trip_id)
-    .eq('user_id', input.paid_by)
-    .single();
+  // Load all trip participants (with id, user_id, type)
+  const { data: tripParticipants } = await supabase
+    .from('trip_participants')
+    .select('id, user_id, type')
+    .eq('trip_id', input.trip_id);
 
-  if (!paidByMember) {
-    return { error: 'O usuário que pagou não é membro desta viagem' };
+  if (!tripParticipants || tripParticipants.length === 0) {
+    return { error: 'Nenhum participante encontrado para esta viagem' };
   }
+
+  // Build maps: participantById (id → participant) and participantByUserId (user_id → id)
+  const participantById = new Map(tripParticipants.map((p) => [p.id, p]));
+
+  // Validate paid_by_participant_id exists in trip_participants
+  const paidByParticipant = participantById.get(input.paid_by_participant_id);
+  if (!paidByParticipant) {
+    return { error: 'O participante que pagou não pertence a esta viagem' };
+  }
+
+  // Derive paid_by (user_id) from participant — null for guests
+  const paidByUserId = paidByParticipant.type === 'guest' ? null : paidByParticipant.user_id;
 
   // Validate splits sum equals amount (with small tolerance for floating point)
   const splitsTotal = input.splits.reduce((sum, split) => sum + split.amount, 0);
@@ -91,7 +101,8 @@ export async function createExpense(input: CreateExpenseInput): Promise<ExpenseR
       exchange_rate: exchangeRate,
       date: input.date,
       category: input.category,
-      paid_by: input.paid_by,
+      paid_by: paidByUserId,
+      paid_by_participant_id: input.paid_by_participant_id,
       created_by: authUser.id,
       notes: input.notes || null,
     })
@@ -102,13 +113,19 @@ export async function createExpense(input: CreateExpenseInput): Promise<ExpenseR
     return { error: expenseError.message };
   }
 
-  // Create expense splits
-  const splits = input.splits.map((split) => ({
-    expense_id: expense.id,
-    user_id: split.user_id,
-    amount: split.amount,
-    percentage: split.percentage || null,
-  }));
+  // Create expense splits — derive user_id from participant (null for guests)
+  const splits = input.splits.map((split) => {
+    const splitParticipant = participantById.get(split.participant_id);
+    const splitUserId =
+      splitParticipant && splitParticipant.type !== 'guest' ? splitParticipant.user_id : null;
+    return {
+      expense_id: expense.id,
+      user_id: splitUserId,
+      participant_id: split.participant_id,
+      amount: split.amount,
+      percentage: split.percentage || null,
+    };
+  });
 
   const { error: splitsError } = await supabase.from('expense_splits').insert(splits);
 
@@ -177,17 +194,24 @@ export async function updateExpense(
     return { error: 'Você não tem permissão para editar esta despesa' };
   }
 
-  // If paid_by is being updated, validate they are a trip member
-  if (input.paid_by) {
-    const { data: paidByMember } = await supabase
-      .from('trip_members')
-      .select('id')
-      .eq('trip_id', expense.trip_id)
-      .eq('user_id', input.paid_by)
-      .single();
+  // Load all trip participants (with id, user_id, type)
+  const { data: tripParticipants } = await supabase
+    .from('trip_participants')
+    .select('id, user_id, type')
+    .eq('trip_id', expense.trip_id);
 
-    if (!paidByMember) {
-      return { error: 'O usuário que pagou não é membro desta viagem' };
+  if (!tripParticipants || tripParticipants.length === 0) {
+    return { error: 'Nenhum participante encontrado para esta viagem' };
+  }
+
+  // Build map: participantById (id → participant)
+  const participantById = new Map(tripParticipants.map((p) => [p.id, p]));
+
+  // If paid_by_participant_id is being updated, validate the participant exists
+  if (input.paid_by_participant_id) {
+    const paidByParticipant = participantById.get(input.paid_by_participant_id);
+    if (!paidByParticipant) {
+      return { error: 'O participante que pagou não pertence a esta viagem' };
     }
   }
 
@@ -227,18 +251,27 @@ export async function updateExpense(
   }
 
   // Update the expense
+  const updateData: Record<string, unknown> = {
+    ...(input.description !== undefined && { description: input.description }),
+    ...(input.amount !== undefined && { amount: input.amount }),
+    ...(input.currency !== undefined && { currency: input.currency }),
+    ...(input.exchange_rate !== undefined && { exchange_rate: input.exchange_rate }),
+    ...(input.date !== undefined && { date: input.date }),
+    ...(input.category !== undefined && { category: input.category }),
+    ...(input.notes !== undefined && { notes: input.notes }),
+  };
+
+  // Update paid_by_participant_id and derive paid_by (user_id)
+  if (input.paid_by_participant_id !== undefined) {
+    const paidByParticipant = participantById.get(input.paid_by_participant_id);
+    updateData.paid_by_participant_id = input.paid_by_participant_id;
+    updateData.paid_by =
+      paidByParticipant && paidByParticipant.type !== 'guest' ? paidByParticipant.user_id : null;
+  }
+
   const { error: updateError } = await supabase
     .from('expenses')
-    .update({
-      ...(input.description !== undefined && { description: input.description }),
-      ...(input.amount !== undefined && { amount: input.amount }),
-      ...(input.currency !== undefined && { currency: input.currency }),
-      ...(input.exchange_rate !== undefined && { exchange_rate: input.exchange_rate }),
-      ...(input.date !== undefined && { date: input.date }),
-      ...(input.category !== undefined && { category: input.category }),
-      ...(input.paid_by !== undefined && { paid_by: input.paid_by }),
-      ...(input.notes !== undefined && { notes: input.notes }),
-    })
+    .update(updateData)
     .eq('id', expenseId);
 
   if (updateError) {
@@ -257,13 +290,19 @@ export async function updateExpense(
       return { error: deleteError.message };
     }
 
-    // Create new splits
-    const splits = input.splits.map((split) => ({
-      expense_id: expenseId,
-      user_id: split.user_id,
-      amount: split.amount,
-      percentage: split.percentage || null,
-    }));
+    // Create new splits — derive user_id from participant (null for guests)
+    const splits = input.splits.map((split) => {
+      const splitParticipant = participantById.get(split.participant_id);
+      const splitUserId =
+        splitParticipant && splitParticipant.type !== 'guest' ? splitParticipant.user_id : null;
+      return {
+        expense_id: expenseId,
+        user_id: splitUserId,
+        participant_id: split.participant_id,
+        amount: split.amount,
+        percentage: split.percentage || null,
+      };
+    });
 
     const { error: splitsError } = await supabase.from('expense_splits').insert(splits);
 

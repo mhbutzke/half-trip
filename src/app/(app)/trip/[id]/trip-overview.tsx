@@ -1,37 +1,57 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Calendar, DollarSign, Plus, Scale, ChevronRight, Receipt, BarChart3 } from 'lucide-react';
+import {
+  BarChart3,
+  Calendar,
+  CheckCircle2,
+  CheckSquare,
+  DollarSign,
+  Plus,
+  Receipt,
+  Scale,
+  Users,
+  Wallet,
+} from 'lucide-react';
+import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { InviteDialog } from '@/components/invites/invite-dialog';
 import { StatWidget } from '@/components/ui/stat-widget';
 import { MoneyDisplay } from '@/components/ui/money-display';
-import { ActivityLogFeed } from '@/components/activity-log/activity-log-feed';
 import { PollCard } from '@/components/polls/poll-card';
 import { CreatePollDialog } from '@/components/polls/create-poll-dialog';
 import { TripRecapCard } from '@/components/recap/trip-recap-card';
 import { BadgeDisplay } from '@/components/badges/badge-display';
 import { computeBadges } from '@/lib/utils/travel-badges';
+import { computeTripReadiness } from '@/lib/utils/trip-readiness';
+import { computeTripProgress } from '@/lib/utils/trip-progress';
 import { useTripRealtime } from '@/hooks/use-trip-realtime';
 import { parseDateOnly } from '@/lib/utils/date-only';
 import { routes } from '@/lib/routes';
+import { getTripActivityLog } from '@/lib/supabase/activity-log';
+import { TripItineraryPreview } from '@/components/itinerary/trip-itinerary-preview';
 import type { TripWithMembers } from '@/lib/supabase/trips';
 import type { DashboardData } from '@/lib/supabase/dashboard';
 import type { ActivityLogEntry } from '@/types/activity-log';
 import type { PollWithVotes } from '@/types/poll';
 import type { TripRecapData } from '@/lib/utils/trip-recap';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
-// Lazy load dialogs - only needed when user clicks a CTA button
-const AddActivityDialog = dynamic(
+const ActivityLogFeed = dynamic(
   () =>
-    import('@/components/activities/add-activity-dialog').then((mod) => ({
-      default: mod.AddActivityDialog,
+    import('@/components/activity-log/activity-log-feed').then((mod) => ({
+      default: mod.ActivityLogFeed,
     })),
   { ssr: false }
 );
@@ -55,8 +75,6 @@ interface TripOverviewProps {
   userRole: 'organizer' | 'participant' | null;
   currentUserId?: string;
   dashboard?: DashboardData | null;
-  initialActivityLog?: ActivityLogEntry[];
-  activityLogHasMore?: boolean;
   initialPolls?: PollWithVotes[];
   initialRecapData?: TripRecapData | null;
 }
@@ -66,17 +84,24 @@ export function TripOverview({
   userRole,
   currentUserId,
   dashboard,
-  initialActivityLog,
-  activityLogHasMore,
   initialPolls,
   initialRecapData,
 }: TripOverviewProps) {
   const router = useRouter();
   const [isInviteOpen, setIsInviteOpen] = useState(false);
-  const [isActivityOpen, setIsActivityOpen] = useState(false);
   const [isNoteOpen, setIsNoteOpen] = useState(false);
   const [isExpenseOpen, setIsExpenseOpen] = useState(false);
   const [createPollOpen, setCreatePollOpen] = useState(false);
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const [isFinancesOpen, setIsFinancesOpen] = useState(false);
+  const [isActivityLogOpen, setIsActivityLogOpen] = useState(false);
+  const [activityLogLoading, setActivityLogLoading] = useState(false);
+  const [activityLogData, setActivityLogData] = useState<{
+    entries: ActivityLogEntry[];
+    hasMore: boolean;
+  } | null>(null);
+
+  const [openItineraryAdd, setOpenItineraryAdd] = useState<((date?: string) => void) | null>(null);
   const refreshTripData = useCallback(() => {
     router.refresh();
   }, [router]);
@@ -88,29 +113,11 @@ export function TripOverview({
   });
 
   const baseCurrency = dashboard?.baseCurrency ?? 'BRL';
-
-  // Format date for next activity
-  const formatActivityDate = (date: string, time: string | null) => {
-    const d = new Date(date + 'T00:00:00');
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    let dateStr: string;
-    if (d.getTime() === today.getTime()) {
-      dateStr = 'Hoje';
-    } else if (d.getTime() === tomorrow.getTime()) {
-      dateStr = 'Amanhã';
-    } else {
-      dateStr = d.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' });
-    }
-
-    if (time) {
-      return `${dateStr} às ${time.slice(0, 5)}`;
-    }
-    return dateStr;
-  };
+  const tripProgress = useMemo(
+    () => computeTripProgress(trip.start_date, trip.end_date),
+    [trip.start_date, trip.end_date]
+  );
+  const isPreTrip = tripProgress.currentDay === 0;
 
   // Budget progress
   const budgetPercentage =
@@ -119,7 +126,16 @@ export function TripOverview({
       : null;
 
   // Compute badges from available data
-  const tripEnded = new Date(trip.end_date) < new Date();
+  const tripEnded = useMemo(() => {
+    const normalize = (d: Date) => {
+      const out = new Date(d);
+      out.setHours(0, 0, 0, 0);
+      return out;
+    };
+    const end = normalize(parseDateOnly(trip.end_date));
+    const today = normalize(new Date());
+    return today.getTime() > end.getTime();
+  }, [trip.end_date]);
   const earnedBadges = tripEnded
     ? computeBadges({
         tripCount: 1,
@@ -132,6 +148,185 @@ export function TripOverview({
         daysCount: initialRecapData?.durationDays ?? 0,
       })
     : [];
+
+  const readiness =
+    isPreTrip && dashboard
+      ? computeTripReadiness({
+          memberCount: trip.memberCount,
+          activityCountTotal: dashboard.activityCountTotal,
+          checklistCount: dashboard.checklistCount,
+          budgetTotal: dashboard.budgetTotal,
+          userRole,
+        })
+      : null;
+
+  const loadActivityLog = useCallback(() => {
+    if (activityLogLoading) return;
+    if (activityLogData) return;
+
+    setActivityLogLoading(true);
+    getTripActivityLog(trip.id, 30, 0)
+      .then((res) => setActivityLogData(res))
+      .catch(() => toast.error('Erro ao carregar atividade recente'))
+      .finally(() => setActivityLogLoading(false));
+  }, [activityLogData, activityLogLoading, trip.id]);
+
+  const handleActivityLogOpenChange = useCallback(
+    (open: boolean) => {
+      setIsActivityLogOpen(open);
+      if (open) loadActivityLog();
+    },
+    [loadActivityLog]
+  );
+
+  const readinessIcon = (key: 'participants' | 'itinerary' | 'checklists' | 'budget') => {
+    switch (key) {
+      case 'participants':
+        return Users;
+      case 'itinerary':
+        return Calendar;
+      case 'checklists':
+        return CheckSquare;
+      case 'budget':
+        return Wallet;
+      default:
+        return CheckCircle2;
+    }
+  };
+
+  const readinessCard = readiness ? (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <CardTitle className="text-base">Preparação da viagem</CardTitle>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {readiness.isReady
+                ? 'Tudo pronto para começar.'
+                : `Faltam ${readiness.missing} de ${readiness.total} para ficar pronto`}
+            </p>
+          </div>
+          {readiness.isReady && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => router.push(routes.trip.itinerary(trip.id))}
+            >
+              Ver roteiro
+            </Button>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>Prontidão</span>
+            <span className="font-medium text-foreground">{readiness.score}%</span>
+          </div>
+          <Progress value={readiness.score} className="h-2" />
+        </div>
+
+        <div className="space-y-2">
+          {readiness.items.map((item) => {
+            const Icon = readinessIcon(item.key);
+            const cta =
+              item.key === 'participants'
+                ? item.done
+                  ? {
+                      label: 'Grupo',
+                      onClick: () => router.push(routes.trip.participants(trip.id)),
+                    }
+                  : { label: 'Convidar', onClick: () => setIsInviteOpen(true) }
+                : item.key === 'itinerary'
+                  ? item.done
+                    ? { label: 'Abrir', onClick: () => router.push(routes.trip.itinerary(trip.id)) }
+                    : {
+                        label: 'Adicionar',
+                        onClick: () =>
+                          openItineraryAdd
+                            ? openItineraryAdd()
+                            : router.push(routes.trip.itinerary(trip.id)),
+                      }
+                  : item.key === 'checklists'
+                    ? {
+                        label: item.done ? 'Abrir' : 'Criar',
+                        onClick: () => router.push(routes.trip.checklists(trip.id)),
+                      }
+                    : {
+                        label:
+                          !item.done && userRole === 'organizer'
+                            ? 'Definir'
+                            : item.done
+                              ? 'Ver'
+                              : 'Abrir',
+                        onClick: () => router.push(routes.trip.budget(trip.id)),
+                      };
+
+            return (
+              <div
+                key={item.key}
+                className="flex items-start justify-between gap-3 rounded-lg border bg-muted/20 p-3"
+              >
+                <div className="flex min-w-0 items-start gap-3">
+                  <div
+                    className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+                      item.done ? 'bg-success/15 text-success' : 'bg-muted text-muted-foreground'
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" aria-hidden="true" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">{item.label}</p>
+                    <p className="text-xs text-muted-foreground">{item.description}</p>
+                    {item.note && (
+                      <p className="mt-0.5 text-xs text-muted-foreground">{item.note}</p>
+                    )}
+                  </div>
+                </div>
+                <Button size="sm" variant="outline" onClick={cta.onClick}>
+                  {cta.label}
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  ) : null;
+
+  const balanceWidget = (
+    <StatWidget
+      label="Meu saldo"
+      icon={Scale}
+      value={
+        <MoneyDisplay
+          amount={dashboard?.userBalance ?? 0}
+          currency={baseCurrency}
+          size="xl"
+          colorBySign
+          showSign
+        />
+      }
+      description={dashboard?.balanceDescription ?? 'Sem despesas ainda'}
+      onClick={() => router.push(routes.trip.balance(trip.id))}
+    />
+  );
+
+  const totalExpensesWidget = (
+    <StatWidget
+      label="Total de despesas"
+      icon={Receipt}
+      value={
+        <MoneyDisplay amount={dashboard?.totalExpenses ?? 0} currency={baseCurrency} size="lg" />
+      }
+      description={
+        dashboard?.expenseCount
+          ? `${dashboard.expenseCount} ${dashboard.expenseCount === 1 ? 'despesa' : 'despesas'}`
+          : 'Nenhuma despesa registrada'
+      }
+      onClick={() => router.push(routes.trip.expenses(trip.id))}
+    />
+  );
 
   return (
     <>
@@ -150,95 +345,196 @@ export function TripOverview({
           </div>
         )}
 
-        {/* Balance Widget - Full Width */}
-        <StatWidget
-          label="Meu saldo"
-          icon={Scale}
-          value={
-            <MoneyDisplay
-              amount={dashboard?.userBalance ?? 0}
-              currency={baseCurrency}
-              size="xl"
-              colorBySign
-              showSign
-            />
-          }
-          description={dashboard?.balanceDescription ?? 'Sem despesas ainda'}
-          onClick={() => router.push(routes.trip.balance(trip.id))}
+        {/* Roteiro (preview interativo) */}
+        <TripItineraryPreview
+          tripId={trip.id}
+          startDate={trip.start_date}
+          endDate={trip.end_date}
+          userRole={userRole}
+          onRegisterAdd={(fn) => setOpenItineraryAdd(() => fn)}
         />
 
-        {/* Two-column grid: Next Activity + Total Expenses */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {/* Next Activity */}
-          <StatWidget
-            label="Próxima atividade"
-            icon={Calendar}
-            value={
-              dashboard?.nextActivity ? (
-                <p className="text-sm font-medium leading-tight">{dashboard.nextActivity.title}</p>
-              ) : (
-                <p className="text-sm text-muted-foreground">Nenhuma atividade futura</p>
-              )
-            }
-            description={
-              dashboard?.nextActivity
-                ? formatActivityDate(dashboard.nextActivity.date, dashboard.nextActivity.time)
-                : undefined
-            }
-            onClick={() => router.push(routes.trip.itinerary(trip.id))}
-          />
+        {/* Preparação (pré-viagem) */}
+        {isPreTrip ? readinessCard : null}
 
-          {/* Total Expenses */}
-          <StatWidget
-            label="Total de despesas"
-            icon={Receipt}
-            value={
-              <MoneyDisplay
-                amount={dashboard?.totalExpenses ?? 0}
-                currency={baseCurrency}
-                size="lg"
-              />
-            }
-            description={
-              dashboard?.expenseCount
-                ? `${dashboard.expenseCount} ${dashboard.expenseCount === 1 ? 'despesa' : 'despesas'}`
-                : 'Nenhuma despesa registrada'
-            }
-            onClick={() => router.push(routes.trip.expenses(trip.id))}
-          />
-        </div>
-
-        {/* Trip Progress + Budget */}
+        {/* Progresso da viagem (timezone do usuário) */}
         <Card>
           <CardContent className="p-4">
             <div className="space-y-3">
               {/* Trip Days Progress */}
-              {dashboard && dashboard.tripProgress.currentDay > 0 && (
+              {tripProgress.currentDay > 0 && (
                 <div>
                   <div className="mb-1.5 flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Progresso da viagem</span>
                     <span className="font-medium">
-                      Dia{' '}
-                      {Math.min(
-                        dashboard.tripProgress.currentDay,
-                        dashboard.tripProgress.totalDays
-                      )}
-                      /{dashboard.tripProgress.totalDays}
+                      Dia {Math.min(tripProgress.currentDay, tripProgress.totalDays)}/
+                      {tripProgress.totalDays}
                     </span>
                   </div>
-                  <Progress
-                    value={Math.min(
-                      100,
-                      (dashboard.tripProgress.currentDay / dashboard.tripProgress.totalDays) * 100
-                    )}
-                    className="h-2"
-                  />
+                  <Progress value={tripProgress.percentage} className="h-2" />
                 </div>
               )}
 
-              {/* Budget Progress */}
-              {budgetPercentage != null && dashboard?.budgetTotal && (
-                <div>
+              {/* Fallback when trip hasn't started yet */}
+              {isPreTrip && (
+                <p className="text-sm text-muted-foreground">
+                  A viagem começa em{' '}
+                  {parseDateOnly(trip.start_date).toLocaleDateString('pt-BR', {
+                    day: 'numeric',
+                    month: 'long',
+                  })}
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Mais (colapsável) */}
+        <Card>
+          <button
+            type="button"
+            className="w-full text-left"
+            aria-expanded={isMoreOpen}
+            onClick={() => setIsMoreOpen((v) => !v)}
+          >
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Mais</CardTitle>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Votações, recap e atividade recente
+              </p>
+            </CardHeader>
+          </button>
+          {isMoreOpen && (
+            <CardContent className="space-y-4">
+              {/* Polls */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-base font-semibold">Votações</h2>
+                  <Button variant="ghost" size="sm" onClick={() => setCreatePollOpen(true)}>
+                    <Plus className="mr-1 h-4 w-4" aria-hidden="true" />
+                    Nova
+                  </Button>
+                </div>
+                {initialPolls && initialPolls.length > 0 ? (
+                  <div className="space-y-3">
+                    {initialPolls.map((poll) => (
+                      <PollCard
+                        key={poll.id}
+                        poll={poll}
+                        currentUserId={currentUserId || ''}
+                        isOrganizer={userRole === 'organizer'}
+                        onUpdate={refreshTripData}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-dashed bg-muted/20 p-4 text-sm text-muted-foreground">
+                    Nenhuma votação ainda.
+                  </div>
+                )}
+              </div>
+
+              {/* Recap + badges */}
+              {tripEnded && initialRecapData ? (
+                <div className="space-y-3">
+                  <h2 className="text-base font-semibold">Trip Recap</h2>
+                  <TripRecapCard recap={initialRecapData} />
+                  {earnedBadges.length > 0 && <BadgeDisplay earned={earnedBadges} />}
+                </div>
+              ) : null}
+
+              {/* Activity log access */}
+              <div className="space-y-2">
+                <h2 className="text-base font-semibold">Atividade recente</h2>
+                <Button variant="outline" onClick={() => handleActivityLogOpenChange(true)}>
+                  Ver atividade recente
+                </Button>
+              </div>
+
+              {/* Quick actions */}
+              <div className="space-y-2">
+                <h2 className="text-base font-semibold">Ações rápidas</h2>
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setIsExpenseOpen(true)}>
+                    <Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />
+                    Despesa
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setIsNoteOpen(true)}>
+                    <Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />
+                    Nota
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setCreatePollOpen(true)}>
+                    <BarChart3 className="mr-1.5 h-4 w-4" aria-hidden="true" />
+                    Votação
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setIsInviteOpen(true)}>
+                    <Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />
+                    Convidar
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          )}
+        </Card>
+
+        {/* Finanças (colapsável) */}
+        <Card>
+          <button
+            type="button"
+            className="w-full text-left"
+            aria-expanded={isFinancesOpen}
+            onClick={() => setIsFinancesOpen((v) => !v)}
+          >
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Finanças</CardTitle>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Saldo, despesas, pendências e orçamento
+              </p>
+            </CardHeader>
+          </button>
+          {isFinancesOpen && (
+            <CardContent className="space-y-4">
+              {balanceWidget}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">{totalExpensesWidget}</div>
+
+              {/* Pendências */}
+              {dashboard && dashboard.pendingSettlements.count > 0 ? (
+                <div className="rounded-lg border bg-muted/20 p-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-destructive/10">
+                      <DollarSign className="h-4 w-4 text-destructive" aria-hidden="true" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium">
+                        Pagar{' '}
+                        <MoneyDisplay
+                          amount={dashboard.pendingSettlements.totalAmount}
+                          currency={baseCurrency}
+                          size="sm"
+                          className="font-semibold"
+                        />
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {dashboard.pendingSettlements.count}{' '}
+                        {dashboard.pendingSettlements.count === 1
+                          ? 'pagamento pendente'
+                          : 'pagamentos pendentes'}
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => router.push(routes.trip.balance(trip.id))}
+                    >
+                      Abrir
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+
+              {/* Orçamento */}
+              {budgetPercentage != null && dashboard?.budgetTotal ? (
+                <div className="rounded-lg border bg-muted/20 p-3">
                   <div className="mb-1.5 flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Orçamento</span>
                     <span className="font-medium">{budgetPercentage}% utilizado</span>
@@ -266,135 +562,19 @@ export function TripOverview({
                       size="sm"
                     />
                   </p>
-                </div>
-              )}
-
-              {/* Fallback when trip hasn't started yet */}
-              {dashboard && dashboard.tripProgress.currentDay <= 0 && budgetPercentage == null && (
-                <p className="text-sm text-muted-foreground">
-                  A viagem começa em{' '}
-                  {parseDateOnly(trip.start_date).toLocaleDateString('pt-BR', {
-                    day: 'numeric',
-                    month: 'long',
-                  })}
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Pending Actions */}
-        {dashboard && dashboard.pendingSettlements.count > 0 && (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Pendências</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {dashboard.pendingSettlements.count > 0 && (
-                <Link
-                  href={routes.trip.balance(trip.id)}
-                  className="flex items-center justify-between rounded-lg p-2 transition-colors hover:bg-accent"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-destructive/10">
-                      <DollarSign className="h-4 w-4 text-destructive" aria-hidden="true" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">
-                        Pagar{' '}
-                        <MoneyDisplay
-                          amount={dashboard.pendingSettlements.totalAmount}
-                          currency={baseCurrency}
-                          size="sm"
-                          className="font-semibold"
-                        />
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {dashboard.pendingSettlements.count}{' '}
-                        {dashboard.pendingSettlements.count === 1
-                          ? 'pagamento pendente'
-                          : 'pagamentos pendentes'}
-                      </p>
-                    </div>
+                  <div className="mt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => router.push(routes.trip.budget(trip.id))}
+                    >
+                      Abrir orçamento
+                    </Button>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                </Link>
-              )}
+                </div>
+              ) : null}
             </CardContent>
-          </Card>
-        )}
-
-        {/* Polls Section */}
-        {initialPolls && initialPolls.length > 0 && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold">Votações</h2>
-              <Button variant="ghost" size="sm" onClick={() => setCreatePollOpen(true)}>
-                <Plus className="mr-1 h-4 w-4" aria-hidden="true" />
-                Nova
-              </Button>
-            </div>
-            {initialPolls.map((poll) => (
-              <PollCard
-                key={poll.id}
-                poll={poll}
-                currentUserId={currentUserId || ''}
-                isOrganizer={userRole === 'organizer'}
-                onUpdate={refreshTripData}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Trip Recap (only shown after trip ends) */}
-        {tripEnded && initialRecapData && (
-          <div className="space-y-3">
-            <h2 className="text-base font-semibold">Trip Recap</h2>
-            <TripRecapCard recap={initialRecapData} />
-          </div>
-        )}
-
-        {/* Travel Badges */}
-        {earnedBadges.length > 0 && <BadgeDisplay earned={earnedBadges} />}
-
-        {/* Activity Feed */}
-        {initialActivityLog && (
-          <ActivityLogFeed
-            tripId={trip.id}
-            initialEntries={initialActivityLog}
-            initialHasMore={activityLogHasMore ?? false}
-          />
-        )}
-
-        {/* Quick Actions */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Ações rápidas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              <Button variant="outline" size="sm" onClick={() => setIsActivityOpen(true)}>
-                <Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />
-                Atividade
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setIsExpenseOpen(true)}>
-                <Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />
-                Despesa
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setIsNoteOpen(true)}>
-                <Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />
-                Nota
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setCreatePollOpen(true)}>
-                <BarChart3 className="mr-1.5 h-4 w-4" aria-hidden="true" />
-                Votação
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setIsInviteOpen(true)}>
-                <Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />
-                Convidar
-              </Button>
-            </div>
-          </CardContent>
+          )}
         </Card>
       </div>
 
@@ -406,18 +586,6 @@ export function TripOverview({
         onOpenChange={setIsInviteOpen}
         userRole={userRole}
         currentUserId={currentUserId}
-      />
-
-      {/* Add Activity Dialog */}
-      <AddActivityDialog
-        tripId={trip.id}
-        defaultDate={trip.start_date}
-        open={isActivityOpen}
-        onOpenChange={setIsActivityOpen}
-        onSuccess={() => {
-          setIsActivityOpen(false);
-          router.refresh();
-        }}
       />
 
       {/* Add Note Dialog */}
@@ -457,6 +625,26 @@ export function TripOverview({
           refreshTripData();
         }}
       />
+
+      <Dialog open={isActivityLogOpen} onOpenChange={handleActivityLogOpenChange}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Atividade recente</DialogTitle>
+            <DialogDescription>Registro das últimas mudanças na viagem.</DialogDescription>
+          </DialogHeader>
+          {activityLogLoading ? (
+            <div className="py-6 text-sm text-muted-foreground">Carregando...</div>
+          ) : activityLogData ? (
+            <ActivityLogFeed
+              tripId={trip.id}
+              initialEntries={activityLogData.entries}
+              initialHasMore={activityLogData.hasMore}
+            />
+          ) : (
+            <div className="py-6 text-sm text-muted-foreground">Sem dados.</div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

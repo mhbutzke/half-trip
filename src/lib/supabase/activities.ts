@@ -441,3 +441,93 @@ export async function getActivitiesCount(tripId: string): Promise<number> {
 
   return count || 0;
 }
+
+/**
+ * Gets an index of activity counts per date for a trip.
+ * Used by itinerary preview components to render day pills efficiently.
+ */
+export async function getTripActivitiesIndex(tripId: string): Promise<Record<string, number>> {
+  const supabase = await createClient();
+
+  const {
+    data: { user: authUser },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !authUser) {
+    return {};
+  }
+
+  // Check if user is a member of the trip
+  const { data: member } = await supabase
+    .from('trip_members')
+    .select('id')
+    .eq('trip_id', tripId)
+    .eq('user_id', authUser.id)
+    .single();
+
+  if (!member) {
+    return {};
+  }
+
+  const { data } = await supabase.from('activities').select('date').eq('trip_id', tripId);
+
+  const index: Record<string, number> = {};
+  for (const row of (data as { date: string }[]) || []) {
+    if (!row?.date) continue;
+    index[row.date] = (index[row.date] || 0) + 1;
+  }
+
+  return index;
+}
+
+/**
+ * Gets all activities for a specific trip day.
+ * Used by itinerary preview components to lazy-load one day at a time.
+ */
+export async function getTripActivitiesByDate(
+  tripId: string,
+  date: string
+): Promise<ActivityWithCreator[]> {
+  const supabase = await createClient();
+
+  const {
+    data: { user: authUser },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !authUser) {
+    return [];
+  }
+
+  // Check if user is a member of the trip
+  const { data: member } = await supabase
+    .from('trip_members')
+    .select('id')
+    .eq('trip_id', tripId)
+    .eq('user_id', authUser.id)
+    .single();
+
+  if (!member) {
+    return [];
+  }
+
+  const { data: activities } = await supabase
+    .from('activities')
+    .select(
+      `
+      *,
+      users!activities_created_by_fkey (
+        id,
+        name,
+        avatar_url
+      )
+    `
+    )
+    .eq('trip_id', tripId)
+    .eq('date', date)
+    .order('sort_order', { ascending: true })
+    .order('start_time', { ascending: true, nullsFirst: false });
+
+  return (activities as ActivityWithCreator[]) || [];
+}

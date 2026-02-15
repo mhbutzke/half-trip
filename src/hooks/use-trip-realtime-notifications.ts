@@ -111,7 +111,7 @@ export function useTripRealtimeNotifications({
           notifications.expenseAdded({
             tripId,
             tripName,
-            userId: expense.paid_by,
+            userId: expense.paid_by ?? undefined,
             userName: paidByName,
             amount: expense.amount,
           });
@@ -138,7 +138,7 @@ export function useTripRealtimeNotifications({
           notifications.expenseUpdated({
             tripId,
             tripName,
-            userId: expense.paid_by,
+            userId: expense.paid_by ?? undefined,
             userName: paidByName,
             amount: expense.amount,
           });
@@ -298,7 +298,7 @@ export function useTripRealtimeNotifications({
           notifications.settlementMarkedPaid({
             tripId,
             tripName,
-            userId: settlement.from_user,
+            userId: settlement.from_user ?? undefined,
             userName: fromUserName,
           });
         }

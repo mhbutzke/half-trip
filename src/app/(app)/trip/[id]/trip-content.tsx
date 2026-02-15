@@ -8,7 +8,6 @@ import { PageContainer } from '@/components/layout/page-container';
 import type { TripWithMembers } from '@/lib/supabase/trips';
 import type { Trip, TripMemberRole } from '@/types/database';
 import type { DashboardData } from '@/lib/supabase/dashboard';
-import type { ActivityLogEntry } from '@/types/activity-log';
 import type { PollWithVotes } from '@/types/poll';
 import type { TripRecapData } from '@/lib/utils/trip-recap';
 
@@ -23,8 +22,6 @@ interface TripContentProps {
     avatar_url: string | null;
   } | null;
   initialDashboard?: DashboardData | null;
-  initialActivityLog?: ActivityLogEntry[];
-  activityLogHasMore?: boolean;
   initialPolls?: PollWithVotes[];
   initialRecapData?: TripRecapData | null;
 }
@@ -35,8 +32,6 @@ export function TripContent({
   initialUserRole,
   initialCurrentUser,
   initialDashboard,
-  initialActivityLog,
-  activityLogHasMore,
   initialPolls,
   initialRecapData,
 }: TripContentProps) {
@@ -158,8 +153,6 @@ export function TripContent({
           userRole={userRole}
           currentUserId={currentUser?.id}
           dashboard={initialDashboard}
-          initialActivityLog={initialActivityLog}
-          activityLogHasMore={activityLogHasMore}
           initialPolls={initialPolls}
           initialRecapData={initialRecapData}
         />

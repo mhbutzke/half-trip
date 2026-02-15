@@ -3,12 +3,16 @@
  *
  * This module defines the types used for expense balance calculations
  * in the Half Trip application.
+ *
+ * All participant references use participantId (trip_participants.id)
+ * which works for both registered users and guests.
  */
 
 export interface ParticipantBalance {
-  userId: string;
-  userName: string;
-  userAvatar: string | null;
+  participantId: string;
+  participantName: string;
+  participantAvatar: string | null;
+  participantType: 'member' | 'guest';
   totalPaid: number; // Total amount this participant paid
   totalOwed: number; // Total amount this participant owes (their share)
   netBalance: number; // paid - owed (positive = owed money, negative = owes money)
@@ -17,20 +21,21 @@ export interface ParticipantBalance {
 export interface ExpenseData {
   id: string;
   amount: number;
-  paidById: string;
+  paidByParticipantId: string;
   exchangeRate?: number;
-  splits: ExpenseSplit[];
+  splits: ExpenseSplitData[];
 }
 
-export interface ExpenseSplit {
-  userId: string;
+export interface ExpenseSplitData {
+  participantId: string;
   amount: number;
 }
 
-export interface TripMemberData {
-  userId: string;
-  userName: string;
-  userAvatar: string | null;
+export interface ParticipantData {
+  participantId: string;
+  participantName: string;
+  participantAvatar: string | null;
+  participantType: 'member' | 'guest';
 }
 
 export interface BalanceCalculationResult {
@@ -41,14 +46,14 @@ export interface BalanceCalculationResult {
 
 export interface Settlement {
   from: {
-    userId: string;
-    userName: string;
-    userAvatar: string | null;
+    participantId: string;
+    participantName: string;
+    participantAvatar: string | null;
   };
   to: {
-    userId: string;
-    userName: string;
-    userAvatar: string | null;
+    participantId: string;
+    participantName: string;
+    participantAvatar: string | null;
   };
   amount: number;
 }
@@ -58,7 +63,26 @@ export interface Settlement {
  * Used to track settlements that have already been made
  */
 export interface PersistedSettlement {
-  fromUserId: string;
-  toUserId: string;
+  fromParticipantId: string;
+  toParticipantId: string;
   amount: number;
+}
+
+// --- Group Balance Types (Fase 3) ---
+
+export interface GroupData {
+  groupId: string;
+  groupName: string;
+  memberParticipantIds: string[];
+}
+
+export interface EntityBalance {
+  entityId: string; // participantId OR groupId
+  entityType: 'participant' | 'group';
+  displayName: string;
+  displayAvatar: string | null;
+  members?: ParticipantData[];
+  totalPaid: number;
+  totalOwed: number;
+  netBalance: number;
 }

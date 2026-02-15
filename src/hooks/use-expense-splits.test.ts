@@ -27,7 +27,7 @@ function buildFormData(overrides: Partial<ExpenseFormValues> = {}): ExpenseFormV
     currency: 'BRL',
     date: '2025-01-15',
     category: 'food',
-    paid_by: 'user-payer',
+    paid_by_participant_id: 'user-payer',
     split_type: 'equal',
     selected_members: ['user-1', 'user-2'],
     ...overrides,
@@ -82,7 +82,7 @@ describe('useExpenseSplits', () => {
       expect(sum).toBeCloseTo(100, 2);
     });
 
-    it('assigns correct user IDs in splits', () => {
+    it('assigns correct participant IDs in splits', () => {
       const { result } = renderHook(() => useExpenseSplits('BRL'));
 
       const data = buildFormData({
@@ -93,8 +93,8 @@ describe('useExpenseSplits', () => {
 
       const splitResult = result.current.calculateSplits(data);
 
-      expect(splitResult!.splits[0].user_id).toBe('alice');
-      expect(splitResult!.splits[1].user_id).toBe('bob');
+      expect(splitResult!.splits[0].participant_id).toBe('alice');
+      expect(splitResult!.splits[1].participant_id).toBe('bob');
     });
 
     it('handles single member', () => {
@@ -111,7 +111,7 @@ describe('useExpenseSplits', () => {
       expect(splitResult).not.toBeNull();
       expect(splitResult!.splits).toHaveLength(1);
       expect(splitResult!.splits[0].amount).toBe(75.5);
-      expect(splitResult!.splits[0].user_id).toBe('user-1');
+      expect(splitResult!.splits[0].participant_id).toBe('user-1');
     });
   });
 
@@ -449,7 +449,7 @@ describe('useExpenseSplits', () => {
       expect(Array.isArray(splitResult!.splits)).toBe(true);
     });
 
-    it('each split has user_id, amount, and percentage', () => {
+    it('each split has participant_id, amount, and percentage', () => {
       const { result } = renderHook(() => useExpenseSplits('BRL'));
 
       const data = buildFormData({
@@ -461,10 +461,10 @@ describe('useExpenseSplits', () => {
       const splitResult = result.current.calculateSplits(data);
 
       for (const split of splitResult!.splits) {
-        expect(split).toHaveProperty('user_id');
+        expect(split).toHaveProperty('participant_id');
         expect(split).toHaveProperty('amount');
         expect(split).toHaveProperty('percentage');
-        expect(typeof split.user_id).toBe('string');
+        expect(typeof split.participant_id).toBe('string');
         expect(typeof split.amount).toBe('number');
         expect(typeof split.percentage).toBe('number');
       }

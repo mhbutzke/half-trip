@@ -58,9 +58,9 @@ export function SettlementHistory({
   };
 
   const canManageSettlement = (settlement: SettlementWithUsers) => {
-    return (
-      settlement.from_user === currentUserId || settlement.to_user === currentUserId || isOrganizer
-    );
+    const isFromUser = settlement.from_user && settlement.from_user === currentUserId;
+    const isToUser = settlement.to_user && settlement.to_user === currentUserId;
+    return isFromUser || isToUser || isOrganizer;
   };
 
   const handleUnmarkAsPaid = async () => {
@@ -148,15 +148,15 @@ export function SettlementHistory({
                     <div className="flex-1 space-y-3">
                       <div className="flex items-center gap-3">
                         <Avatar className="h-9 w-9">
-                          <AvatarImage src={settlement.from_user_data.avatar_url || undefined} />
+                          <AvatarImage src={settlement.from_user_data?.avatar_url || undefined} />
                           <AvatarFallback className="text-xs">
-                            {getInitials(settlement.from_user_data.name)}
+                            {getInitials(settlement.from_user_data?.name || 'Convidado')}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
                           <p className="text-sm font-medium">
-                            {settlement.from_user_data.name.split(' ')[0]} pagou{' '}
-                            {settlement.to_user_data.name.split(' ')[0]}
+                            {(settlement.from_user_data?.name || 'Convidado').split(' ')[0]} pagou{' '}
+                            {(settlement.to_user_data?.name || 'Convidado').split(' ')[0]}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {settlement.settled_at &&

@@ -58,13 +58,13 @@ export function SettlementsList({ settlements, currentUserId }: SettlementsListP
     <div className="space-y-3">
       {settlements.map((settlement, index) => {
         // Check if current user is involved in this settlement
-        const isFromCurrentUser = currentUserId === settlement.from.userId;
-        const isToCurrentUser = currentUserId === settlement.to.userId;
+        const isFromCurrentUser = currentUserId === settlement.from.participantId;
+        const isToCurrentUser = currentUserId === settlement.to.participantId;
         const isHighlighted = isFromCurrentUser || isToCurrentUser;
 
         return (
           <Card
-            key={`${settlement.from.userId}-${settlement.to.userId}-${index}`}
+            key={`${settlement.from.participantId}-${settlement.to.participantId}-${index}`}
             className={`p-4 transition-colors ${
               isHighlighted ? 'border-primary bg-primary/5' : ''
             }`}
@@ -73,9 +73,9 @@ export function SettlementsList({ settlements, currentUserId }: SettlementsListP
               {/* From (Debtor) */}
               <div className="flex items-center gap-2 flex-1">
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src={settlement.from.userAvatar || undefined} />
+                  <AvatarImage src={settlement.from.participantAvatar || undefined} />
                   <AvatarFallback>
-                    {settlement.from.userName.substring(0, 2).toUpperCase()}
+                    {settlement.from.participantName.substring(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
@@ -84,7 +84,7 @@ export function SettlementsList({ settlements, currentUserId }: SettlementsListP
                       isFromCurrentUser ? 'text-foreground' : 'text-muted-foreground'
                     }`}
                   >
-                    {settlement.from.userName}
+                    {settlement.from.participantName}
                   </p>
                   {isFromCurrentUser && (
                     <p className="text-xs text-muted-foreground">Voc� deve pagar</p>
@@ -109,16 +109,16 @@ export function SettlementsList({ settlements, currentUserId }: SettlementsListP
                       isToCurrentUser ? 'text-foreground' : 'text-muted-foreground'
                     }`}
                   >
-                    {settlement.to.userName}
+                    {settlement.to.participantName}
                   </p>
                   {isToCurrentUser && (
                     <p className="text-xs text-muted-foreground">Voc� deve receber</p>
                   )}
                 </div>
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src={settlement.to.userAvatar || undefined} />
+                  <AvatarImage src={settlement.to.participantAvatar || undefined} />
                   <AvatarFallback>
-                    {settlement.to.userName.substring(0, 2).toUpperCase()}
+                    {settlement.to.participantName.substring(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
               </div>

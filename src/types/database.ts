@@ -138,6 +138,103 @@ export type Database = {
           },
         ];
       };
+      trip_participants: {
+        Row: {
+          id: string;
+          trip_id: string;
+          user_id: string | null;
+          guest_name: string | null;
+          guest_email: string | null;
+          guest_avatar_url: string | null;
+          type: 'member' | 'guest';
+          group_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          trip_id: string;
+          user_id?: string | null;
+          guest_name?: string | null;
+          guest_email?: string | null;
+          guest_avatar_url?: string | null;
+          type: 'member' | 'guest';
+          group_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          trip_id?: string;
+          user_id?: string | null;
+          guest_name?: string | null;
+          guest_email?: string | null;
+          guest_avatar_url?: string | null;
+          type?: 'member' | 'guest';
+          group_id?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'trip_participants_trip_id_fkey';
+            columns: ['trip_id'];
+            isOneToOne: false;
+            referencedRelation: 'trips';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'trip_participants_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'trip_participants_group_id_fkey';
+            columns: ['group_id'];
+            isOneToOne: false;
+            referencedRelation: 'trip_groups';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      trip_groups: {
+        Row: {
+          id: string;
+          trip_id: string;
+          name: string;
+          created_by: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          trip_id: string;
+          name: string;
+          created_by: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          trip_id?: string;
+          name?: string;
+          created_by?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'trip_groups_trip_id_fkey';
+            columns: ['trip_id'];
+            isOneToOne: false;
+            referencedRelation: 'trips';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'trip_groups_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       activities: {
         Row: {
           id: string;
@@ -255,7 +352,8 @@ export type Database = {
           exchange_rate: number;
           date: string;
           category: 'accommodation' | 'food' | 'transport' | 'tickets' | 'shopping' | 'other';
-          paid_by: string;
+          paid_by: string | null;
+          paid_by_participant_id: string | null;
           created_by: string;
           receipt_url: string | null;
           notes: string | null;
@@ -271,7 +369,8 @@ export type Database = {
           exchange_rate?: number;
           date: string;
           category: 'accommodation' | 'food' | 'transport' | 'tickets' | 'shopping' | 'other';
-          paid_by: string;
+          paid_by?: string | null;
+          paid_by_participant_id?: string | null;
           created_by: string;
           receipt_url?: string | null;
           notes?: string | null;
@@ -288,6 +387,7 @@ export type Database = {
           date?: string;
           category?: 'accommodation' | 'food' | 'transport' | 'tickets' | 'shopping' | 'other';
           paid_by?: string;
+          paid_by_participant_id?: string;
           created_by?: string;
           receipt_url?: string | null;
           notes?: string | null;
@@ -310,6 +410,13 @@ export type Database = {
             referencedColumns: ['id'];
           },
           {
+            foreignKeyName: 'expenses_paid_by_participant_id_fkey';
+            columns: ['paid_by_participant_id'];
+            isOneToOne: false;
+            referencedRelation: 'trip_participants';
+            referencedColumns: ['id'];
+          },
+          {
             foreignKeyName: 'expenses_created_by_fkey';
             columns: ['created_by'];
             isOneToOne: false;
@@ -322,7 +429,8 @@ export type Database = {
         Row: {
           id: string;
           expense_id: string;
-          user_id: string;
+          user_id: string | null;
+          participant_id: string | null;
           amount: number;
           percentage: number | null;
           created_at: string;
@@ -330,7 +438,8 @@ export type Database = {
         Insert: {
           id?: string;
           expense_id: string;
-          user_id: string;
+          user_id?: string | null;
+          participant_id?: string | null;
           amount: number;
           percentage?: number | null;
           created_at?: string;
@@ -338,7 +447,8 @@ export type Database = {
         Update: {
           id?: string;
           expense_id?: string;
-          user_id?: string;
+          user_id?: string | null;
+          participant_id?: string | null;
           amount?: number;
           percentage?: number | null;
           created_at?: string;
@@ -356,6 +466,13 @@ export type Database = {
             columns: ['user_id'];
             isOneToOne: false;
             referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'expense_splits_participant_id_fkey';
+            columns: ['participant_id'];
+            isOneToOne: false;
+            referencedRelation: 'trip_participants';
             referencedColumns: ['id'];
           },
         ];
@@ -740,8 +857,10 @@ export type Database = {
         Row: {
           id: string;
           trip_id: string;
-          from_user: string;
-          to_user: string;
+          from_user: string | null;
+          to_user: string | null;
+          from_participant_id: string | null;
+          to_participant_id: string | null;
           amount: number;
           settled_at: string | null;
           created_at: string;
@@ -749,8 +868,10 @@ export type Database = {
         Insert: {
           id?: string;
           trip_id: string;
-          from_user: string;
-          to_user: string;
+          from_user?: string | null;
+          to_user?: string | null;
+          from_participant_id?: string | null;
+          to_participant_id?: string | null;
           amount: number;
           settled_at?: string | null;
           created_at?: string;
@@ -758,8 +879,10 @@ export type Database = {
         Update: {
           id?: string;
           trip_id?: string;
-          from_user?: string;
-          to_user?: string;
+          from_user?: string | null;
+          to_user?: string | null;
+          from_participant_id?: string | null;
+          to_participant_id?: string | null;
           amount?: number;
           settled_at?: string | null;
           created_at?: string;
@@ -784,6 +907,20 @@ export type Database = {
             columns: ['to_user'];
             isOneToOne: false;
             referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'settlements_from_participant_id_fkey';
+            columns: ['from_participant_id'];
+            isOneToOne: false;
+            referencedRelation: 'trip_participants';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'settlements_to_participant_id_fkey';
+            columns: ['to_participant_id'];
+            isOneToOne: false;
+            referencedRelation: 'trip_participants';
             referencedColumns: ['id'];
           },
         ];
@@ -1132,6 +1269,14 @@ export type Database = {
         };
         Returns: boolean;
       };
+      link_guest_to_user: {
+        Args: {
+          p_trip_id: string;
+          p_user_id: string;
+          p_user_email: string;
+        };
+        Returns: string | null;
+      };
     };
     Enums: {
       [_ in never]: never;
@@ -1154,6 +1299,8 @@ export type UpdateTables<T extends keyof Database['public']['Tables']> =
 export type User = Tables<'users'>;
 export type Trip = Tables<'trips'>;
 export type TripMember = Tables<'trip_members'>;
+export type TripParticipant = Tables<'trip_participants'>;
+export type TripGroup = Tables<'trip_groups'>;
 export type Activity = Tables<'activities'>;
 export type ActivityAttachment = Tables<'activity_attachments'>;
 export type Expense = Tables<'expenses'>;
@@ -1169,6 +1316,8 @@ export type GoogleCalendarActivitySync = Tables<'google_calendar_activity_syncs'
 export type InsertUser = InsertTables<'users'>;
 export type InsertTrip = InsertTables<'trips'>;
 export type InsertTripMember = InsertTables<'trip_members'>;
+export type InsertTripParticipant = InsertTables<'trip_participants'>;
+export type InsertTripGroup = InsertTables<'trip_groups'>;
 export type InsertActivity = InsertTables<'activities'>;
 export type InsertActivityAttachment = InsertTables<'activity_attachments'>;
 export type InsertExpense = InsertTables<'expenses'>;
@@ -1184,6 +1333,8 @@ export type InsertGoogleCalendarActivitySync = InsertTables<'google_calendar_act
 export type UpdateUser = UpdateTables<'users'>;
 export type UpdateTrip = UpdateTables<'trips'>;
 export type UpdateTripMember = UpdateTables<'trip_members'>;
+export type UpdateTripParticipant = UpdateTables<'trip_participants'>;
+export type UpdateTripGroup = UpdateTables<'trip_groups'>;
 export type UpdateActivity = UpdateTables<'activities'>;
 export type UpdateActivityAttachment = UpdateTables<'activity_attachments'>;
 export type UpdateExpense = UpdateTables<'expenses'>;
@@ -1209,6 +1360,7 @@ export type ExpenseCategory =
   | 'other';
 
 export type BudgetCategory = ExpenseCategory | 'total';
+export type TripParticipantType = 'member' | 'guest';
 
 // Activity transport sub-type (for activities with category 'transport')
 export type ActivityTransportType = 'car' | 'plane' | 'bus' | 'train' | 'ship' | 'bike' | 'other';

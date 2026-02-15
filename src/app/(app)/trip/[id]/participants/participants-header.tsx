@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, UserPlus, Users } from 'lucide-react';
+import { ArrowLeft, UserPlus, UserRound, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { InviteDialog } from '@/components/invites/invite-dialog';
+import { AddGuestDialog } from './add-guest-dialog';
 
 interface ParticipantsHeaderProps {
   tripId: string;
@@ -20,6 +21,8 @@ export function ParticipantsHeader({
   currentUserId,
 }: ParticipantsHeaderProps) {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [isGuestOpen, setIsGuestOpen] = useState(false);
+  const isOrganizer = userRole === 'organizer';
 
   return (
     <>
@@ -39,10 +42,18 @@ export function ParticipantsHeader({
           <p className="text-muted-foreground">{tripName}</p>
         </div>
 
-        <Button onClick={() => setIsInviteOpen(true)}>
-          <UserPlus className="mr-2 h-4 w-4" />
-          Convidar
-        </Button>
+        <div className="flex gap-2">
+          {isOrganizer && (
+            <Button variant="outline" onClick={() => setIsGuestOpen(true)}>
+              <UserRound className="mr-2 h-4 w-4" />
+              Convidado
+            </Button>
+          )}
+          <Button onClick={() => setIsInviteOpen(true)}>
+            <UserPlus className="mr-2 h-4 w-4" />
+            Convidar
+          </Button>
+        </div>
       </div>
 
       <InviteDialog
@@ -53,6 +64,10 @@ export function ParticipantsHeader({
         userRole={userRole}
         currentUserId={currentUserId}
       />
+
+      {isOrganizer && (
+        <AddGuestDialog tripId={tripId} open={isGuestOpen} onOpenChange={setIsGuestOpen} />
+      )}
     </>
   );
 }

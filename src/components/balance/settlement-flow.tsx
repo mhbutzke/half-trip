@@ -41,8 +41,8 @@ export function SettlementFlow({
 
   const canInteract = (settlement: Settlement) => {
     return (
-      settlement.from.userId === currentUserId ||
-      settlement.to.userId === currentUserId ||
+      settlement.from.participantId === currentUserId ||
+      settlement.to.participantId === currentUserId ||
       isOrganizer
     );
   };
@@ -74,8 +74,8 @@ export function SettlementFlow({
         <div className="space-y-4">
           {settlements.map((settlement) => {
             const isUserInvolved = canInteract(settlement);
-            const isUserPaying = settlement.from.userId === currentUserId;
-            const settlementKey = `${settlement.from.userId}-${settlement.to.userId}-${settlement.amount}`;
+            const isUserPaying = settlement.from.participantId === currentUserId;
+            const settlementKey = `${settlement.from.participantId}-${settlement.to.participantId}-${settlement.amount}`;
 
             return (
               <div
@@ -91,7 +91,7 @@ export function SettlementFlow({
                     Você deve
                   </Badge>
                 )}
-                {settlement.to.userId === currentUserId && (
+                {settlement.to.participantId === currentUserId && (
                   <Badge variant="secondary" className="absolute -top-2 left-4 text-xs">
                     Você recebe
                   </Badge>
@@ -101,13 +101,13 @@ export function SettlementFlow({
                   {/* From user */}
                   <div className="flex flex-col items-center gap-2">
                     <Avatar className="h-12 w-12 border-2 border-background">
-                      <AvatarImage src={settlement.from.userAvatar || undefined} />
+                      <AvatarImage src={settlement.from.participantAvatar || undefined} />
                       <AvatarFallback className="bg-destructive/10 text-destructive text-xs">
-                        {getInitials(settlement.from.userName)}
+                        {getInitials(settlement.from.participantName)}
                       </AvatarFallback>
                     </Avatar>
                     <span className="text-xs font-medium text-center max-w-20 truncate">
-                      {getFirstName(settlement.from.userName)}
+                      {getFirstName(settlement.from.participantName)}
                     </span>
                   </div>
 
@@ -122,13 +122,13 @@ export function SettlementFlow({
                   {/* To user */}
                   <div className="flex flex-col items-center gap-2">
                     <Avatar className="h-12 w-12 border-2 border-background">
-                      <AvatarImage src={settlement.to.userAvatar || undefined} />
+                      <AvatarImage src={settlement.to.participantAvatar || undefined} />
                       <AvatarFallback className="bg-success/10 text-success text-xs">
-                        {getInitials(settlement.to.userName)}
+                        {getInitials(settlement.to.participantName)}
                       </AvatarFallback>
                     </Avatar>
                     <span className="text-xs font-medium text-center max-w-20 truncate">
-                      {getFirstName(settlement.to.userName)}
+                      {getFirstName(settlement.to.participantName)}
                     </span>
                   </div>
 

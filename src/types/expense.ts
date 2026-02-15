@@ -11,7 +11,7 @@ export type ExpenseWithDetails = Expense & {
     id: string;
     name: string;
     avatar_url: string | null;
-  };
+  } | null;
   created_by_user: {
     id: string;
     name: string;
@@ -22,7 +22,7 @@ export type ExpenseWithDetails = Expense & {
       id: string;
       name: string;
       avatar_url: string | null;
-    };
+    } | null;
   })[];
 };
 
@@ -34,10 +34,10 @@ export type CreateExpenseInput = {
   exchange_rate?: number;
   date: string;
   category: ExpenseCategory;
-  paid_by: string;
+  paid_by_participant_id: string;
   notes?: string | null;
   splits: {
-    user_id: string;
+    participant_id: string;
     amount: number;
     percentage?: number | null;
   }[];

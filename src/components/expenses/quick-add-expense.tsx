@@ -21,21 +21,21 @@ import { AvatarSelector } from '@/components/ui/avatar-selector';
 import { createExpense } from '@/lib/supabase/expenses';
 import { useCurrencyInput } from '@/hooks/use-currency-input';
 import { parseAmount } from '@/lib/validation/expense-schemas';
-import type { TripMemberWithUser } from '@/lib/supabase/trips';
+import type { TripParticipantResolved } from '@/lib/supabase/participants';
 
 const quickExpenseSchema = z.object({
   description: z.string().min(2, 'Mínimo 2 caracteres'),
   amount: z.string().min(1, 'Valor obrigatório'),
   category: z.enum(['accommodation', 'food', 'transport', 'tickets', 'shopping', 'other'] as const),
-  paid_by: z.string().uuid(),
+  paid_by_participant_id: z.string().uuid(),
 });
 
 type QuickExpenseInput = z.infer<typeof quickExpenseSchema>;
 
 interface QuickAddExpenseProps {
   tripId: string;
-  members: TripMemberWithUser[];
-  currentUserId: string;
+  participants: TripParticipantResolved[];
+  currentParticipantId: string;
   baseCurrency: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -44,8 +44,8 @@ interface QuickAddExpenseProps {
 
 export function QuickAddExpense({
   tripId,
-  members,
-  currentUserId,
+  participants,
+  currentParticipantId,
   baseCurrency,
   open,
   onOpenChange,
@@ -59,7 +59,7 @@ export function QuickAddExpense({
       description: '',
       amount: '',
       category: 'food',
-      paid_by: currentUserId,
+      paid_by_participant_id: currentParticipantId,
     },
   });
 
@@ -68,10 +68,10 @@ export function QuickAddExpense({
     onChange: (v) => form.setValue('amount', v),
   });
 
-  const avatarParticipants = members.map((m) => ({
-    id: m.user_id,
-    name: m.users.name,
-    avatar_url: m.users.avatar_url,
+  const avatarParticipants = participants.map((p) => ({
+    id: p.id,
+    name: p.displayName,
+    avatar_url: p.displayAvatar,
   }));
 
   const onSubmit = async (data: QuickExpenseInput) => {
@@ -79,14 +79,14 @@ export function QuickAddExpense({
 
     try {
       const amount = parseAmount(data.amount);
-      const memberCount = members.length;
+      const participantCount = participants.length;
 
-      if (memberCount === 0) {
-        toast.error('Nenhum membro na viagem para dividir a despesa');
+      if (participantCount === 0) {
+        toast.error('Nenhum participante na viagem para dividir a despesa');
         return;
       }
 
-      const splitAmount = amount / memberCount;
+      const splitAmount = amount / participantCount;
 
       const result = await createExpense({
         trip_id: tripId,
@@ -96,10 +96,10 @@ export function QuickAddExpense({
         exchange_rate: 1,
         date: new Date().toISOString().split('T')[0],
         category: data.category,
-        paid_by: data.paid_by,
+        paid_by_participant_id: data.paid_by_participant_id,
         notes: null,
-        splits: members.map((m) => ({
-          user_id: m.user_id,
+        splits: participants.map((p) => ({
+          participant_id: p.id,
           amount: splitAmount,
           percentage: null,
         })),
@@ -159,8 +159,8 @@ export function QuickAddExpense({
                     </div>
                   </FormControl>
                   <p className="text-xs text-muted-foreground">
-                    Será dividido igualmente entre {members.length}{' '}
-                    {members.length === 1 ? 'pessoa' : 'pessoas'}
+                    Será dividido igualmente entre {participants.length}{' '}
+                    {participants.length === 1 ? 'pessoa' : 'pessoas'}
                   </p>
                   <FormMessage />
                 </FormItem>
@@ -185,8 +185,8 @@ export function QuickAddExpense({
               <FormLabel>Quem pagou?</FormLabel>
               <AvatarSelector
                 participants={avatarParticipants}
-                selected={form.watch('paid_by')}
-                onSelect={(id) => form.setValue('paid_by', id)}
+                selected={form.watch('paid_by_participant_id')}
+                onSelect={(id) => form.setValue('paid_by_participant_id', id)}
               />
             </div>
 

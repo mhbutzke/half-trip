@@ -2,7 +2,7 @@
 
 import { createClient } from './server';
 import { getTripExpenses } from './expenses';
-import { getTripMembers } from './trips';
+import { getTripParticipants } from './participants';
 import { getTripExpenseSummary } from './expense-summary';
 import type { ExpenseExportRow } from '@/lib/export/csv-expenses';
 import type { PdfReportData } from '@/lib/export/pdf-expense-report';
@@ -25,16 +25,18 @@ export async function getTripExportData(tripId: string): Promise<PdfReportData |
 
   if (!trip) return null;
 
-  const [expenses, members, summary] = await Promise.all([
+  const [expenses, participantsResult, summary] = await Promise.all([
     getTripExpenses(tripId),
-    getTripMembers(tripId),
+    getTripParticipants(tripId),
     getTripExpenseSummary(tripId),
   ]);
 
-  // Build member name map
-  const memberNameMap = new Map<string, string>();
-  members.forEach((m) => {
-    memberNameMap.set(m.user_id, m.users.name);
+  const participants = participantsResult.data ?? [];
+
+  // Build participant name map (participant_id -> displayName)
+  const participantNameMap = new Map<string, string>();
+  participants.forEach((p) => {
+    participantNameMap.set(p.id, p.displayName);
   });
 
   const expenseRows: ExpenseExportRow[] = expenses.map((e) => ({
@@ -44,16 +46,19 @@ export async function getTripExportData(tripId: string): Promise<PdfReportData |
     amount: e.amount,
     currency: e.currency,
     exchange_rate: e.exchange_rate ?? 1,
-    paid_by_name: memberNameMap.get(e.paid_by) || 'N/A',
+    paid_by_name:
+      (e.paid_by_participant_id && participantNameMap.get(e.paid_by_participant_id)) ||
+      e.paid_by_user?.name ||
+      'Convidado',
     notes: e.notes,
   }));
 
   const baseCurrency = trip.base_currency || 'BRL';
   const totalAmount = expenses.reduce((sum, e) => sum + e.amount * (e.exchange_rate ?? 1), 0);
 
-  const participants = summary
+  const participantSummary = summary
     ? summary.participants.map((p) => ({
-        name: p.userName,
+        name: p.participantName,
         paid: p.totalPaid,
         owes: p.totalOwed,
         balance: p.netBalance,
@@ -69,6 +74,6 @@ export async function getTripExportData(tripId: string): Promise<PdfReportData |
     expenses: expenseRows,
     totalAmount,
     currency: baseCurrency,
-    participants,
+    participants: participantSummary,
   };
 }

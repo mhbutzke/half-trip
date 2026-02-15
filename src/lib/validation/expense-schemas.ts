@@ -25,7 +25,7 @@ export const splitTypes = [
 export type SplitType = (typeof splitTypes)[number]['value'];
 
 export const expenseSplitSchema = z.object({
-  user_id: z.string().uuid('ID do usuário inválido'),
+  participant_id: z.string().uuid('ID do participante inválido'),
   amount: z.number().nonnegative('Valor deve ser positivo ou zero'),
   percentage: z.number().min(0).max(100).optional().nullable(),
 });
@@ -48,7 +48,7 @@ export const createExpenseSchema = z.object({
       message: 'Categoria inválida',
     })
     .refine((val) => val !== undefined, { message: 'Categoria é obrigatória' }),
-  paid_by: z.string().uuid('Quem pagou é obrigatório'),
+  paid_by_participant_id: z.string().uuid('Quem pagou é obrigatório'),
   notes: z
     .string()
     .max(500, 'Observações devem ter no máximo 500 caracteres')
@@ -82,7 +82,7 @@ export const expenseFormSchema = z.object({
       message: 'Categoria inválida',
     }
   ),
-  paid_by: z.string().min(1, 'Quem pagou é obrigatório'),
+  paid_by_participant_id: z.string().min(1, 'Quem pagou é obrigatório'),
   notes: z.string().max(500, 'Observações devem ter no máximo 500 caracteres').optional(),
   split_type: z.enum(['equal', 'by_amount', 'by_percentage'] as const),
   selected_members: z.array(z.string()).min(1, 'Selecione pelo menos um participante'),
@@ -159,17 +159,17 @@ export function formatCurrencyInput(raw: string): string {
  */
 export function calculateEqualSplits(
   totalAmount: number,
-  memberIds: string[]
+  participantIds: string[]
 ): ExpenseSplitInput[] {
-  if (memberIds.length === 0) return [];
+  if (participantIds.length === 0) return [];
 
-  const baseAmount = Math.floor((totalAmount / memberIds.length) * 100) / 100;
-  const remainder = Math.round((totalAmount - baseAmount * memberIds.length) * 100) / 100;
+  const baseAmount = Math.floor((totalAmount / participantIds.length) * 100) / 100;
+  const remainder = Math.round((totalAmount - baseAmount * participantIds.length) * 100) / 100;
 
-  return memberIds.map((userId, index) => ({
-    user_id: userId,
+  return participantIds.map((participantId, index) => ({
+    participant_id: participantId,
     amount: index === 0 ? baseAmount + remainder : baseAmount,
-    percentage: Math.round((100 / memberIds.length) * 100) / 100,
+    percentage: Math.round((100 / participantIds.length) * 100) / 100,
   }));
 }
 
@@ -179,13 +179,13 @@ export function calculateEqualSplits(
 export function calculateAmountSplits(
   totalAmount: number,
   customAmounts: Record<string, string>,
-  memberIds: string[]
+  participantIds: string[]
 ): ExpenseSplitInput[] {
-  return memberIds.map((userId) => {
-    const amount = parseAmount(customAmounts[userId] || '0');
+  return participantIds.map((participantId) => {
+    const amount = parseAmount(customAmounts[participantId] || '0');
     const percentage = totalAmount > 0 ? (amount / totalAmount) * 100 : 0;
     return {
-      user_id: userId,
+      participant_id: participantId,
       amount,
       percentage: Math.round(percentage * 100) / 100,
     };
@@ -198,13 +198,13 @@ export function calculateAmountSplits(
 export function calculatePercentageSplits(
   totalAmount: number,
   customPercentages: Record<string, string>,
-  memberIds: string[]
+  participantIds: string[]
 ): ExpenseSplitInput[] {
-  return memberIds.map((userId) => {
-    const percentage = parseAmount(customPercentages[userId] || '0');
+  return participantIds.map((participantId) => {
+    const percentage = parseAmount(customPercentages[participantId] || '0');
     const amount = Math.round(((totalAmount * percentage) / 100) * 100) / 100;
     return {
-      user_id: userId,
+      participant_id: participantId,
       amount,
       percentage,
     };

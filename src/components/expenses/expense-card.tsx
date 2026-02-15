@@ -168,13 +168,13 @@ export const ExpenseCard = memo(function ExpenseCard({
             {/* Paid by */}
             <div className="flex items-center gap-1.5">
               <Avatar className="h-5 w-5">
-                <AvatarImage src={expense.paid_by_user.avatar_url || undefined} />
+                <AvatarImage src={expense.paid_by_user?.avatar_url || undefined} />
                 <AvatarFallback className="text-[9px]">
-                  {getInitials(expense.paid_by_user.name)}
+                  {getInitials(expense.paid_by_user?.name || 'Convidado')}
                 </AvatarFallback>
               </Avatar>
               <span className="text-xs text-muted-foreground">
-                {expense.paid_by_user.name.split(' ')[0]}
+                {(expense.paid_by_user?.name || 'Convidado').split(' ')[0]}
               </span>
             </div>
           </div>

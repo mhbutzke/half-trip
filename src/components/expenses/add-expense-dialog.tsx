@@ -63,15 +63,16 @@ import { CurrencyAmountInput } from '@/components/forms/currency-amount-input';
 import { MemberSplitSelector } from '@/components/forms/member-split-selector';
 import { cn } from '@/lib/utils';
 import type { SupportedCurrency } from '@/types/currency';
-import type { TripMemberWithUser } from '@/lib/supabase/trips';
+import type { TripParticipantResolved } from '@/lib/supabase/participants';
 import type { ExpenseWithDetails } from '@/types/expense';
 
 type DialogStep = 'capture' | 'details' | 'split';
 
 interface AddExpenseDialogProps {
   tripId: string;
-  members: TripMemberWithUser[];
+  participants: TripParticipantResolved[];
   currentUserId: string;
+  currentParticipantId: string;
   baseCurrency: string;
   trigger?: React.ReactNode;
   onSuccess?: () => void;
@@ -87,8 +88,9 @@ type TriggerElementProps = {
 
 export function AddExpenseDialog({
   tripId,
-  members,
-  currentUserId,
+  participants,
+  currentUserId: _currentUserId,
+  currentParticipantId,
   baseCurrency,
   trigger,
   onSuccess,
@@ -119,15 +121,16 @@ export function AddExpenseDialog({
           : '',
       date: expense?.date || new Date().toISOString().split('T')[0],
       category: expense?.category || 'other',
-      paid_by: expense?.paid_by || currentUserId,
+      paid_by_participant_id: expense?.paid_by_participant_id || currentParticipantId,
       notes: expense?.notes || '',
       split_type: 'equal',
       selected_members:
-        expense?.expense_splits.map((s) => s.user_id) || members.map((m) => m.user_id),
+        (expense?.expense_splits.map((s) => s.participant_id).filter(Boolean) as string[]) ||
+        participants.map((p) => p.id),
       custom_amounts: {},
       custom_percentages: {},
     }),
-    [expense, baseCurrency, currentUserId, members]
+    [expense, baseCurrency, currentParticipantId, participants]
   );
 
   const { open, setOpen } = useDialogState({
@@ -158,10 +161,10 @@ export function AddExpenseDialog({
     }
   }, [watchDescription, watchCategory, isEditing, form]);
 
-  const avatarParticipants = members.map((m) => ({
-    id: m.user_id,
-    name: m.users.name,
-    avatar_url: m.users.avatar_url,
+  const avatarParticipants = participants.map((p) => ({
+    id: p.id,
+    name: p.displayName,
+    avatar_url: p.displayAvatar,
   }));
 
   // Receipt handlers
@@ -230,10 +233,10 @@ export function AddExpenseDialog({
         exchange_rate: exchangeRate,
         date: data.date,
         category: data.category,
-        paid_by: data.paid_by,
+        paid_by_participant_id: data.paid_by_participant_id,
         notes: data.notes || null,
         splits: splits.map((s) => ({
-          user_id: s.user_id,
+          participant_id: s.participant_id,
           amount: s.amount,
           percentage: s.percentage,
         })),
@@ -303,7 +306,7 @@ export function AddExpenseDialog({
       toast.error('Informe a descrição da despesa');
       return;
     }
-    if (!form.getValues('paid_by')) {
+    if (!form.getValues('paid_by_participant_id')) {
       toast.error('Selecione quem pagou');
       return;
     }
@@ -520,7 +523,8 @@ export function AddExpenseDialog({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
-                        Descrição<RequiredMark />
+                        Descrição
+                        <RequiredMark />
                       </FormLabel>
                       <FormControl>
                         <Input placeholder="Ex: Jantar no restaurante" {...field} autoFocus />
@@ -536,15 +540,15 @@ export function AddExpenseDialog({
                 {/* Split Preview (if amount > 0) */}
                 {parseAmount(watchAmount || '0') > 0 && watchSelectedMembers.length > 0 && (
                   <SplitPreview
-                    splits={watchSelectedMembers.map((userId) => {
-                      const member = members.find((m) => m.user_id === userId);
+                    splits={watchSelectedMembers.map((participantId) => {
+                      const participant = participants.find((p) => p.id === participantId);
                       const amount = parseAmount(watchAmount || '0') / watchSelectedMembers.length;
                       return {
-                        userId,
-                        userName: member?.users.name || 'Desconhecido',
-                        userAvatar: member?.users.avatar_url || null,
+                        userId: participantId,
+                        userName: participant?.displayName || 'Desconhecido',
+                        userAvatar: participant?.displayAvatar || null,
                         amount,
-                        isPayer: userId === form.watch('paid_by'),
+                        isPayer: participantId === form.watch('paid_by_participant_id'),
                       };
                     })}
                     currency={form.watch('currency')}
@@ -560,7 +564,8 @@ export function AddExpenseDialog({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>
-                          Data<RequiredMark />
+                          Data
+                          <RequiredMark />
                         </FormLabel>
                         <FormControl>
                           <Input type="date" {...field} />
@@ -576,7 +581,8 @@ export function AddExpenseDialog({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>
-                          Categoria<RequiredMark />
+                          Categoria
+                          <RequiredMark />
                         </FormLabel>
                         <FormControl>
                           <CategorySelector value={field.value} onChange={field.onChange} />
@@ -592,8 +598,8 @@ export function AddExpenseDialog({
                   <FormLabel>Pago por</FormLabel>
                   <AvatarSelector
                     participants={avatarParticipants}
-                    selected={form.watch('paid_by')}
-                    onSelect={(id) => form.setValue('paid_by', id)}
+                    selected={form.watch('paid_by_participant_id')}
+                    onSelect={(id) => form.setValue('paid_by_participant_id', id)}
                   />
                 </div>
 
@@ -681,10 +687,10 @@ export function AddExpenseDialog({
                     <FormItem>
                       <FormLabel>Participantes da divisão</FormLabel>
                       <MemberSplitSelector
-                        members={members}
+                        participants={participants}
                         splitType={watchSplitType as 'equal' | 'by_amount' | 'by_percentage'}
-                        selectedMembers={watchSelectedMembers}
-                        onSelectedMembersChange={(ids) =>
+                        selectedParticipants={watchSelectedMembers}
+                        onSelectedParticipantsChange={(ids) =>
                           form.setValue('selected_members', ids, { shouldValidate: true })
                         }
                         customAmounts={form.watch('custom_amounts')}

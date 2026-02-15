@@ -24,16 +24,19 @@ async function ExpensesContent({ tripId }: { tripId: string }) {
     redirect('/login');
   }
 
-  const [trip, expenses, members, userRole] = await Promise.all([
+  const [trip, expenses, participantsResult, userRole] = await Promise.all([
     getTripById(tripId),
     getTripExpenses(tripId),
-    getTripMembers(tripId),
+    getTripParticipants(tripId),
     getUserRoleInTrip(tripId),
   ]);
 
   if (!trip) {
     notFound();
   }
+
+  const participants = participantsResult.data ?? [];
+  const currentParticipantId = participants.find((p) => p.userId === user.id)?.id ?? '';
 
   return (
     <div className="space-y-6">
@@ -43,9 +46,10 @@ async function ExpensesContent({ tripId }: { tripId: string }) {
         tripId={tripId}
         baseCurrency={trip.base_currency}
         initialExpenses={expenses}
-        members={members}
+        participants={participants}
         userRole={userRole}
         currentUserId={user.id}
+        currentParticipantId={currentParticipantId}
       />
     </div>
   );

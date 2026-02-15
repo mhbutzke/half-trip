@@ -9,6 +9,8 @@ export type DashboardData = {
   balanceDescription: string;
   totalExpenses: number;
   expenseCount: number;
+  activityCountTotal: number;
+  checklistCount: number;
   nextActivity: {
     title: string;
     date: string;
@@ -46,7 +48,26 @@ export async function getDashboardData(tripId: string): Promise<DashboardData | 
   const baseCurrency = trip.base_currency || 'BRL';
 
   // Fetch expense summary (has balances, settlements, totals)
-  const summary = await getTripExpenseSummary(tripId);
+  const summaryPromise = getTripExpenseSummary(tripId);
+
+  // Count total activities and checklists for readiness UI
+  const activityCountPromise = supabase
+    .from('activities')
+    .select('id', { count: 'exact', head: true })
+    .eq('trip_id', tripId);
+  const checklistCountPromise = supabase
+    .from('trip_checklists')
+    .select('id', { count: 'exact', head: true })
+    .eq('trip_id', tripId);
+
+  const [summary, activityCountResult, checklistCountResult] = await Promise.all([
+    summaryPromise,
+    activityCountPromise,
+    checklistCountPromise,
+  ]);
+
+  const activityCountTotal = activityCountResult.count ?? 0;
+  const checklistCount = checklistCountResult.count ?? 0;
 
   // Find current user's balance
   const userParticipant = summary?.participants.find((p) => p.userId === user.id);
@@ -128,6 +149,8 @@ export async function getDashboardData(tripId: string): Promise<DashboardData | 
     balanceDescription,
     totalExpenses: summary?.totalExpenses ?? 0,
     expenseCount: summary?.expenseCount ?? 0,
+    activityCountTotal,
+    checklistCount,
     nextActivity,
     pendingSettlements: {
       count: pendingForUser.length,

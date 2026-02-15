@@ -47,8 +47,8 @@ export function TripSummary({ summary, currentUserId, isOrganizer }: TripSummary
     // First, create the settlement record in the database
     const result = await createSettlement({
       trip_id: summary.tripId,
-      from_user: settlement.from.userId,
-      to_user: settlement.to.userId,
+      from_participant_id: settlement.from.participantId,
+      to_participant_id: settlement.to.participantId,
       amount: settlement.amount,
     });
 
@@ -64,9 +64,10 @@ export function TripSummary({ summary, currentUserId, isOrganizer }: TripSummary
   };
 
   const balanceItems = summary.participants.map((p) => ({
-    userId: p.userId,
-    userName: p.userName,
-    userAvatar: p.userAvatar,
+    participantId: p.participantId,
+    participantName: p.participantName,
+    participantAvatar: p.participantAvatar,
+    participantType: p.participantType,
     balance: p.netBalance,
   }));
 
@@ -104,14 +105,14 @@ export function TripSummary({ summary, currentUserId, isOrganizer }: TripSummary
         <CardContent>
           <div className="space-y-4">
             {summary.participants.map((participant) => (
-              <div key={participant.userId} className="space-y-2">
+              <div key={participant.participantId} className="space-y-2">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-10 w-10">
-                    <AvatarImage src={participant.userAvatar || undefined} />
-                    <AvatarFallback>{getInitials(participant.userName)}</AvatarFallback>
+                    <AvatarImage src={participant.participantAvatar || undefined} />
+                    <AvatarFallback>{getInitials(participant.participantName)}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
-                    <p className="font-medium">{participant.userName}</p>
+                    <p className="font-medium">{participant.participantName}</p>
                     <p className="text-xs text-muted-foreground">
                       Pagou{' '}
                       <MoneyDisplay amount={participant.totalPaid} currency={baseCur} size="sm" /> •
@@ -174,10 +175,10 @@ export function TripSummary({ summary, currentUserId, isOrganizer }: TripSummary
       {selectedSettlement && (
         <MarkSettledDialog
           settlementId={summary.settledSettlements[0]?.id || ''} // This will be populated after creating the settlement
-          fromUserName={selectedSettlement.from.userName}
-          fromUserAvatar={selectedSettlement.from.userAvatar}
-          toUserName={selectedSettlement.to.userName}
-          toUserAvatar={selectedSettlement.to.userAvatar}
+          fromUserName={selectedSettlement.from.participantName}
+          fromUserAvatar={selectedSettlement.from.participantAvatar}
+          toUserName={selectedSettlement.to.participantName}
+          toUserAvatar={selectedSettlement.to.participantAvatar}
           amount={selectedSettlement.amount}
           open={markDialogOpen}
           onOpenChange={setMarkDialogOpen}
@@ -190,7 +191,7 @@ export function TripSummary({ summary, currentUserId, isOrganizer }: TripSummary
         <PixQrDialog
           open={!!pixSettlement}
           onOpenChange={(open) => !open && setPixSettlement(null)}
-          toUserName={pixSettlement.to.userName}
+          toUserName={pixSettlement.to.participantName}
           amount={pixSettlement.amount}
           currency={baseCur}
         />

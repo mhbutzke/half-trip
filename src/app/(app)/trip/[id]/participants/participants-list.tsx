@@ -3,17 +3,20 @@
 import { useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Clock, Mail, Users } from 'lucide-react';
+import { Clock, Mail, UserRound, Users } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { ParticipantCard } from './participant-card';
+import { GuestCard } from './guest-card';
 import { LeaveDialog } from './leave-dialog';
 import { useTripRealtime } from '@/hooks/use-trip-realtime';
 import type { TripMemberWithUser } from '@/lib/supabase/trips';
+import type { TripParticipantResolved } from '@/lib/supabase/participants';
 import type { TripInviteWithInviter } from '@/lib/supabase/invites';
 
 interface ParticipantsListProps {
   members: TripMemberWithUser[];
+  guests: TripParticipantResolved[];
   pendingInvites: TripInviteWithInviter[];
   userRole: 'organizer' | 'participant' | null;
   currentUserId: string;
@@ -22,6 +25,7 @@ interface ParticipantsListProps {
 
 export function ParticipantsList({
   members,
+  guests,
   pendingInvites,
   userRole,
   currentUserId,
@@ -31,6 +35,8 @@ export function ParticipantsList({
 
   // Enable real-time updates for this trip
   useTripRealtime({ tripId });
+
+  const isOrganizer = userRole === 'organizer';
 
   // Separate organizers and participants
   const organizers = members.filter((m) => m.role === 'organizer');
@@ -94,6 +100,28 @@ export function ParticipantsList({
           )}
         </CardContent>
       </Card>
+
+      {/* Guests */}
+      {guests.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UserRound className="h-5 w-5" />
+              Convidados ({guests.length})
+            </CardTitle>
+            <CardDescription>
+              Pessoas sem conta no Half Trip que participam das despesas
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {guests.map((guest) => (
+                <GuestCard key={guest.id} guest={guest} tripId={tripId} canManage={isOrganizer} />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Pending Invites */}
       {pendingInvites.length > 0 && (

@@ -5,20 +5,15 @@
  * It takes participant balances and produces an optimized list of settlements
  * that minimizes the number of transactions needed to settle all debts.
  *
+ * All references use participantId (trip_participants.id), supporting both
+ * registered users and guests.
+ *
  * Algorithm: Greedy Matching
  * 1. Separate participants into creditors (positive balance) and debtors (negative balance)
  * 2. Sort both lists by absolute balance (largest first)
  * 3. Match largest creditor with largest debtor
  * 4. Create settlement for the minimum of the two amounts
  * 5. Update both balances and repeat until all debts are settled
- *
- * Example:
- * - Alice paid $100, owes $40 -> net +$60 (creditor)
- * - Bob paid $50, owes $60 -> net -$10 (debtor)
- * - Carol paid $0, owes $50 -> net -$50 (debtor)
- *
- * Without optimization: Bob pays Alice $10, Carol pays Alice $50 (2 transactions)
- * With optimization: Same result, but algorithm ensures minimum transactions
  *
  * Complexity: O(n log n) for sorting, O(n) for matching = O(n log n) overall
  */
@@ -61,14 +56,14 @@ export function calculateSettlements(balances: ParticipantBalance[]): Settlement
     if (settleAmount > 0.01) {
       settlements.push({
         from: {
-          userId: debtor.userId,
-          userName: debtor.userName,
-          userAvatar: debtor.userAvatar,
+          participantId: debtor.participantId,
+          participantName: debtor.participantName,
+          participantAvatar: debtor.participantAvatar,
         },
         to: {
-          userId: creditor.userId,
-          userName: creditor.userName,
-          userAvatar: creditor.userAvatar,
+          participantId: creditor.participantId,
+          participantName: creditor.participantName,
+          participantAvatar: creditor.participantAvatar,
         },
         amount: Math.round(settleAmount * 100) / 100, // Round to 2 decimal places
       });
@@ -99,36 +94,40 @@ export function getSettlementParticipantCount(settlements: Settlement[]): number
   const participants = new Set<string>();
 
   for (const settlement of settlements) {
-    participants.add(settlement.from.userId);
-    participants.add(settlement.to.userId);
+    participants.add(settlement.from.participantId);
+    participants.add(settlement.to.participantId);
   }
 
   return participants.size;
 }
 
 /**
- * Get all settlements involving a specific user
+ * Get all settlements involving a specific participant
  */
-export function getSettlementsForUser(
+export function getSettlementsForParticipant(
   settlements: Settlement[],
-  userId: string
+  participantId: string
 ): { outgoing: Settlement[]; incoming: Settlement[] } {
-  const outgoing = settlements.filter((s) => s.from.userId === userId);
-  const incoming = settlements.filter((s) => s.to.userId === userId);
+  const outgoing = settlements.filter((s) => s.from.participantId === participantId);
+  const incoming = settlements.filter((s) => s.to.participantId === participantId);
 
   return { outgoing, incoming };
 }
 
 /**
- * Calculate the total amount a user needs to pay out
+ * Calculate the total amount a participant needs to pay out
  */
-export function getTotalOutgoing(settlements: Settlement[], userId: string): number {
-  return settlements.filter((s) => s.from.userId === userId).reduce((sum, s) => sum + s.amount, 0);
+export function getTotalOutgoing(settlements: Settlement[], participantId: string): number {
+  return settlements
+    .filter((s) => s.from.participantId === participantId)
+    .reduce((sum, s) => sum + s.amount, 0);
 }
 
 /**
- * Calculate the total amount a user should receive
+ * Calculate the total amount a participant should receive
  */
-export function getTotalIncoming(settlements: Settlement[], userId: string): number {
-  return settlements.filter((s) => s.to.userId === userId).reduce((sum, s) => sum + s.amount, 0);
+export function getTotalIncoming(settlements: Settlement[], participantId: string): number {
+  return settlements
+    .filter((s) => s.to.participantId === participantId)
+    .reduce((sum, s) => sum + s.amount, 0);
 }

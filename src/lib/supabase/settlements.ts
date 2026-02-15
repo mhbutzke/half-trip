@@ -16,18 +16,18 @@ export type SettlementWithUsers = Settlement & {
     id: string;
     name: string;
     avatar_url: string | null;
-  };
+  } | null;
   to_user_data: {
     id: string;
     name: string;
     avatar_url: string | null;
-  };
+  } | null;
 };
 
 export type CreateSettlementInput = {
   trip_id: string;
-  from_user: string;
-  to_user: string;
+  from_participant_id: string;
+  to_participant_id: string;
   amount: number;
 };
 
@@ -58,34 +58,38 @@ export async function createSettlement(input: CreateSettlementInput): Promise<Se
     return { error: 'Você não é membro desta viagem' };
   }
 
-  // Validate that both users are trip members
-  const { count: fromUserCount } = await supabase
-    .from('trip_members')
-    .select('id', { count: 'exact', head: true })
-    .eq('trip_id', input.trip_id)
-    .eq('user_id', input.from_user);
-
-  const { count: toUserCount } = await supabase
-    .from('trip_members')
-    .select('id', { count: 'exact', head: true })
-    .eq('trip_id', input.trip_id)
-    .eq('user_id', input.to_user);
-
-  if (!fromUserCount || !toUserCount) {
-    return { error: 'Os usuários devem ser membros desta viagem' };
-  }
-
   if (input.amount <= 0) {
     return { error: 'O valor deve ser maior que zero' };
   }
+
+  // Load trip participants and build a lookup map
+  const { data: tripParticipants } = await supabase
+    .from('trip_participants')
+    .select('id, user_id, type')
+    .eq('trip_id', input.trip_id);
+
+  const participantById = new Map((tripParticipants || []).map((p) => [p.id, p]));
+
+  const fromParticipant = participantById.get(input.from_participant_id);
+  const toParticipant = participantById.get(input.to_participant_id);
+
+  if (!fromParticipant || !toParticipant) {
+    return { error: 'Os participantes devem fazer parte desta viagem' };
+  }
+
+  // Derive user_id from participants (null for guests)
+  const fromUser = fromParticipant.user_id || null;
+  const toUser = toParticipant.user_id || null;
 
   // Create the settlement
   const { data: settlement, error: settlementError } = await supabase
     .from('settlements')
     .insert({
       trip_id: input.trip_id,
-      from_user: input.from_user,
-      to_user: input.to_user,
+      from_user: fromUser,
+      to_user: toUser,
+      from_participant_id: input.from_participant_id,
+      to_participant_id: input.to_participant_id,
       amount: input.amount,
     })
     .select('id')
@@ -151,11 +155,10 @@ export async function markSettlementAsPaid(settlementId: string): Promise<Settle
   }
 
   // Only the from_user, to_user, or organizers can mark as paid
-  if (
-    authUser.id !== settlement.from_user &&
-    authUser.id !== settlement.to_user &&
-    member.role !== 'organizer'
-  ) {
+  // For guests (from_user/to_user is null), only organizers can mark as paid
+  const isFromUser = settlement.from_user && authUser.id === settlement.from_user;
+  const isToUser = settlement.to_user && authUser.id === settlement.to_user;
+  if (!isFromUser && !isToUser && member.role !== 'organizer') {
     return { error: 'Você não tem permissão para marcar este acerto como pago' };
   }
 
@@ -224,11 +227,10 @@ export async function markSettlementAsUnpaid(settlementId: string): Promise<Sett
   }
 
   // Only the from_user, to_user, or organizers can mark as unpaid
-  if (
-    authUser.id !== settlement.from_user &&
-    authUser.id !== settlement.to_user &&
-    member.role !== 'organizer'
-  ) {
+  // For guests (from_user/to_user is null), only organizers can mark as unpaid
+  const isFromUser = settlement.from_user && authUser.id === settlement.from_user;
+  const isToUser = settlement.to_user && authUser.id === settlement.to_user;
+  if (!isFromUser && !isToUser && member.role !== 'organizer') {
     return {
       error: 'Você não tem permissão para desmarcar este acerto como pago',
     };

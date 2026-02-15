@@ -22,7 +22,7 @@ import { ExpenseDateGroup } from '@/components/expenses/expense-date-group';
 import { expenseCategoryList, getCategoryInfo } from '@/lib/utils/expense-categories';
 import { deleteExpense } from '@/lib/supabase/expenses';
 import { formatAmount } from '@/lib/validation/expense-schemas';
-import type { TripMemberWithUser } from '@/lib/supabase/trips';
+import type { TripParticipantResolved } from '@/lib/supabase/participants';
 import type { ExpenseWithDetails } from '@/types/expense';
 import type { TripMemberRole, ExpenseCategory } from '@/types/database';
 import { usePermissions } from '@/hooks/use-permissions';
@@ -47,9 +47,10 @@ interface ExpensesListProps {
   tripId: string;
   baseCurrency: string;
   initialExpenses: ExpenseWithDetails[];
-  members: TripMemberWithUser[];
+  participants: TripParticipantResolved[];
   userRole: TripMemberRole | null;
   currentUserId: string;
+  currentParticipantId: string;
 }
 
 type FilterCategory = ExpenseCategory | 'all';
@@ -59,9 +60,10 @@ export function ExpensesList({
   tripId,
   baseCurrency,
   initialExpenses,
-  members,
+  participants,
   userRole,
   currentUserId,
+  currentParticipantId,
 }: ExpensesListProps) {
   const router = useRouter();
   const permissions = usePermissions({ userRole, currentUserId });
@@ -94,7 +96,7 @@ export function ExpensesList({
 
   // Check if user can edit an expense (paid_by is more intuitive than created_by)
   const canEditExpense = (expense: ExpenseWithDetails) => {
-    return permissions.canOnOwn('EDIT', expense.paid_by);
+    return permissions.canOnOwn('EDIT', expense.paid_by ?? undefined);
   };
 
   // Handle edit expense via dialog
@@ -147,8 +149,12 @@ export function ExpensesList({
         return false;
       }
 
-      // Paid by filter
-      if (paidByFilter !== 'all' && expense.paid_by !== paidByFilter) {
+      // Paid by filter (match against participant_id or user_id)
+      if (
+        paidByFilter !== 'all' &&
+        expense.paid_by !== paidByFilter &&
+        expense.paid_by_participant_id !== paidByFilter
+      ) {
         return false;
       }
 
@@ -228,8 +234,9 @@ export function ExpensesList({
           {/* Add expense dialog */}
           <AddExpenseDialog
             tripId={tripId}
-            members={members}
+            participants={participants}
             currentUserId={currentUserId}
+            currentParticipantId={currentParticipantId}
             baseCurrency={baseCurrency}
             onSuccess={handleExpenseAdded}
             trigger={
@@ -278,9 +285,9 @@ export function ExpensesList({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
-                {members.map((member) => (
-                  <SelectItem key={member.user_id} value={member.user_id}>
-                    {member.users.name}
+                {participants.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.displayName}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -315,7 +322,7 @@ export function ExpensesList({
                 className="cursor-pointer gap-1"
                 onClick={() => setPaidByFilter('all')}
               >
-                {members.find((m) => m.user_id === paidByFilter)?.users.name || 'Desconhecido'}
+                {participants.find((p) => p.id === paidByFilter)?.displayName || 'Desconhecido'}
                 <X className="h-3 w-3" />
               </Badge>
             )}
@@ -354,8 +361,9 @@ export function ExpensesList({
           {expenses.length === 0 && (
             <AddExpenseDialog
               tripId={tripId}
-              members={members}
+              participants={participants}
               currentUserId={currentUserId}
+              currentParticipantId={currentParticipantId}
               baseCurrency={baseCurrency}
               onSuccess={handleExpenseAdded}
               trigger={
@@ -398,8 +406,8 @@ export function ExpensesList({
       {/* Quick Add Dialog */}
       <QuickAddExpense
         tripId={tripId}
-        members={members}
-        currentUserId={currentUserId}
+        participants={participants}
+        currentParticipantId={currentParticipantId}
         baseCurrency={baseCurrency}
         open={isQuickAddOpen}
         onOpenChange={setIsQuickAddOpen}
@@ -408,8 +416,9 @@ export function ExpensesList({
 
       <AddExpenseDialog
         tripId={tripId}
-        members={members}
+        participants={participants}
         currentUserId={currentUserId}
+        currentParticipantId={currentParticipantId}
         baseCurrency={baseCurrency}
         open={isAddOpen}
         onOpenChange={setIsAddOpen}
@@ -420,8 +429,9 @@ export function ExpensesList({
       {editingExpense && (
         <AddExpenseDialog
           tripId={tripId}
-          members={members}
+          participants={participants}
           currentUserId={currentUserId}
+          currentParticipantId={currentParticipantId}
           baseCurrency={baseCurrency}
           expense={editingExpense}
           open={!!editingExpense}
@@ -434,8 +444,9 @@ export function ExpensesList({
       {duplicatingExpense && (
         <AddExpenseDialog
           tripId={tripId}
-          members={members}
+          participants={participants}
           currentUserId={currentUserId}
+          currentParticipantId={currentParticipantId}
           baseCurrency={baseCurrency}
           expense={duplicatingExpense}
           open={!!duplicatingExpense}

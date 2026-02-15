@@ -6,9 +6,10 @@ import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface BalanceItem {
-  userId: string;
-  userName: string;
-  userAvatar: string | null;
+  participantId: string;
+  participantName: string;
+  participantAvatar: string | null;
+  participantType: 'member' | 'guest';
   balance: number;
 }
 
@@ -70,12 +71,12 @@ export function BalanceBarChart({ participants, currency, className }: BalanceBa
             const barWidth = getBarWidth(participant.balance);
 
             return (
-              <div key={participant.userId} className="space-y-1">
+              <div key={participant.participantId} className="space-y-1">
                 {/* Name and balance */}
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
                     {getStatusIcon(status)}
-                    <span className="font-medium">{participant.userName.split(' ')[0]}</span>
+                    <span className="font-medium">{participant.participantName.split(' ')[0]}</span>
                   </div>
                   <span className={cn('font-semibold', getStatusTextColor(status))}>
                     <MoneyDisplay

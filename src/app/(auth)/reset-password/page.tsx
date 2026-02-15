@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, Eye, EyeOff } from 'lucide-react';
 
 import { resetPasswordSchema, type ResetPasswordInput } from '@/lib/validation/auth-schemas';
 import { resetPassword } from '@/lib/supabase/auth';
@@ -34,6 +34,8 @@ export default function ResetPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const form = useForm<ResetPasswordInput>({
     resolver: zodResolver(resetPasswordSchema),
@@ -63,12 +65,14 @@ export default function ResetPasswordPage() {
     return (
       <Card>
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <CheckCircle className="h-6 w-6 text-primary" />
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 animate-in zoom-in duration-300">
+            <CheckCircle className="h-8 w-8 text-primary" />
           </div>
-          <CardTitle className="text-2xl">Senha atualizada!</CardTitle>
-          <CardDescription>
-            Sua senha foi redefinida com sucesso. Agora você pode fazer login com sua nova senha.
+          <CardTitle className="text-2xl">Senha atualizada! 🔐</CardTitle>
+          <CardDescription className="mt-2">
+            Sua senha foi redefinida com sucesso.
+            <br />
+            Agora você pode fazer login com sua nova senha e começar a planejar suas viagens!
           </CardDescription>
         </CardHeader>
         <CardFooter className="justify-center">
@@ -100,13 +104,30 @@ export default function ResetPasswordPage() {
                 <FormItem>
                   <FormLabel>Nova senha</FormLabel>
                   <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="********"
-                      autoComplete="new-password"
-                      disabled={isLoading}
-                      {...field}
-                    />
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="********"
+                        autoComplete="new-password"
+                        disabled={isLoading}
+                        {...field}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                        onClick={() => setShowPassword(!showPassword)}
+                        aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                        tabIndex={-1}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                        )}
+                      </Button>
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -120,13 +141,30 @@ export default function ResetPasswordPage() {
                 <FormItem>
                   <FormLabel>Confirmar nova senha</FormLabel>
                   <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="********"
-                      autoComplete="new-password"
-                      disabled={isLoading}
-                      {...field}
-                    />
+                    <div className="relative">
+                      <Input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        placeholder="********"
+                        autoComplete="new-password"
+                        disabled={isLoading}
+                        {...field}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        aria-label={showConfirmPassword ? 'Ocultar confirmação de senha' : 'Mostrar confirmação de senha'}
+                        tabIndex={-1}
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                        )}
+                      </Button>
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>

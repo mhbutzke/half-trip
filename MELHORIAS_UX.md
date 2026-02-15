@@ -2,7 +2,7 @@
 
 ## ✅ Implementado (Branch: feat/auth-ux-improvements)
 
-### Autenticação
+### Autenticação (Fase 1)
 
 #### 1. Toggle de Visibilidade de Senha
 - ✅ Adicionado em todos os campos de senha (registro, login, reset, confirmação)
@@ -29,15 +29,32 @@
 - ✅ Reset Password: toggle de senha + melhor feedback visual
 - ✅ Textos mais claros e acolhedores
 
+### Gerenciamento de Viagens (Fase 2)
+
+#### 1. Criação de Viagem
+- ✅ Step indicator visual com estados (atual, completo, pendente)
+- ✅ Checkmarks em etapas completadas
+- ✅ Indicadores (*) para campos obrigatórios
+- ✅ Melhor navegação entre etapas com validação
+
+### Despesas (Fase 2)
+
+#### 1. Formulário de Despesa
+- ✅ Seletor visual de categorias com ícones e cores
+- ✅ Interface mais visual (menos dropdowns)
+- ✅ Indicadores de campos obrigatórios
+- ✅ Melhor organização dos campos
+
 ## 📋 Próximas Melhorias Sugeridas
 
 ### Gerenciamento de Viagens
 
 #### 1. Criar Viagem
+- [x] Indicador visual de campos obrigatórios
+- [x] Step indicator visual com checkmarks
+- [x] Feedback de progresso melhorado
 - [ ] Adicionar preview da capa durante upload
 - [ ] Sugestões de destinos populares ao digitar
-- [ ] Indicador visual de campos obrigatórios
-- [ ] Validação em tempo real com feedback visual
 
 #### 2. Lista de Viagens
 - [ ] Filtros por status (planejada, em andamento, concluída)
@@ -48,9 +65,10 @@
 ### Despesas
 
 #### 1. Adicionar Despesa
-- [ ] Campos de valor com formatação de moeda em tempo real
-- [ ] Sugestões de categorias com ícones
-- [ ] Upload de comprovante com preview
+- [x] Seletor de categoria visual com ícones coloridos
+- [x] Indicadores visuais de campos obrigatórios
+- [x] Campos de valor com formatação de moeda em tempo real (já existia)
+- [x] Upload de comprovante com preview (já existia)
 - [ ] Divisão rápida (igual, custom) mais visual
 
 #### 2. Lista de Despesas

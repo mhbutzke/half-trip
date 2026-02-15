@@ -5,14 +5,14 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { ArrowRight, TrendingUp, TrendingDown, Check, QrCode } from 'lucide-react';
+import { TrendingUp, TrendingDown, Check } from 'lucide-react';
 import { MarkSettledDialog } from '@/components/settlements/mark-settled-dialog';
 import { SettlementHistory } from '@/components/settlements/settlement-history';
 import { createSettlement } from '@/lib/supabase/settlements';
 import { PixQrDialog } from '@/components/settlements/pix-qr-dialog';
 import { MoneyDisplay } from '@/components/ui/money-display';
+import { BalanceBarChart } from '@/components/balance/balance-bar-chart';
+import { SettlementFlow } from '@/components/balance/settlement-flow';
 import { toast } from 'sonner';
 import type { TripExpenseSummary } from '@/types/expense-summary';
 import type { Settlement } from '@/lib/balance';
@@ -63,6 +63,13 @@ export function TripSummary({ summary, currentUserId, isOrganizer }: TripSummary
     }
   };
 
+  const balanceItems = summary.participants.map((p) => ({
+    userId: p.userId,
+    userName: p.userName,
+    userAvatar: p.userAvatar,
+    balance: p.netBalance,
+  }));
+
   return (
     <div className="space-y-6">
       {/* Overall Summary Card */}
@@ -84,6 +91,9 @@ export function TripSummary({ summary, currentUserId, isOrganizer }: TripSummary
           </div>
         </CardContent>
       </Card>
+
+      {/* Visual Balance Chart */}
+      <BalanceBarChart participants={balanceItems} currency={baseCur} />
 
       {/* Participant Balances Card */}
       <Card>
@@ -142,78 +152,15 @@ export function TripSummary({ summary, currentUserId, isOrganizer }: TripSummary
         </CardContent>
       </Card>
 
-      {/* Suggested Settlements Card */}
-      {summary.suggestedSettlements.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Acertos sugeridos</CardTitle>
-            <CardDescription>
-              Pagamentos para quitar todas as dívidas ({summary.suggestedSettlements.length}{' '}
-              {summary.suggestedSettlements.length === 1 ? 'transação' : 'transações'})
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {summary.suggestedSettlements.map((settlement, index) => (
-                <div key={index}>
-                  {index > 0 && <Separator className="my-3" />}
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-9 w-9">
-                      <AvatarImage src={settlement.from.userAvatar || undefined} />
-                      <AvatarFallback className="text-xs">
-                        {getInitials(settlement.from.userName)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">
-                        {settlement.from.userName.split(' ')[0]}
-                      </p>
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                    <div className="flex-1 text-right">
-                      <p className="text-sm font-medium">{settlement.to.userName.split(' ')[0]}</p>
-                    </div>
-                    <Avatar className="h-9 w-9">
-                      <AvatarImage src={settlement.to.userAvatar || undefined} />
-                      <AvatarFallback className="text-xs">
-                        {getInitials(settlement.to.userName)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex items-center gap-2">
-                      <Badge className="font-semibold">
-                        <MoneyDisplay amount={settlement.amount} currency={baseCur} size="sm" />
-                      </Badge>
-                      {(settlement.from.userId === currentUserId ||
-                        settlement.to.userId === currentUserId ||
-                        isOrganizer) && (
-                        <>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-11 w-11 sm:h-9 sm:w-9"
-                            onClick={() => setPixSettlement(settlement)}
-                            aria-label="Pagar via Pix"
-                          >
-                            <QrCode className="h-4 w-4" aria-hidden="true" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-11 sm:h-9"
-                            onClick={() => handleMarkSettlement(settlement)}
-                          >
-                            Marcar pago
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Settlement Flow - Visual representation */}
+      <SettlementFlow
+        settlements={summary.suggestedSettlements}
+        currency={baseCur}
+        currentUserId={currentUserId}
+        isOrganizer={isOrganizer}
+        onMarkSettlement={handleMarkSettlement}
+        onPixSettlement={setPixSettlement}
+      />
 
       {/* Settlement History */}
       <SettlementHistory

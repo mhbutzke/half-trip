@@ -3,25 +3,17 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  MapPin,
-  Users,
-  Calendar,
-  DollarSign,
-  TrendingUp,
-  Download,
-  Share2,
-} from 'lucide-react';
+import { MapPin, Calendar, DollarSign, TrendingUp, Download, Share2 } from 'lucide-react';
 import { MoneyDisplay } from '@/components/ui/money-display';
 import { formatAmount } from '@/lib/validation/expense-schemas';
 import { format, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { getCategoryInfo } from '@/lib/utils/expense-categories';
 import { cn } from '@/lib/utils';
-import type { Trip } from '@/types/database';
+import type { ExpenseCategory, Trip } from '@/types/database';
 
 interface CategorySummary {
-  category: string;
+  category: ExpenseCategory;
   total: number;
   percentage: number;
   count: number;
@@ -45,13 +37,16 @@ interface TripSummaryCardProps {
 }
 
 export function TripSummaryCard({ data, onShare, onExport, className }: TripSummaryCardProps) {
-  const { trip, totalExpenses, participantCount, perPersonAverage, categoryBreakdown, activityCount, dayCount } =
-    data;
+  const {
+    trip,
+    totalExpenses,
+    participantCount,
+    perPersonAverage,
+    categoryBreakdown,
+    activityCount,
+  } = data;
 
-  const tripDuration = differenceInDays(
-    new Date(trip.end_date),
-    new Date(trip.start_date)
-  ) + 1;
+  const tripDuration = differenceInDays(new Date(trip.end_date), new Date(trip.start_date)) + 1;
 
   const formattedPeriod = `${format(new Date(trip.start_date), "d 'de' MMM", { locale: ptBR })} - ${format(new Date(trip.end_date), "d 'de' MMM 'de' yyyy", { locale: ptBR })}`;
 
@@ -118,7 +113,7 @@ export function TripSummaryCard({ data, onShare, onExport, className }: TripSumm
             </h3>
             <div className="space-y-2">
               {categoryBreakdown.slice(0, 3).map((cat, index) => {
-                const categoryInfo = getCategoryInfo(cat.category as any);
+                const categoryInfo = getCategoryInfo(cat.category);
                 const CategoryIcon = categoryInfo.icon;
 
                 return (
@@ -128,9 +123,7 @@ export function TripSummaryCard({ data, onShare, onExport, className }: TripSumm
                   >
                     <div className="flex items-center gap-3">
                       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-background">
-                        <span className="text-lg font-bold text-muted-foreground">
-                          {index + 1}
-                        </span>
+                        <span className="text-lg font-bold text-muted-foreground">{index + 1}</span>
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
@@ -212,7 +205,7 @@ export function generateTripSummaryText(data: TripSummaryData): string {
   if (categoryBreakdown.length > 0) {
     text += `🏆 TOP CATEGORIAS\n`;
     categoryBreakdown.slice(0, 3).forEach((cat, index) => {
-      const categoryInfo = getCategoryInfo(cat.category as any);
+      const categoryInfo = getCategoryInfo(cat.category);
       text += `${index + 1}. ${categoryInfo.label}: ${formatAmount(cat.total, trip.base_currency)} (${cat.percentage.toFixed(0)}%)\n`;
     });
     text += '\n';

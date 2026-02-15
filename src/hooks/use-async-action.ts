@@ -7,8 +7,8 @@ interface AsyncActionState {
   isSuccess: boolean;
 }
 
-interface AsyncActionOptions {
-  onSuccess?: (data?: unknown) => void;
+interface AsyncActionOptions<TResult> {
+  onSuccess?: (data: TResult) => void;
   onError?: (error: Error) => void;
   successMessage?: string;
   errorMessage?: string;
@@ -16,9 +16,9 @@ interface AsyncActionOptions {
   showErrorToast?: boolean;
 }
 
-export function useAsyncAction<T extends (...args: any[]) => Promise<any>>(
-  action: T,
-  options: AsyncActionOptions = {}
+export function useAsyncAction<TArgs extends unknown[], TResult>(
+  action: (...args: TArgs) => Promise<TResult>,
+  options: AsyncActionOptions<TResult> = {}
 ) {
   const {
     onSuccess,
@@ -36,7 +36,7 @@ export function useAsyncAction<T extends (...args: any[]) => Promise<any>>(
   });
 
   const execute = useCallback(
-    async (...args: Parameters<T>): Promise<ReturnType<T> | null> => {
+    async (...args: TArgs): Promise<TResult | null> => {
       setState({ isLoading: true, error: null, isSuccess: false });
 
       try {

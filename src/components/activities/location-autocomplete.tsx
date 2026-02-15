@@ -1,13 +1,11 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { useJsApiLoader } from '@react-google-maps/api';
+import { useGoogleMaps } from '@/components/maps/google-maps-provider';
 import { MapPin, ExternalLink, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-
-const LIBRARIES: 'places'[] = ['places'];
 
 export type LocationCoords = {
   lat: number;
@@ -41,12 +39,7 @@ export function LocationAutocomplete({
   ...inputProps
 }: LocationAutocompleteProps & NativeInputProps) {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-
-  const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: apiKey || '',
-    libraries: LIBRARIES,
-    preventGoogleFontsLoading: true,
-  });
+  const { isLoaded, loadError } = useGoogleMaps();
 
   const [suggestions, setSuggestions] = useState<google.maps.places.AutocompletePrediction[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);

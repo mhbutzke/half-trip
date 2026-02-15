@@ -1,5 +1,6 @@
 import { TripSidebar } from '@/components/layout/trip-sidebar';
 import { TripContextSetter } from '@/components/layout/trip-context-setter';
+import { GoogleMapsProvider } from '@/components/maps/google-maps-provider';
 import { createClient } from '@/lib/supabase/server';
 
 interface TripLayoutProps {
@@ -17,7 +18,9 @@ export default async function TripLayout({ children, params }: TripLayoutProps) 
     <div className="flex flex-1">
       <TripContextSetter tripName={trip?.name || ''} />
       <TripSidebar tripId={id} />
-      <div className="min-w-0 flex-1">{children}</div>
+      <GoogleMapsProvider>
+        <div className="min-w-0 flex-1">{children}</div>
+      </GoogleMapsProvider>
     </div>
   );
 }

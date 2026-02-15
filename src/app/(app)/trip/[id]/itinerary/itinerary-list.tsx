@@ -18,7 +18,7 @@ import {
 } from '@dnd-kit/core';
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { format, parseISO, eachDayOfInterval } from 'date-fns';
-import { MapPin, Plus, Plane, Search, X } from 'lucide-react';
+import { MapPin, Plus, Plane, Search, X, Map, List } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -58,6 +58,13 @@ const FlightSearchDialog = dynamic(
     })),
   { ssr: false }
 );
+const TripActivityMap = dynamic(
+  () =>
+    import('@/components/maps/trip-activity-map').then((mod) => ({
+      default: mod.TripActivityMap,
+    })),
+  { ssr: false }
+);
 
 interface ItineraryListProps {
   tripId: string;
@@ -90,6 +97,7 @@ export function ItineraryList({
   const [syncingActivityId, setSyncingActivityId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<ActivityCategory | 'all'>('all');
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
 
   // Activity detail sheet state
   const [viewingActivity, setViewingActivity] = useState<ActivityWithCreator | null>(null);
@@ -494,6 +502,20 @@ export function ItineraryList({
 
         {/* Actions */}
         <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant={viewMode === 'map' ? 'default' : 'outline'}
+            size="sm"
+            className="h-11 sm:h-9"
+            onClick={() => setViewMode(viewMode === 'map' ? 'list' : 'map')}
+            aria-label={viewMode === 'map' ? 'Ver como lista' : 'Ver no mapa'}
+          >
+            {viewMode === 'map' ? (
+              <List className="mr-2 h-4 w-4" />
+            ) : (
+              <Map className="mr-2 h-4 w-4" />
+            )}
+            <span>{viewMode === 'map' ? 'Lista' : 'Mapa'}</span>
+          </Button>
           {isFilteredView && (
             <div className="mr-auto text-xs text-muted-foreground">
               {visibleActivitiesCount} de {totalActivities} atividades
@@ -525,78 +547,91 @@ export function ItineraryList({
         </div>
       </div>
 
-      {isFilteredView && (
-        <div className="rounded-lg border border-dashed bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
-          Reordenação por arrastar está desativada enquanto filtros/busca estiverem ativos.
-        </div>
-      )}
+      {viewMode === 'map' ? (
+        /* Map View */
+        <TripActivityMap
+          activities={visibleActivities}
+          onActivitySelect={(a) => handleActivityClick(a as ActivityWithCreator)}
+          className="h-[calc(100vh-16rem)] min-h-[400px] md:h-[calc(100vh-20rem)]"
+        />
+      ) : (
+        <>
+          {isFilteredView && (
+            <div className="rounded-lg border border-dashed bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+              Reordenação por arrastar está desativada enquanto filtros/busca estiverem ativos.
+            </div>
+          )}
 
-      {allDates.length === 0 && isFilteredView && (
-        <div className="rounded-lg border border-dashed py-10 text-center">
-          <p className="text-sm font-medium">Nenhuma atividade encontrada para o filtro atual.</p>
-          <Button
-            className="mt-3 h-11 sm:h-9"
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setSearchTerm('');
-              setCategoryFilter('all');
-            }}
-          >
-            Limpar filtros
-          </Button>
-        </div>
-      )}
+          {allDates.length === 0 && isFilteredView && (
+            <div className="rounded-lg border border-dashed py-10 text-center">
+              <p className="text-sm font-medium">
+                Nenhuma atividade encontrada para o filtro atual.
+              </p>
+              <Button
+                className="mt-3 h-11 sm:h-9"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSearchTerm('');
+                  setCategoryFilter('all');
+                }}
+              >
+                Limpar filtros
+              </Button>
+            </div>
+          )}
 
-      {/* Day Carousel with Timeline */}
-      {allDates.length > 0 && (
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCorners}
-          onDragStart={handleDragStart}
-          onDragOver={handleDragOver}
-          onDragEnd={handleDragEnd}
-        >
-          <DayCarousel
-            dates={allDates}
-            tripDays={tripDays}
-            activitiesByDate={activitiesByDate}
-            activeIndex={activeDayIndex}
-            onDayChange={setActiveDayIndex}
-          >
-            {allDates.map((date) => {
-              const dayNumber = tripDays.indexOf(date) + 1;
-              const isOutOfRange = !tripDays.includes(date);
+          {/* Day Carousel with Timeline */}
+          {allDates.length > 0 && (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCorners}
+              onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
+              onDragEnd={handleDragEnd}
+            >
+              <DayCarousel
+                dates={allDates}
+                tripDays={tripDays}
+                activitiesByDate={activitiesByDate}
+                activeIndex={activeDayIndex}
+                onDayChange={setActiveDayIndex}
+              >
+                {allDates.map((date) => {
+                  const dayNumber = tripDays.indexOf(date) + 1;
+                  const isOutOfRange = !tripDays.includes(date);
 
-              return (
-                <DaySection
-                  key={date}
-                  date={date}
-                  dayNumber={isOutOfRange ? 0 : dayNumber}
-                  activities={activitiesByDate[date] || []}
-                  onAddActivity={handleAddActivity}
-                  onActivityClick={handleActivityClick}
-                  draggable={!isFilteredView}
-                />
-              );
-            })}
-          </DayCarousel>
+                  return (
+                    <DaySection
+                      key={date}
+                      date={date}
+                      dayNumber={isOutOfRange ? 0 : dayNumber}
+                      activities={activitiesByDate[date] || []}
+                      onAddActivity={handleAddActivity}
+                      onActivityClick={handleActivityClick}
+                      draggable={!isFilteredView}
+                    />
+                  );
+                })}
+              </DayCarousel>
 
-          {/* Drag Overlay */}
-          <DragOverlay>
-            {!isFilteredView && activeActivity ? (
-              <div className="w-full max-w-sm rounded-lg border bg-background p-2 shadow-lg">
-                <DraggableTimelineItem
-                  activity={activeActivity}
-                  isFirst
-                  isLast
-                  onClick={() => {}}
-                  isDragOverlay
-                />
-              </div>
-            ) : null}
-          </DragOverlay>
-        </DndContext>
+              {/* Drag Overlay */}
+              <DragOverlay>
+                {!isFilteredView && activeActivity ? (
+                  <div className="w-full max-w-sm rounded-lg border bg-background p-2 shadow-lg">
+                    <DraggableTimelineItem
+                      activity={activeActivity}
+                      isFirst
+                      isLast
+                      onClick={() => {}}
+                      isDragOverlay
+                    />
+                  </div>
+                ) : null}
+              </DragOverlay>
+            </DndContext>
+          )}
+        </>
       )}
 
       {/* Activity Detail Sheet */}

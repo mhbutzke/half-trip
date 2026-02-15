@@ -106,7 +106,65 @@
 - ✅ Exemplos de uso de hooks e componentes
 - ✅ Guia de boas práticas
 
-## 📋 Melhorias Futuras (Opcional)
+## ✅ Melhorias Focadas no Core (Implementadas)
+
+### Despesas - Velocidade e Praticidade
+
+1. ✅ **Duplicar Despesas** (commit 9f1f4d1)
+   - Botão duplicar no menu de cada despesa
+   - 80% menos tempo em despesas recorrentes
+
+2. ✅ **Preview de Divisão em Tempo Real** (commit f1c0a89)
+   - Mostra divisão instantânea ao digitar valor
+   - Transparência total antes de confirmar
+
+3. ✅ **Quick Add - Modo Rápido** (commit 159b56c)
+   - Dialog simplificado de 4 campos
+   - FAB mobile para acesso rápido
+   - Reduz de 3 etapas para 1 click
+
+4. ✅ **Categorias Inteligentes** (commit 4a6d617)
+   - Sugestão automática baseada em palavras-chave
+   - Keywords em português
+   - Menos cliques, mais velocidade
+
+5. ✅ **Templates de Despesas** (commit 15b3f3e)
+   - 10 templates pré-definidos
+   - Templates customizados salvos localmente
+   - Atalho para despesas frequentes
+
+### Roteiro - Planejamento Visual
+
+6. ✅ **Timeline Visual do Dia** (commit d890190)
+   - Linha do tempo com horários
+   - Detecção automática de conflitos
+   - Visualização clara do fluxo do dia
+
+7. ✅ **Compartilhar Dia Específico** (commit 98c82b6)
+   - Formata roteiro para WhatsApp
+   - Web Share API nativa
+   - Links diretos para dias
+
+### Balanço - Ações Rápidas
+
+8. ✅ **Quick Settle** (commit a1e7e48)
+   - Botão inline de marcar pago
+   - Swipe to pay no mobile
+   - Menos fricção para acertos
+
+### Infraestrutura
+
+9. ✅ **Indicador de Status Offline** (commit 04cc5d2)
+   - Badge com contagem de itens pendentes
+   - Popover com detalhes
+   - Retry manual de sincronização
+
+10. ✅ **Resumo Automático da Viagem** (commit 21f6b93)
+    - Card visual com estatísticas
+    - Top categorias e gastos
+    - Compartilhamento fácil
+
+## 📋 Melhorias Futuras (Backlog)
 
 ### Gerenciamento de Viagens
 
@@ -275,9 +333,13 @@
 - ✅ **Fase 3 - Balanço, Feedback e Acessibilidade:** 100% completo
 - ✅ **Fase 4 - Polish Global:** 100% completo
 
-### Commits Realizados (16 total)
+### Commits Realizados (26 total)
+
+**Fase 1 - Autenticação (2 commits):**
 1. feat(auth): login e registro
 2. feat(auth): recuperação de senha
+
+**Fase 2 - Formulários (7 commits):**
 3. docs: documento de melhorias
 4. feat(trips): criação de viagem
 5. feat(expenses): formulário de despesas
@@ -285,10 +347,26 @@
 7. feat(itinerary): formulário de atividades
 8. refactor: componentes reutilizáveis
 9. docs: atualização Fases 1 e 2
+
+**Fase 3 - Balanço e Acessibilidade (4 commits):**
 10. feat(balance): gráficos e flow visual
-11. feat(ui): componentes de feedback e helpers
-12. feat(a11y): atalhos de teclado e skip links
-13. docs: atualização completa Fase 3
-14. feat(perf): componentes otimizados e performance
-15. docs: documentação completa de componentes
-16. docs: finalização Fase 4 e resumo completo
+11. feat(ui): componentes de feedback
+12. feat(a11y): atalhos de teclado
+13. docs: atualização Fase 3
+
+**Fase 4 - Performance e Polish (3 commits):**
+14. feat(perf): componentes otimizados
+15. docs: documentação de componentes
+16. docs: finalização Fase 4
+
+**Core Improvements - Despesas e Roteiro (10 commits):**
+17. feat(expenses): duplicação rápida
+18. feat(expenses): preview de divisão em tempo real
+19. feat(expenses): modo Quick Add
+20. feat(expenses): categorias inteligentes
+21. feat(sync): indicador de status offline
+22. feat(itinerary): timeline visual do dia
+23. feat(itinerary): compartilhamento de dia
+24. feat(trips): resumo automático da viagem
+25. feat(expenses): templates de despesas
+26. feat(balance): ações rápidas de pagamento

@@ -7,6 +7,7 @@ import {
   useMemo,
   useRef,
   useCallback,
+  useEffect,
   type KeyboardEventHandler,
   type MouseEventHandler,
 } from 'react';
@@ -53,6 +54,7 @@ import {
 } from '@/lib/validation/expense-schemas';
 import { CategorySelector } from './category-selector';
 import { SplitPreview } from './split-preview';
+import { suggestCategory } from '@/lib/utils/smart-categories';
 import { createExpense, updateExpense } from '@/lib/supabase/expenses';
 import { uploadReceipt } from '@/lib/supabase/receipts';
 import { useDialogState } from '@/hooks/use-dialog-state';
@@ -141,8 +143,20 @@ export function AddExpenseDialog({
   const watchSplitType = form.watch('split_type');
   const watchSelectedMembers = form.watch('selected_members');
   const watchAmount = form.watch('amount');
+  const watchDescription = form.watch('description');
+  const watchCategory = form.watch('category');
 
   const { calculateSplits } = useExpenseSplits(baseCurrency);
+
+  // Auto-suggest category based on description (only if category is still 'other' and not editing)
+  useEffect(() => {
+    if (!isEditing && watchDescription && watchCategory === 'other') {
+      const suggested = suggestCategory(watchDescription);
+      if (suggested) {
+        form.setValue('category', suggested);
+      }
+    }
+  }, [watchDescription, watchCategory, isEditing, form]);
 
   const avatarParticipants = members.map((m) => ({
     id: m.user_id,

@@ -1,5 +1,9 @@
+'use client';
+
+import { useEffect, useRef, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useRealtimeSubscription } from './use-realtime-subscription';
+import { createClient } from '@/lib/supabase/client';
+import { logDebug, logError, logWarning } from '@/lib/errors/logger';
 
 interface UseTripRealtimeOptions {
   tripId: string;
@@ -7,101 +11,148 @@ interface UseTripRealtimeOptions {
 }
 
 /**
- * Hook for subscribing to all trip-related realtime updates
- * Automatically invalidates React Query caches when data changes
+ * Consolidated realtime subscription for all trip-related tables.
+ *
+ * Instead of creating 9 separate Supabase channels (one per table), this hook
+ * creates a **single channel** with multiple `postgres_changes` listeners.
+ * This drastically reduces WebSocket overhead and avoids the
+ * "Max payload size exceeded" error that occurred with many parallel channels.
+ *
+ * Automatically invalidates React Query caches when data changes.
  */
 export function useTripRealtime({ tripId, onPollChange }: UseTripRealtimeOptions) {
   const queryClient = useQueryClient();
+  const onPollChangeRef = useRef(onPollChange);
 
-  // Subscribe to trip changes
-  useRealtimeSubscription({
-    table: 'trips',
-    filter: `id=eq.${tripId}`,
-    onChange: () => {
-      queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
-    },
-  });
+  useEffect(() => {
+    onPollChangeRef.current = onPollChange;
+  }, [onPollChange]);
 
-  // Subscribe to activity changes
-  useRealtimeSubscription({
-    table: 'activities',
-    filter: `trip_id=eq.${tripId}`,
-    onChange: () => {
-      queryClient.invalidateQueries({ queryKey: ['activities', tripId] });
-      queryClient.invalidateQueries({ queryKey: ['activity-count', tripId] });
+  const invalidate = useCallback(
+    (keys: string[][]) => {
+      for (const key of keys) {
+        queryClient.invalidateQueries({ queryKey: key });
+      }
     },
-  });
+    [queryClient]
+  );
 
-  // Subscribe to expense changes
-  useRealtimeSubscription({
-    table: 'expenses',
-    filter: `trip_id=eq.${tripId}`,
-    onChange: () => {
-      queryClient.invalidateQueries({ queryKey: ['expenses', tripId] });
-      queryClient.invalidateQueries({ queryKey: ['expense-count', tripId] });
-      queryClient.invalidateQueries({ queryKey: ['balance', tripId] });
-      queryClient.invalidateQueries({ queryKey: ['expense-summary', tripId] });
-    },
-  });
+  useEffect(() => {
+    const supabase = createClient();
+    const channelName = `trip-realtime:${tripId}`;
 
-  // Subscribe to trip member changes
-  useRealtimeSubscription({
-    table: 'trip_members',
-    filter: `trip_id=eq.${tripId}`,
-    onChange: () => {
-      queryClient.invalidateQueries({ queryKey: ['trip-members', tripId] });
-      queryClient.invalidateQueries({ queryKey: ['trip', tripId] });
-      queryClient.invalidateQueries({ queryKey: ['balance', tripId] });
-      queryClient.invalidateQueries({ queryKey: ['expense-summary', tripId] });
-    },
-  });
+    const channel = supabase
+      .channel(channelName)
+      // trips
+      .on(
+        'postgres_changes' as 'system',
+        { event: '*', schema: 'public', table: 'trips', filter: `id=eq.${tripId}` },
+        () => invalidate([['trip', tripId]])
+      )
+      // activities
+      .on(
+        'postgres_changes' as 'system',
+        { event: '*', schema: 'public', table: 'activities', filter: `trip_id=eq.${tripId}` },
+        () =>
+          invalidate([
+            ['activities', tripId],
+            ['activity-count', tripId],
+          ])
+      )
+      // expenses
+      .on(
+        'postgres_changes' as 'system',
+        { event: '*', schema: 'public', table: 'expenses', filter: `trip_id=eq.${tripId}` },
+        () =>
+          invalidate([
+            ['expenses', tripId],
+            ['expense-count', tripId],
+            ['balance', tripId],
+            ['expense-summary', tripId],
+          ])
+      )
+      // trip_members
+      .on(
+        'postgres_changes' as 'system',
+        { event: '*', schema: 'public', table: 'trip_members', filter: `trip_id=eq.${tripId}` },
+        () =>
+          invalidate([
+            ['trip-members', tripId],
+            ['trip', tripId],
+            ['balance', tripId],
+            ['expense-summary', tripId],
+          ])
+      )
+      // trip_notes
+      .on(
+        'postgres_changes' as 'system',
+        { event: '*', schema: 'public', table: 'trip_notes', filter: `trip_id=eq.${tripId}` },
+        () =>
+          invalidate([
+            ['notes', tripId],
+            ['notes-count', tripId],
+          ])
+      )
+      // trip_activity_log
+      .on(
+        'postgres_changes' as 'system',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'trip_activity_log',
+          filter: `trip_id=eq.${tripId}`,
+        },
+        () => invalidate([['activity-log', tripId]])
+      )
+      // settlements
+      .on(
+        'postgres_changes' as 'system',
+        { event: '*', schema: 'public', table: 'settlements', filter: `trip_id=eq.${tripId}` },
+        () =>
+          invalidate([
+            ['settlements', tripId],
+            ['balance', tripId],
+            ['expense-summary', tripId],
+          ])
+      )
+      // trip_polls
+      .on(
+        'postgres_changes' as 'system',
+        { event: '*', schema: 'public', table: 'trip_polls', filter: `trip_id=eq.${tripId}` },
+        () => {
+          invalidate([['polls', tripId]]);
+          onPollChangeRef.current?.();
+        }
+      )
+      // poll_votes (no trip_id filter — votes reference poll_id, not trip_id)
+      .on(
+        'postgres_changes' as 'system',
+        { event: '*', schema: 'public', table: 'poll_votes' },
+        () => {
+          invalidate([['polls', tripId]]);
+          onPollChangeRef.current?.();
+        }
+      );
 
-  // Subscribe to notes changes
-  useRealtimeSubscription({
-    table: 'trip_notes',
-    filter: `trip_id=eq.${tripId}`,
-    onChange: () => {
-      queryClient.invalidateQueries({ queryKey: ['notes', tripId] });
-      queryClient.invalidateQueries({ queryKey: ['notes-count', tripId] });
-    },
-  });
+    channel.subscribe((status, err) => {
+      if (status === 'SUBSCRIBED') {
+        logDebug(`Subscribed to trip realtime updates (single channel)`, {
+          tripId,
+          channel: channelName,
+        });
+      } else if (status === 'CHANNEL_ERROR') {
+        logError(`Error subscribing to trip realtime updates`, {
+          action: 'trip-realtime-subscribe',
+          tripId,
+          error: err,
+        });
+      } else if (status === 'TIMED_OUT') {
+        logWarning(`Timed out subscribing to trip realtime updates`, { tripId });
+      }
+    });
 
-  // Subscribe to activity log changes
-  useRealtimeSubscription({
-    table: 'trip_activity_log',
-    filter: `trip_id=eq.${tripId}`,
-    onChange: () => {
-      queryClient.invalidateQueries({ queryKey: ['activity-log', tripId] });
-    },
-  });
-
-  // Subscribe to settlement changes
-  useRealtimeSubscription({
-    table: 'settlements',
-    filter: `trip_id=eq.${tripId}`,
-    onChange: () => {
-      queryClient.invalidateQueries({ queryKey: ['settlements', tripId] });
-      queryClient.invalidateQueries({ queryKey: ['balance', tripId] });
-      queryClient.invalidateQueries({ queryKey: ['expense-summary', tripId] });
-    },
-  });
-
-  // Subscribe to poll changes
-  useRealtimeSubscription({
-    table: 'trip_polls',
-    filter: `trip_id=eq.${tripId}`,
-    onChange: () => {
-      queryClient.invalidateQueries({ queryKey: ['polls', tripId] });
-      onPollChange?.();
-    },
-  });
-
-  // Subscribe to poll vote changes
-  useRealtimeSubscription({
-    table: 'poll_votes',
-    onChange: () => {
-      queryClient.invalidateQueries({ queryKey: ['polls', tripId] });
-      onPollChange?.();
-    },
-  });
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [tripId, invalidate]);
 }

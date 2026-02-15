@@ -7,6 +7,8 @@ import { toast } from 'sonner';
 import { notifications } from '@/lib/notifications';
 import { logDebug, logError } from '@/lib/errors/logger';
 
+let globalSyncInProgress = false;
+
 type AutoSyncConfig = {
   enabled?: boolean;
   syncOnMount?: boolean;
@@ -42,10 +44,11 @@ export function useAutoSync(config: AutoSyncConfig = {}): AutoSyncHook {
 
   // Sync function
   const sync = async () => {
-    if (!isOnline || isSyncing) {
+    if (!isOnline || isSyncing || globalSyncInProgress) {
       return;
     }
 
+    globalSyncInProgress = true;
     setIsSyncing(true);
 
     try {
@@ -100,6 +103,7 @@ export function useAutoSync(config: AutoSyncConfig = {}): AutoSyncHook {
       toast.error('Erro ao sincronizar');
     } finally {
       setIsSyncing(false);
+      globalSyncInProgress = false;
     }
   };
 

@@ -82,14 +82,14 @@ export function DeleteTripDialog({
             ?
             <br />
             <br />
-            Esta ação é <strong>irreversível</strong> e irá excluir:
-            <ul className="list-disc pl-5 mt-2 space-y-1">
-              <li>Todos os itinerários e atividades</li>
-              <li>Todas as despesas e divisões</li>
-              <li>Todas as notas e anexos</li>
-              <li>Todos os convites pendentes</li>
-            </ul>
+            Esta ação é <strong>irreversível</strong>.
           </DialogDescription>
+          <ul className="list-disc pl-5 mt-2 space-y-1 text-sm text-muted-foreground">
+            <li>Todos os itinerários e atividades</li>
+            <li>Todas as despesas e divisões</li>
+            <li>Todas as notas e anexos</li>
+            <li>Todos os convites pendentes</li>
+          </ul>
         </DialogHeader>
 
         <DialogFooter className="pt-4">

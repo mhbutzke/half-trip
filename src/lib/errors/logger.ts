@@ -13,18 +13,89 @@ export interface LogContext {
   [key: string]: unknown;
 }
 
+interface ParsedError {
+  message: string;
+  stack?: string;
+  details?: Record<string, unknown>;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function serializeUnknown(value: unknown): unknown {
+  if (value === null || value === undefined) return value;
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return value;
+  }
+
+  try {
+    return JSON.parse(JSON.stringify(value));
+  } catch {
+    return String(value);
+  }
+}
+
+function parseError(error: unknown): ParsedError {
+  if (error instanceof Error) {
+    const details: Record<string, unknown> = {
+      name: error.name,
+    };
+    const errorWithCause = error as Error & { cause?: unknown };
+    if (errorWithCause.cause !== undefined) {
+      details.cause = serializeUnknown(errorWithCause.cause);
+    }
+
+    return {
+      message: error.message || error.name,
+      stack: error.stack,
+      details,
+    };
+  }
+
+  if (typeof error === 'string') {
+    return { message: error };
+  }
+
+  if (isRecord(error)) {
+    const details: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(error)) {
+      if (key === 'message' || key === 'stack') continue;
+      details[key] = serializeUnknown(value);
+    }
+
+    const message =
+      typeof error.message === 'string' && error.message.trim().length > 0
+        ? error.message
+        : typeof error.error === 'string' && error.error.trim().length > 0
+          ? error.error
+          : 'Unknown error object';
+    const stack = typeof error.stack === 'string' ? error.stack : undefined;
+
+    return {
+      message,
+      stack,
+      details: Object.keys(details).length > 0 ? details : undefined,
+    };
+  }
+
+  return {
+    message: String(error),
+  };
+}
+
 /**
  * Log an error with context
  */
 export function logError(error: unknown, context?: LogContext): void {
   const timestamp = new Date().toISOString();
-  const errorMessage = error instanceof Error ? error.message : String(error);
-  const errorStack = error instanceof Error ? error.stack : undefined;
+  const parsedError = parseError(error);
 
-  console.error('[Error]', {
+  console.error(`[Error] ${parsedError.message}`, {
     timestamp,
-    message: errorMessage,
-    stack: errorStack,
+    message: parsedError.message,
+    stack: parsedError.stack,
+    error: parsedError.details,
     context,
   });
 

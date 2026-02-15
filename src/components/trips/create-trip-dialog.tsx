@@ -185,7 +185,8 @@ export function CreateTripDialog({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
-                        Nome da viagem<RequiredMark />
+                        Nome da viagem
+                        <RequiredMark />
                       </FormLabel>
                       <FormControl>
                         <Input placeholder="Ex: Férias na praia" {...field} />
@@ -201,12 +202,15 @@ export function CreateTripDialog({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
-                        Destino<RequiredMark />
+                        Destino
+                        <RequiredMark />
                       </FormLabel>
                       <FormControl>
                         <LocationAutocomplete
                           value={field.value}
                           onChange={field.onChange}
+                          name={field.name}
+                          onBlur={field.onBlur}
                           placeholder="Ex: Florianópolis, SC"
                           types={['(cities)']}
                         />
@@ -249,7 +253,8 @@ export function CreateTripDialog({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>
-                          Data de início<RequiredMark />
+                          Data de início
+                          <RequiredMark />
                         </FormLabel>
                         <FormControl>
                           <Input type="date" {...field} />
@@ -265,7 +270,8 @@ export function CreateTripDialog({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>
-                          Data de término<RequiredMark />
+                          Data de término
+                          <RequiredMark />
                         </FormLabel>
                         <FormControl>
                           <Input type="date" {...field} />

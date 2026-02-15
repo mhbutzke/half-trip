@@ -25,6 +25,11 @@ interface LocationAutocompleteProps {
   types?: string[];
 }
 
+type NativeInputProps = Omit<
+  React.ComponentProps<typeof Input>,
+  'value' | 'onChange' | 'placeholder' | 'className' | 'type'
+>;
+
 export function LocationAutocomplete({
   value,
   onChange,
@@ -33,7 +38,8 @@ export function LocationAutocomplete({
   placeholder = 'Ex: Aeroporto GRU',
   className,
   types,
-}: LocationAutocompleteProps) {
+  ...inputProps
+}: LocationAutocompleteProps & NativeInputProps) {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   const { isLoaded, loadError } = useJsApiLoader({
@@ -218,6 +224,7 @@ export function LocationAutocomplete({
   if (!apiKey || !placesAvailable) {
     return (
       <Input
+        {...inputProps}
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -230,15 +237,17 @@ export function LocationAutocomplete({
     <div ref={containerRef} className="relative">
       <div className="relative">
         <Input
+          {...inputProps}
           placeholder={placeholder}
           value={value}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          onFocus={() => {
+          onFocus={(e) => {
+            inputProps.onFocus?.(e);
             if (suggestions.length > 0) setShowSuggestions(true);
           }}
           className={className}
-          autoComplete="off"
+          autoComplete={inputProps.autoComplete ?? 'off'}
           role="combobox"
           aria-expanded={showSuggestions && suggestions.length > 0}
           aria-controls="location-suggestions-listbox"

@@ -63,19 +63,21 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <QueryProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <ViewTransitions>{children}</ViewTransitions>
-            <Toaster />
-            <Analytics />
-            <SpeedInsights />
-          </ThemeProvider>
-        </QueryProvider>
+        <ViewTransitions>
+          <QueryProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              {children}
+              <Toaster />
+              <Analytics />
+              <SpeedInsights />
+            </ThemeProvider>
+          </QueryProvider>
+        </ViewTransitions>
       </body>
     </html>
   );

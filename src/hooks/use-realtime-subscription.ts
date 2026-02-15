@@ -119,9 +119,10 @@ export function useRealtimeSubscription({
       if (status === 'SUBSCRIBED') {
         logDebug(`Subscribed to ${table} realtime updates`);
       } else if (status === 'CHANNEL_ERROR') {
-        logError(err ?? `Error subscribing to ${table} realtime updates`, {
+        logError(`Error subscribing to ${table} realtime updates`, {
           action: 'realtime-subscribe',
           table,
+          error: err,
         });
       } else if (status === 'TIMED_OUT') {
         logWarning(`Timed out subscribing to ${table} realtime updates`, { table });

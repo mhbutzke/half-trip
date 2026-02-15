@@ -1,0 +1,4051 @@
+[
+  {
+    "id": "TC001",
+    "title": "Cadastro com dados válidos exibe mensagem de sucesso para verificar o email",
+    "description": "Garante que um novo usuário consegue se cadastrar e vê a mensagem de sucesso solicitando verificação de email.",
+    "category": "User Registration",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /register"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Criar conta\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Type \"Usuário Teste\" into the name field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"usuario.teste+novo1@example.com\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"SenhaForte@123\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"SenhaForte@123\" into the confirm password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Criar conta\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Verifique seu e-mail\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC002",
+    "title": "Confirmação de senha diferente mostra erro e permanece no cadastro",
+    "description": "Valida que o sistema bloqueia cadastro quando a confirmação de senha não corresponde e mantém o usuário na tela de cadastro.",
+    "category": "User Registration",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /register"
+      },
+      {
+        "type": "action",
+        "description": "Type \"Usuário Teste\" into the name field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"usuario.teste+novo2@example.com\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"SenhaForte@123\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"SenhaDiferente@123\" into the confirm password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Criar conta\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"A confirmação de senha\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/register\""
+      }
+    ]
+  },
+  {
+    "id": "TC003",
+    "title": "Email inválido impede envio do cadastro",
+    "description": "Garante que o formulário valida formato de email e não permite submeter com email inválido.",
+    "category": "User Registration",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /register"
+      },
+      {
+        "type": "action",
+        "description": "Type \"Usuário Teste\" into the name field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"email-invalido\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"SenhaForte@123\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"SenhaForte@123\" into the confirm password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Criar conta\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"E-mail\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/register\""
+      }
+    ]
+  },
+  {
+    "id": "TC004",
+    "title": "Campos obrigatórios vazios mostram validações ao tentar criar conta",
+    "description": "Verifica que o usuário não consegue criar conta com campos obrigatórios vazios e vê mensagens de validação.",
+    "category": "User Registration",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /register"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Criar conta\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Nome\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"E-mail\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Senha\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/register\""
+      }
+    ]
+  },
+  {
+    "id": "TC005",
+    "title": "Senha fraca (curta) não permite cadastro",
+    "description": "Confirma que uma senha abaixo do mínimo/critério exibe erro e impede o envio.",
+    "category": "User Registration",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /register"
+      },
+      {
+        "type": "action",
+        "description": "Type \"Usuário Teste\" into the name field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"usuario.teste+novo3@example.com\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"123\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"123\" into the confirm password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Criar conta\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Senha\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/register\""
+      }
+    ]
+  },
+  {
+    "id": "TC006",
+    "title": "Após erro de confirmação de senha, corrigir e reenviar exibe sucesso",
+    "description": "Verifica a recuperação do formulário: após erro de confirmação, o usuário corrige e consegue concluir o cadastro.",
+    "category": "User Registration",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /register"
+      },
+      {
+        "type": "action",
+        "description": "Type \"Usuário Teste\" into the name field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"usuario.teste+novo4@example.com\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"SenhaForte@123\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"SenhaDiferente@123\" into the confirm password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Criar conta\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"A confirmação de senha\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Type \"SenhaForte@123\" into the confirm password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Criar conta\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Verifique seu e-mail\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC007",
+    "title": "Solicitar recuperação de senha com e-mail válido (confirmação exibida)",
+    "description": "Verifica que o usuário consegue solicitar o link de redefinição de senha e vê uma confirmação na tela.",
+    "category": "Password Recovery",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /forgot-password"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Esqueci minha senha\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Fill \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Click submit button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Enviamos\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"e-mail\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "Solicitar recuperação de senha com e-mail não cadastrado (mensagem de erro)",
+    "description": "Verifica que o sistema informa falha/erro ao solicitar reset com e-mail não registrado e mantém o usuário na página.",
+    "category": "Password Recovery",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /forgot-password"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/forgot-password\""
+      },
+      {
+        "type": "action",
+        "description": "Fill \"naoexiste_12345@exemplo.com\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Click submit button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"não\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/forgot-password\""
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "Validação: tentar enviar recuperação sem preencher e-mail",
+    "description": "Verifica validação do formulário ao submeter o pedido sem e-mail.",
+    "category": "Password Recovery",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /forgot-password"
+      },
+      {
+        "type": "action",
+        "description": "Click submit button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"e-mail\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"obrigatório\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/forgot-password\""
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "Validação: e-mail em formato inválido no formulário de recuperação",
+    "description": "Verifica que o formulário impede ou acusa erro quando o e-mail não tem formato válido.",
+    "category": "Password Recovery",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /forgot-password"
+      },
+      {
+        "type": "action",
+        "description": "Fill \"email-invalido\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Click submit button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"e-mail\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"inválido\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC011",
+    "title": "Fluxo alternativo: acessar recuperação a partir do login",
+    "description": "Verifica que o usuário consegue chegar à página de recuperação a partir da tela de login e visualizar o formulário.",
+    "category": "Password Recovery",
+    "priority": "Low",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Entrar\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Esqueci minha senha\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/forgot-password\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"email\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC012",
+    "title": "Criar viagem pelo assistente de 3 etapas e abrir o dashboard da nova viagem",
+    "description": "Garante que um usuário autenticado consegue criar uma nova viagem no fluxo completo e acessar o dashboard ao clicar no card criado.",
+    "category": "Trip Management",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Nova viagem\" button to open create dialog"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Nova viagem\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Fill \"Viagem E2E\" into the \"Nome da viagem\" field"
+      }
+    ]
+  },
+  {
+    "id": "TC013",
+    "title": "Assistente - avançar etapas e concluir criação com moeda e transporte definidos",
+    "description": "Verifica que o assistente permite avançar pelas etapas, selecionar datas/estilo e finalizar com moeda e transporte.",
+    "category": "Trip Management",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Nova viagem\" button to open create dialog"
+      },
+      {
+        "type": "action",
+        "description": "Fill \"Viagem Wizard\" into the \"Nome da viagem\" field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Próximo\""
+      }
+    ]
+  },
+  {
+    "id": "TC014",
+    "title": "Validação do formulário: impedir criação ao tentar enviar com campos obrigatórios vazios",
+    "description": "Garante que o sistema mostra mensagens de validação e não cria viagem quando campos obrigatórios estão vazios.",
+    "category": "Trip Management",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Nova viagem\" button to open create dialog"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Criar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"obrigatório\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC015",
+    "title": "Cancelar criação de viagem e confirmar que nenhum card novo aparece na lista",
+    "description": "Verifica que ao fechar o diálogo de criação sem enviar, a lista de viagens permanece sem um novo card criado.",
+    "category": "Trip Management",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Nova viagem\" button to open create dialog"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Cancelar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Nova viagem\" is not visible"
+      }
+    ]
+  },
+  {
+    "id": "TC016",
+    "title": "Erro de validação por datas inválidas no passo 2 (fim antes do início)",
+    "description": "Garante que o assistente bloqueia avanço/criação quando a data final é anterior à data inicial.",
+    "category": "Trip Management",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Nova viagem\" button to open create dialog"
+      },
+      {
+        "type": "action",
+        "description": "Fill \"Viagem Datas\" into the \"Nome da viagem\" field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Próximo\""
+      }
+    ]
+  },
+  {
+    "id": "TC017",
+    "title": "Reabrir o assistente após erro de validação e criar viagem com campos corrigidos",
+    "description": "Verifica que após ver mensagens de erro, o usuário consegue corrigir campos e concluir a criação.",
+    "category": "Trip Management",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Nova viagem\" button to open create dialog"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Criar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"obrigatório\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC018",
+    "title": "Adicionar uma atividade com sucesso e ver na linha do tempo do roteiro",
+    "description": "Garante que o usuário autenticado consegue criar uma atividade com data/hora, local e categoria e visualizá-la no roteiro diário.",
+    "category": "Itinerary Activities",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the list"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Roteiro\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Adicionar atividade\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"Caminhada no centro\" into the \"Título\" field"
+      },
+      {
+        "type": "action",
+        "description": "Fill \"2026-03-10\" into the \"Data\" field"
+      },
+      {
+        "type": "action",
+        "description": "Fill \"10:30\" into the \"Horário\" (início) field"
+      },
+      {
+        "type": "action",
+        "description": "Fill \"90\" into the \"Duração\" field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"Praça\" into the \"Local\" field"
+      },
+      {
+        "type": "action",
+        "description": "Click on the first autocomplete suggestion for the location"
+      },
+      {
+        "type": "action",
+        "description": "Select \"Passeio\" from the \"Categoria\" dropdown"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Salvar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Caminhada no centro\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC019",
+    "title": "Validar erro ao tentar adicionar atividade com data no passado",
+    "description": "Garante que o formulário bloqueia o envio quando a data é no passado e exibe mensagem de validação, sem adicionar atividade.",
+    "category": "Itinerary Activities",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the list"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Roteiro\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Adicionar atividade\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"Museu (teste inválido)\" into the \"Título\" field"
+      },
+      {
+        "type": "action",
+        "description": "Fill \"2000-01-01\" into the \"Data\" field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Salvar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Data\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"inválida\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Museu (teste inválido)\" is not visible"
+      }
+    ]
+  },
+  {
+    "id": "TC020",
+    "title": "Editar uma atividade existente e verificar atualização na linha do tempo",
+    "description": "Garante que uma atividade pode ser aberta para edição, alterada e salva refletindo as mudanças no roteiro.",
+    "category": "Itinerary Activities",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the list"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Roteiro\""
+      },
+      {
+        "type": "action",
+        "description": "Click on an existing activity in the itinerary timeline"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Editar atividade\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Type \" (editado)\" into the \"Título\" field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Salvar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"(editado)\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC021",
+    "title": "Cancelar edição de atividade não deve alterar o conteúdo exibido",
+    "description": "Garante que ao abrir a edição e cancelar/fechar, nenhuma alteração é aplicada à atividade.",
+    "category": "Itinerary Activities",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the list"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Roteiro\""
+      },
+      {
+        "type": "action",
+        "description": "Click on an existing activity in the itinerary timeline"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Editar atividade\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Type \" ALTERAÇÃO NÃO SALVA\" into the \"Título\" field"
+      },
+      {
+        "type": "action",
+        "description": "Press \"Escape\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"ALTERAÇÃO NÃO SALVA\" is not visible"
+      }
+    ]
+  },
+  {
+    "id": "TC022",
+    "title": "Excluir uma atividade e confirmar que some da linha do tempo",
+    "description": "Garante que o usuário consegue deletar uma atividade e ela deixa de aparecer no roteiro.",
+    "category": "Itinerary Activities",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the list"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Roteiro\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Adicionar atividade\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"Atividade para excluir\" into the \"Título\" field"
+      },
+      {
+        "type": "action",
+        "description": "Fill \"2026-03-11\" into the \"Data\" field"
+      },
+      {
+        "type": "action",
+        "description": "Fill \"15:00\" into the \"Horário\" (início) field"
+      },
+      {
+        "type": "action",
+        "description": "Fill \"30\" into the \"Duração\" field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Salvar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Atividade para excluir\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click on the activity \"Atividade para excluir\" in the itinerary timeline"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Excluir\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Atividade para excluir\" is not visible"
+      }
+    ]
+  },
+  {
+    "id": "TC023",
+    "title": "Obrigatoriedade de campos: tentar salvar atividade sem título",
+    "description": "Garante que o formulário exige o título e impede salvar quando o campo está vazio.",
+    "category": "Itinerary Activities",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the list"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Roteiro\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Adicionar atividade\""
+      },
+      {
+        "type": "action",
+        "description": "Fill \"2026-03-12\" into the \"Data\" field"
+      },
+      {
+        "type": "action",
+        "description": "Fill \"09:00\" into the \"Horário\" (início) field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Salvar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Título\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"obrigatório\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC024",
+    "title": "Local com autocomplete: abrir sugestões e selecionar um resultado",
+    "description": "Garante que o campo de local apresenta sugestões e o valor selecionado fica visível no formulário antes de salvar.",
+    "category": "Itinerary Activities",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the list"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Roteiro\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Adicionar atividade\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"Café\" into the \"Local\" field"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"lista de sugestões\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click on the first suggestion in the suggestions list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Café\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC025",
+    "title": "Adicionar despesa com divisão igual e visualizar na lista",
+    "description": "Verifica que o usuário consegue registrar uma despesa com divisão igual e que ela aparece na lista de despesas.",
+    "category": "Expense Tracking",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the list"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Despesas\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Adicionar despesa\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Adicionar despesa\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Type \"Jantar\" into the description field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"120\" into the amount field"
+      },
+      {
+        "type": "action",
+        "description": "Select \"BRL\" from the currency dropdown"
+      },
+      {
+        "type": "action",
+        "description": "Fill \"2026-02-14\" into the date field"
+      },
+      {
+        "type": "action",
+        "description": "Select \"Alimentação\" from the category dropdown"
+      },
+      {
+        "type": "action",
+        "description": "Select a member from the \"Quem pagou\" dropdown"
+      },
+      {
+        "type": "action",
+        "description": "Select \"Dividir igualmente\" as the split type"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Salvar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Jantar\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"R$\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC026",
+    "title": "Adicionar despesa com divisão por valor (ajustar valores por participante)",
+    "description": "Verifica que o usuário consegue escolher divisão por valor, ajustar valores e salvar a despesa.",
+    "category": "Expense Tracking",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the list"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Despesas\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Adicionar despesa\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"Táxi\" into the description field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"80\" into the amount field"
+      },
+      {
+        "type": "action",
+        "description": "Select \"BRL\" from the currency dropdown"
+      },
+      {
+        "type": "action",
+        "description": "Fill \"2026-02-14\" into the date field"
+      },
+      {
+        "type": "action",
+        "description": "Select \"Transporte\" from the category dropdown"
+      },
+      {
+        "type": "action",
+        "description": "Select a member from the \"Quem pagou\" dropdown"
+      },
+      {
+        "type": "action",
+        "description": "Select \"Por valor\" as the split type"
+      },
+      {
+        "type": "action",
+        "description": "Select at least two participants in the split list"
+      },
+      {
+        "type": "action",
+        "description": "Type \"50\" into the split amount field for the first selected participant"
+      },
+      {
+        "type": "action",
+        "description": "Type \"30\" into the split amount field for the second selected participant"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Salvar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Táxi\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC027",
+    "title": "Adicionar despesa com divisão por porcentagem (ajustar percentuais por participante)",
+    "description": "Verifica que o usuário consegue escolher divisão por porcentagem, ajustar percentuais e salvar a despesa.",
+    "category": "Expense Tracking",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the list"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Despesas\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Adicionar despesa\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"Hotel\" into the description field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"500\" into the amount field"
+      },
+      {
+        "type": "action",
+        "description": "Select \"BRL\" from the currency dropdown"
+      },
+      {
+        "type": "action",
+        "description": "Fill \"2026-02-14\" into the date field"
+      },
+      {
+        "type": "action",
+        "description": "Select \"Hospedagem\" from the category dropdown"
+      },
+      {
+        "type": "action",
+        "description": "Select a member from the \"Quem pagou\" dropdown"
+      },
+      {
+        "type": "action",
+        "description": "Select \"Por porcentagem\" as the split type"
+      },
+      {
+        "type": "action",
+        "description": "Select at least two participants in the split list"
+      },
+      {
+        "type": "action",
+        "description": "Type \"60\" into the split percentage field for the first selected participant"
+      },
+      {
+        "type": "action",
+        "description": "Type \"40\" into the split percentage field for the second selected participant"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Salvar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Hotel\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC028",
+    "title": "Validação: impedir salvar despesa com valor não numérico",
+    "description": "Verifica que o sistema exibe erro de validação para valor inválido e não salva a despesa.",
+    "category": "Expense Tracking",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the list"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Despesas\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Adicionar despesa\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"Sorvete\" into the description field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"abc\" into the amount field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Salvar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"valor\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Sorvete\" is not visible"
+      }
+    ]
+  },
+  {
+    "id": "TC029",
+    "title": "Cancelar adição de despesa (fechar modal) sem salvar",
+    "description": "Verifica que o usuário consegue fechar o formulário de adicionar despesa e que nenhuma despesa nova aparece na lista.",
+    "category": "Expense Tracking",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the list"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Despesas\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Adicionar despesa\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"Item temporário\" into the description field"
+      },
+      {
+        "type": "action",
+        "description": "Press \"Escape\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Adicionar despesa\" is not visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Item temporário\" is not visible"
+      }
+    ]
+  },
+  {
+    "id": "TC030",
+    "title": "Divisão: desmarcar um participante e salvar com participantes restantes",
+    "description": "Verifica que o usuário consegue remover um participante da divisão e salvar a despesa com a divisão atualizada.",
+    "category": "Expense Tracking",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the list"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Despesas\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Adicionar despesa\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"Mercado\" into the description field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"200\" into the amount field"
+      },
+      {
+        "type": "action",
+        "description": "Select \"BRL\" from the currency dropdown"
+      },
+      {
+        "type": "action",
+        "description": "Fill \"2026-02-14\" into the date field"
+      },
+      {
+        "type": "action",
+        "description": "Select \"Compras\" from the category dropdown"
+      },
+      {
+        "type": "action",
+        "description": "Select a member from the \"Quem pagou\" dropdown"
+      },
+      {
+        "type": "action",
+        "description": "Select \"Dividir igualmente\" as the split type"
+      },
+      {
+        "type": "action",
+        "description": "Click to unselect one participant from the split list"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Salvar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Mercado\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC031",
+    "title": "Acessar 'Saldo' e visualizar saldos dos participantes e sugestões de acerto",
+    "description": "Garante que um usuário autenticado consegue abrir a página de Saldo e ver saldos e sugestões de acerto.",
+    "category": "Balance and Settlements",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the trips list"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Saldo\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Sugestões de acerto\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC032",
+    "title": "Gerar QR Code PIX a partir de uma sugestão de acerto",
+    "description": "Valida que é possível abrir o diálogo do PIX QR a partir de uma sugestão de acerto.",
+    "category": "Balance and Settlements",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Entrar\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the trips list"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Saldo\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Gerar PIX\" in the first suggested settlement"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"PIX\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC033",
+    "title": "Fechar o diálogo de PIX QR e retornar à tela de saldo",
+    "description": "Garante que o usuário consegue fechar o diálogo do QR Code PIX sem alterar o estado visível da página.",
+    "category": "Balance and Settlements",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Entrar\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the trips list"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Saldo\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Gerar PIX\" in the first suggested settlement"
+      },
+      {
+        "type": "action",
+        "description": "Press \"Escape\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Sugestões de acerto\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC034",
+    "title": "Marcar uma sugestão de acerto como paga com sucesso",
+    "description": "Valida que ao marcar um acerto como pago, o histórico é atualizado e o item deixa de aparecer como pendente.",
+    "category": "Balance and Settlements",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Entrar\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the trips list"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Saldo\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Marcar como pago\" in the first suggested settlement"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Confirmar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Histórico\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC035",
+    "title": "Ver histórico de acertos (settlement history) na aba/ seção de Saldo",
+    "description": "Garante que a seção de histórico de acertos é exibida e contém itens quando houver registros.",
+    "category": "Balance and Settlements",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Entrar\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the trips list"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Saldo\""
+      },
+      {
+        "type": "action",
+        "description": "Scroll to \"Histórico\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Histórico\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC036",
+    "title": "Cancelar o diálogo de 'Marcar como pago' e não registrar o acerto",
+    "description": "Valida que ao cancelar, o acerto não é registrado e nada muda visualmente no histórico.",
+    "category": "Balance and Settlements",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Entrar\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the trips list"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Saldo\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Marcar como pago\" in the first suggested settlement"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Cancelar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Sugestões de acerto\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC037",
+    "title": "Visualizar saldos positivos e negativos na lista de participantes",
+    "description": "Verifica que a tela exibe participantes com saldo a receber e saldo a pagar (valores com sinal ou indicação).",
+    "category": "Balance and Settlements",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Entrar\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the trips list"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Saldo\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Participantes\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"R$\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC038",
+    "title": "Adicionar orçamento por categoria com valor válido e ver progresso exibido",
+    "description": "Garante que o usuário consegue criar um orçamento por categoria e ver o card/barra de progresso correspondente na tela de Orçamento.",
+    "category": "Budget Tracking",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Adicionar orcamento\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Adicionar orcamento\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Categoria\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC039",
+    "title": "Validar erro ao salvar orçamento com valor vazio",
+    "description": "Garante que o sistema exige preenchimento do valor antes de salvar o orçamento.",
+    "category": "Budget Tracking",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the trips list"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Orçamento\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Adicionar orcamento\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Salvar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Obrigatório\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC040",
+    "title": "Editar valor de um orçamento existente",
+    "description": "Verifica que o usuário consegue editar um orçamento já criado e ver o valor atualizado no card.",
+    "category": "Budget Tracking",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the trips list"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Orçamento\""
+      },
+      {
+        "type": "action",
+        "description": "Click to edit budget amount"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Editar\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC041",
+    "title": "Excluir um orçamento existente",
+    "description": "Garante que o usuário consegue remover um orçamento e que o card correspondente deixa de aparecer.",
+    "category": "Budget Tracking",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the trips list"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Orçamento\""
+      },
+      {
+        "type": "action",
+        "description": "Click to delete budget"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Excluir\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC042",
+    "title": "Visualizar barras de progresso (gasto vs orçado) na página de Orçamento",
+    "description": "Confirma que a tela de Orçamento exibe os indicadores visuais de progresso para categorias orçadas.",
+    "category": "Budget Tracking",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the trips list"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Orçamento\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Orçamento\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Progresso\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC043",
+    "title": "Cancelar criação de orçamento e confirmar que nada foi salvo",
+    "description": "Verifica que ao fechar/cancelar o diálogo de orçamento, nenhum novo orçamento aparece na lista.",
+    "category": "Budget Tracking",
+    "priority": "Low",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the trips list"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Orçamento\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Adicionar orcamento\""
+      },
+      {
+        "type": "action",
+        "description": "Press \"Escape\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Adicionar orcamento\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC044",
+    "title": "Tentar salvar orçamento com texto não numérico no valor",
+    "description": "Garante que o campo de valor rejeita entrada não numérica e apresenta validação adequada.",
+    "category": "Budget Tracking",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the trips list"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Orçamento\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Adicionar orcamento\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"abc\" into the \"Valor\" field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Salvar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"inválido\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC045",
+    "title": "Criar uma nova checklist com nome válido",
+    "description": "Garante que o usuário autenticado consegue criar uma checklist informando um nome válido.",
+    "category": "Checklists",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the list"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Checklists\" in the trip navigation"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Nova checklist\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"Lista de Bagagem\" into the checklist name field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Criar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Lista de Bagagem\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC046",
+    "title": "Adicionar itens em uma checklist recém-criada",
+    "description": "Garante que é possível adicionar itens a uma checklist e vê-los listados na tela.",
+    "category": "Checklists",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the list"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Checklists\" in the trip navigation"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Nova checklist\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"Checklist Itens\" into the checklist name field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Criar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Checklist Itens\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Adicionar item\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"Passaporte\" into the item description field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Salvar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Passaporte\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC047",
+    "title": "Marcar e desmarcar um item da checklist",
+    "description": "Garante que o usuário consegue alternar o estado (marcado/desmarcado) de um item e ver a mudança refletida na UI.",
+    "category": "Checklists",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the list"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Checklists\" in the trip navigation"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Nova checklist\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"Checklist Toggle\" into the checklist name field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Criar\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Adicionar item\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"Carregador\" into the item description field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Salvar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Carregador\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click the checkbox for item \"Carregador\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Checkbox marcado para o item 'Carregador'\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click the checkbox for item \"Carregador\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Checkbox desmarcado para o item 'Carregador'\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC048",
+    "title": "Validação ao tentar criar checklist sem nome",
+    "description": "Garante que o sistema bloqueia a criação de checklist quando o nome está vazio e exibe mensagem de validação.",
+    "category": "Checklists",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the list"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Checklists\" in the trip navigation"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Nova checklist\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Criar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Nome\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"obrigatório\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC049",
+    "title": "Cancelar a criação de uma checklist no diálogo",
+    "description": "Garante que o usuário pode cancelar o diálogo de criação e que nenhuma checklist é criada.",
+    "category": "Checklists",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the list"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Checklists\" in the trip navigation"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Nova checklist\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"Checklist Para Cancelar\" into the checklist name field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Cancelar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Checklist Para Cancelar\" is not visible"
+      }
+    ]
+  },
+  {
+    "id": "TC050",
+    "title": "Excluir um item de uma checklist",
+    "description": "Garante que é possível remover um item da checklist e que ele deixa de aparecer na lista.",
+    "category": "Checklists",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the list"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Checklists\" in the trip navigation"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Nova checklist\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"Checklist Excluir Item\" into the checklist name field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Criar\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Adicionar item\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"Protetor solar\" into the item description field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Salvar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Protetor solar\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Excluir\" for item \"Protetor solar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Protetor solar\" is not visible"
+      }
+    ]
+  },
+  {
+    "id": "TC051",
+    "title": "Excluir uma checklist inteira",
+    "description": "Garante que o usuário consegue excluir uma checklist e que ela não aparece mais na página.",
+    "category": "Checklists",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the list"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Checklists\" in the trip navigation"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Nova checklist\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"Checklist Para Excluir\" into the checklist name field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Criar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Checklist Para Excluir\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Excluir checklist\" for checklist \"Checklist Para Excluir\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Confirmar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Checklist Para Excluir\" is not visible"
+      }
+    ]
+  },
+  {
+    "id": "TC052",
+    "title": "Criar nova nota e fixar no topo",
+    "description": "Verifica que o usuário consegue criar uma nota compartilhada e fixá-la para aparecer no topo da lista.",
+    "category": "Trip Notes",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click the trip card for an existing trip"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Notas\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/notes\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Nova nota\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"Nota de teste\" into the title field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"Conteúdo da nota de teste\" into the content field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Salvar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Nota de teste\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click pin to pin note to top"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Fixada\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC053",
+    "title": "Validação ao tentar salvar nota sem conteúdo (quando obrigatório)",
+    "description": "Verifica que o formulário mostra erro de validação e não salva a nota quando o conteúdo está vazio (se obrigatório).",
+    "category": "Trip Notes",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click the trip card for an existing trip"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Notas\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/notes\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Nova nota\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"Nota sem conteúdo\" into the title field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Salvar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Conteúdo\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Nota sem conteúdo\" is not visible"
+      }
+    ]
+  },
+  {
+    "id": "TC054",
+    "title": "Editar uma nota existente",
+    "description": "Verifica que o usuário consegue abrir uma nota existente, editar título e conteúdo e ver as mudanças refletidas na lista.",
+    "category": "Trip Notes",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click the trip card for an existing trip"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Notas\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/notes\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Nova nota\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"Nota para editar\" into the title field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"Conteúdo original\" into the content field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Salvar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Nota para editar\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click note to edit"
+      },
+      {
+        "type": "action",
+        "description": "Type \"Nota editada\" into the title field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"Conteúdo atualizado\" into the content field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Salvar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Nota editada\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC055",
+    "title": "Cancelar criação de nota não deve salvar na lista",
+    "description": "Verifica que ao fechar/cancelar o diálogo de nova nota, a nota não aparece na lista.",
+    "category": "Trip Notes",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click the trip card for an existing trip"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Notas\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/notes\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Nova nota\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"Nota cancelada\" into the title field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"Conteúdo que não deve ser salvo\" into the content field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Cancelar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Nota cancelada\" is not visible"
+      }
+    ]
+  },
+  {
+    "id": "TC056",
+    "title": "Deletar uma nota",
+    "description": "Verifica que o usuário consegue deletar uma nota e que ela some da lista após a exclusão.",
+    "category": "Trip Notes",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click the trip card for an existing trip"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Notas\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/notes\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Nova nota\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"Nota para deletar\" into the title field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"Conteúdo para deletar\" into the content field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Salvar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Nota para deletar\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click delete to remove note"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Nota para deletar\" is not visible"
+      }
+    ]
+  },
+  {
+    "id": "TC057",
+    "title": "Fixar e desafixar uma nota",
+    "description": "Verifica que a nota pode ser fixada e depois desafixada, refletindo o estado visual correspondente.",
+    "category": "Trip Notes",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click the trip card for an existing trip"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Notas\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/notes\""
+      },
+      {
+        "type": "action",
+        "description": "Click \"Nova nota\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"Nota para fixar\" into the title field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"Conteúdo para fixar\" into the content field"
+      },
+      {
+        "type": "action",
+        "description": "Click \"Salvar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Nota para fixar\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click pin to pin note to top"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Fixada\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click pin to pin note to top"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Fixada\" is not visible"
+      }
+    ]
+  },
+  {
+    "id": "TC058",
+    "title": "Ver lista de participantes da viagem",
+    "description": "Garante que um usuário autenticado consegue acessar a página de participantes e ver a lista de membros.",
+    "category": "Participants and Invites",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the trips list"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Participantes\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Participantes\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC059",
+    "title": "Convidar participante por e-mail com endereço válido",
+    "description": "Garante que o convite por e-mail pode ser enviado e que uma confirmação de sucesso é exibida.",
+    "category": "Participants and Invites",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Entrar\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the trips list"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Participantes\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Convidar por e-mail\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"convidado.teste+e2e@example.com\" into the email invite field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Enviar convite\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Convite enviado\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC060",
+    "title": "Validar erro ao convidar por e-mail com formato inválido",
+    "description": "Garante que o formulário bloqueia envio com e-mail inválido e exibe mensagem de validação.",
+    "category": "Participants and Invites",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Entrar\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the trips list"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Participantes\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Convidar por e-mail\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"email-invalido\" into the email invite field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Enviar convite\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"E-mail inválido\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC061",
+    "title": "Exibir erro ao abrir convite expirado ou inválido",
+    "description": "Garante que a página de convite mostra mensagem de erro quando o código é inválido/expirado.",
+    "category": "Participants and Invites",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Entrar\""
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /invite/INVALIDO123"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Convite inválido\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"expirado\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC062",
+    "title": "Remover membro (apenas organizador)",
+    "description": "Garante que a ação de remover membro funciona para organizador e o membro deixa de aparecer na lista.",
+    "category": "Participants and Invites",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Entrar\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the trips list"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Participantes\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Remover\" for a non-organizer member"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Membro removido\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC063",
+    "title": "Sair da viagem como participante",
+    "description": "Garante que o usuário consegue sair da viagem e não permanece no contexto da viagem após a ação.",
+    "category": "Participants and Invites",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Entrar\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the trips list"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Participantes\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Sair da viagem\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      }
+    ]
+  },
+  {
+    "id": "TC064",
+    "title": "Acessar o dashboard da viagem e visualizar estatísticas principais",
+    "description": "Garante que o usuário autenticado consegue abrir o dashboard da viagem e ver os cards/indicadores principais (gastos, orçamento, membros e atividades).",
+    "category": "Trip Dashboard",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the trips list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Estatísticas\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Gastos\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC065",
+    "title": "Visualizar feed de atividades no dashboard da viagem",
+    "description": "Verifica que o feed/log de atividades é exibido no dashboard e apresenta itens visíveis para o usuário.",
+    "category": "Trip Dashboard",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the trips list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Atividades\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Feed de atividades\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC066",
+    "title": "Criar enquete com pergunta e opções válidas e vê-la no dashboard",
+    "description": "Confirma que é possível criar uma enquete preenchendo pergunta e opções e que ela aparece na lista de enquetes do dashboard.",
+    "category": "Trip Dashboard",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the trips list"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Criar enquete\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Criar enquete\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC067",
+    "title": "Submeter enquete válida e verificar que o card da enquete aparece",
+    "description": "Valida o fluxo completo de criação: preencher pergunta e opções, enviar e ver a enquete renderizada no dashboard.",
+    "category": "Trip Dashboard",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Entrar\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the trips list"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Criar enquete\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"Qual é o melhor horário para sair?\" into the question field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"08:00\" into the first option field"
+      }
+    ]
+  },
+  {
+    "id": "TC068",
+    "title": "Completar criação de enquete com múltiplas opções e confirmar presença no dashboard",
+    "description": "Garante que uma enquete com pelo menos duas opções pode ser criada e fica visível após o envio.",
+    "category": "Trip Dashboard",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Entrar\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the trips list"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Criar enquete\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"Qual atividade fazemos primeiro?\" into the question field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"Praia\" into the first option field"
+      }
+    ]
+  },
+  {
+    "id": "TC069",
+    "title": "Validar erro ao tentar criar enquete sem opções",
+    "description": "Garante que o sistema impede a criação de enquete quando a pergunta é preenchida mas as opções ficam vazias, exibindo mensagem de validação.",
+    "category": "Trip Dashboard",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Entrar\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the trips list"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Criar enquete\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"Qual restaurante escolhemos?\" into the question field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Enviar\""
+      }
+    ]
+  },
+  {
+    "id": "TC070",
+    "title": "Confirmar que enquete inválida não é criada após erro de validação",
+    "description": "Após submeter sem opções, verifica que a enquete não aparece na lista do dashboard.",
+    "category": "Trip Dashboard",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Entrar\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the trips list"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Criar enquete\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"Qual passeio é prioridade?\" into the question field"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Opções\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC071",
+    "title": "Navegação rápida do dashboard para Roteiro (Itinerário)",
+    "description": "Verifica que o atalho de navegação do dashboard leva para a seção de roteiro/itinerário da viagem.",
+    "category": "Trip Dashboard",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Entrar\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the trips list"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Roteiro\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/itinerary\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Roteiro\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC072",
+    "title": "Navegação rápida do dashboard para Despesas e Saldo",
+    "description": "Garante que os atalhos do dashboard abrem as páginas de Despesas e Saldo da viagem sem erro de navegação.",
+    "category": "Trip Dashboard",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Entrar\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first trip in the trips list"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Despesas\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/expenses\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Saldo\""
+      }
+    ]
+  },
+  {
+    "id": "TC073",
+    "title": "Atualizar perfil (nome e e-mail) e salvar com sucesso",
+    "description": "Garante que o usuário autenticado consegue alterar nome/e-mail no perfil e ver confirmação visual de sucesso.",
+    "category": "Settings and Profile",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Entrar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/trips\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Configurações\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/settings\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"Usuário Teste Atualizado\" into the name field"
+      }
+    ]
+  },
+  {
+    "id": "TC074",
+    "title": "Salvar alterações de perfil e validar mensagem/estado de sucesso",
+    "description": "Verifica que ao salvar alterações do perfil o app exibe feedback visível de sucesso e mantém os dados atualizados na tela.",
+    "category": "Settings and Profile",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Entrar\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Configurações\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"usuario.teste+atualizado@example.com\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Salvar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Salvo\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC075",
+    "title": "Alterar senha com sucesso (senha atual correta)",
+    "description": "Garante que o usuário consegue trocar a senha informando senha atual, nova senha e confirmação e recebe confirmação visual.",
+    "category": "Settings and Profile",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Entrar\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Configurações\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the current password field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"NovaSenha@123\" into the new password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Salvar\""
+      }
+    ]
+  },
+  {
+    "id": "TC076",
+    "title": "Falha ao alterar senha com senha atual incorreta",
+    "description": "Verifica que o sistema bloqueia a troca de senha quando a senha atual está errada e exibe mensagem de erro visível.",
+    "category": "Settings and Profile",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Entrar\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Configurações\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"SenhaAtualErrada!\" into the current password field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"OutraNovaSenha@123\" into the new password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Salvar\""
+      }
+    ]
+  },
+  {
+    "id": "TC077",
+    "title": "Validar mensagem de erro após senha atual incorreta (senha não alterada)",
+    "description": "Confirma que após a tentativa com senha atual incorreta o app mostra erro de \"senha atual\" e não confirma sucesso.",
+    "category": "Settings and Profile",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Entrar\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Configurações\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"SenhaAtualErrada!\" into the current password field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"OutraNovaSenha@123\" into the new password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Salvar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Senha atual\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC078",
+    "title": "Alternar preferências de e-mail e ver estado atualizado",
+    "description": "Garante que o usuário consegue alternar preferências de notificação por e-mail e ver o estado atualizado refletido na tela.",
+    "category": "Settings and Profile",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Entrar\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Configurações\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the email notification preference toggle"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Preferências de e-mail\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Salvar\""
+      }
+    ]
+  },
+  {
+    "id": "TC079",
+    "title": "Preferências de e-mail persistem visualmente após salvar",
+    "description": "Verifica que, após salvar, o usuário vê confirmação e as preferências continuam no estado selecionado durante a sessão.",
+    "category": "Settings and Profile",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Entrar\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Configurações\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the email notification preference toggle"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Salvar\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Salvo\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC080",
+    "title": "Zona de perigo: iniciar exclusão de conta e validar exigência de confirmação por e-mail",
+    "description": "Garante que a exclusão de conta exige digitação do e-mail como confirmação antes de permitir prosseguir.",
+    "category": "Settings and Profile",
+    "priority": "Low",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Entrar\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Configurações\""
+      },
+      {
+        "type": "action",
+        "description": "Scroll to \"Zona de perigo\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Excluir conta\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Excluir conta\""
+      }
+    ]
+  },
+  {
+    "id": "TC081",
+    "title": "Zona de perigo: tentar confirmar exclusão com e-mail inválido e ver erro/bloqueio",
+    "description": "Verifica que o sistema bloqueia a exclusão quando o e-mail digitado para confirmação não corresponde e mostra feedback visível.",
+    "category": "Settings and Profile",
+    "priority": "Low",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Entrar\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Configurações\""
+      },
+      {
+        "type": "action",
+        "description": "Scroll to \"Zona de perigo\""
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Excluir conta\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"email.errado@example.com\" into the confirmation email field"
+      }
+    ]
+  }
+]

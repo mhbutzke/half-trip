@@ -10,7 +10,7 @@ import type { TripParticipantResolved } from '@/lib/supabase/participants';
 
 interface MemberSplitSelectorProps {
   participants: TripParticipantResolved[];
-  splitType: 'equal' | 'by_amount' | 'by_percentage';
+  splitType: 'equal' | 'by_amount' | 'by_percentage' | 'by_group';
   selectedParticipants: string[];
   onSelectedParticipantsChange: (participantIds: string[]) => void;
   customAmounts?: Record<string, string>;
@@ -102,6 +102,12 @@ export function MemberSplitSelector({
       {splitType === 'equal' && selectedParticipants.length > 0 && parsedAmount > 0 && (
         <p className="text-sm text-muted-foreground">
           {formatAmount(parsedAmount / selectedParticipants.length, currency)} por pessoa
+        </p>
+      )}
+
+      {splitType === 'by_group' && selectedParticipants.length > 0 && parsedAmount > 0 && (
+        <p className="text-sm text-muted-foreground">
+          Dividido igualmente entre grupos e participantes individuais
         </p>
       )}
     </div>

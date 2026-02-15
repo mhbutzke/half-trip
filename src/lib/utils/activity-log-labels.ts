@@ -15,6 +15,7 @@ const entityLabels: Record<ActivityLogEntityType, string> = {
   attachment: 'anexo',
   receipt: 'comprovante',
   trip_member: 'membro da viagem',
+  group: 'grupo',
 };
 
 const actionLabels: Record<ActivityLogAction, string> = {

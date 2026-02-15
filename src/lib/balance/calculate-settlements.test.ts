@@ -9,7 +9,7 @@ import { describe, it, expect } from 'vitest';
 import {
   calculateSettlements,
   getSettlementParticipantCount,
-  getSettlementsForUser,
+  getSettlementsForParticipant,
   getTotalOutgoing,
   getTotalIncoming,
 } from './calculate-settlements';
@@ -20,17 +20,19 @@ describe('Settlement Calculation', () => {
     it('should return empty array when all participants are settled', () => {
       const balances: ParticipantBalance[] = [
         {
-          userId: 'user-1',
-          userName: 'Alice',
-          userAvatar: null,
+          participantId: 'user-1',
+          participantName: 'Alice',
+          participantAvatar: null,
+          participantType: 'member',
           totalPaid: 50,
           totalOwed: 50,
           netBalance: 0,
         },
         {
-          userId: 'user-2',
-          userName: 'Bob',
-          userAvatar: null,
+          participantId: 'user-2',
+          participantName: 'Bob',
+          participantAvatar: null,
+          participantType: 'member',
           totalPaid: 50,
           totalOwed: 50,
           netBalance: 0,
@@ -45,17 +47,19 @@ describe('Settlement Calculation', () => {
     it('should create single settlement for two people', () => {
       const balances: ParticipantBalance[] = [
         {
-          userId: 'user-1',
-          userName: 'Alice',
-          userAvatar: null,
+          participantId: 'user-1',
+          participantName: 'Alice',
+          participantAvatar: null,
+          participantType: 'member',
           totalPaid: 100,
           totalOwed: 50,
           netBalance: 50,
         },
         {
-          userId: 'user-2',
-          userName: 'Bob',
-          userAvatar: null,
+          participantId: 'user-2',
+          participantName: 'Bob',
+          participantAvatar: null,
+          participantType: 'member',
           totalPaid: 0,
           totalOwed: 50,
           netBalance: -50,
@@ -65,33 +69,36 @@ describe('Settlement Calculation', () => {
       const settlements = calculateSettlements(balances);
 
       expect(settlements).toHaveLength(1);
-      expect(settlements[0].from.userId).toBe('user-2'); // Bob owes
-      expect(settlements[0].to.userId).toBe('user-1'); // Alice is owed
+      expect(settlements[0].from.participantId).toBe('user-2'); // Bob owes
+      expect(settlements[0].to.participantId).toBe('user-1'); // Alice is owed
       expect(settlements[0].amount).toBe(50);
     });
 
     it('should minimize number of settlements for three people', () => {
       const balances: ParticipantBalance[] = [
         {
-          userId: 'user-1',
-          userName: 'Alice',
-          userAvatar: null,
+          participantId: 'user-1',
+          participantName: 'Alice',
+          participantAvatar: null,
+          participantType: 'member',
           totalPaid: 150,
           totalOwed: 50,
           netBalance: 100, // Owed $100
         },
         {
-          userId: 'user-2',
-          userName: 'Bob',
-          userAvatar: null,
+          participantId: 'user-2',
+          participantName: 'Bob',
+          participantAvatar: null,
+          participantType: 'member',
           totalPaid: 0,
           totalOwed: 50,
           netBalance: -50, // Owes $50
         },
         {
-          userId: 'user-3',
-          userName: 'Carol',
-          userAvatar: null,
+          participantId: 'user-3',
+          participantName: 'Carol',
+          participantAvatar: null,
+          participantType: 'member',
           totalPaid: 0,
           totalOwed: 50,
           netBalance: -50, // Owes $50
@@ -107,39 +114,43 @@ describe('Settlement Calculation', () => {
       expect(totalSettled).toBe(100);
 
       // All settlements should be to Alice
-      expect(settlements.every((s) => s.to.userId === 'user-1')).toBe(true);
+      expect(settlements.every((s) => s.to.participantId === 'user-1')).toBe(true);
     });
 
     it('should handle complex scenario with multiple creditors and debtors', () => {
       const balances: ParticipantBalance[] = [
         {
-          userId: 'user-1',
-          userName: 'Alice',
-          userAvatar: null,
+          participantId: 'user-1',
+          participantName: 'Alice',
+          participantAvatar: null,
+          participantType: 'member',
           totalPaid: 120,
           totalOwed: 40,
           netBalance: 80, // Owed $80
         },
         {
-          userId: 'user-2',
-          userName: 'Bob',
-          userAvatar: null,
+          participantId: 'user-2',
+          participantName: 'Bob',
+          participantAvatar: null,
+          participantType: 'member',
           totalPaid: 60,
           totalOwed: 40,
           netBalance: 20, // Owed $20
         },
         {
-          userId: 'user-3',
-          userName: 'Carol',
-          userAvatar: null,
+          participantId: 'user-3',
+          participantName: 'Carol',
+          participantAvatar: null,
+          participantType: 'member',
           totalPaid: 0,
           totalOwed: 40,
           netBalance: -40, // Owes $40
         },
         {
-          userId: 'user-4',
-          userName: 'Dave',
-          userAvatar: null,
+          participantId: 'user-4',
+          participantName: 'Dave',
+          participantAvatar: null,
+          participantType: 'member',
           totalPaid: 0,
           totalOwed: 60,
           netBalance: -60, // Owes $60
@@ -162,25 +173,28 @@ describe('Settlement Calculation', () => {
     it('should round amounts to 2 decimal places', () => {
       const balances: ParticipantBalance[] = [
         {
-          userId: 'user-1',
-          userName: 'Alice',
-          userAvatar: null,
+          participantId: 'user-1',
+          participantName: 'Alice',
+          participantAvatar: null,
+          participantType: 'member',
           totalPaid: 100,
           totalOwed: 33.33,
           netBalance: 66.67,
         },
         {
-          userId: 'user-2',
-          userName: 'Bob',
-          userAvatar: null,
+          participantId: 'user-2',
+          participantName: 'Bob',
+          participantAvatar: null,
+          participantType: 'member',
           totalPaid: 0,
           totalOwed: 33.34,
           netBalance: -33.34,
         },
         {
-          userId: 'user-3',
-          userName: 'Carol',
-          userAvatar: null,
+          participantId: 'user-3',
+          participantName: 'Carol',
+          participantAvatar: null,
+          participantType: 'member',
           totalPaid: 0,
           totalOwed: 33.33,
           netBalance: -33.33,
@@ -199,25 +213,28 @@ describe('Settlement Calculation', () => {
     it('should handle floating point precision issues', () => {
       const balances: ParticipantBalance[] = [
         {
-          userId: 'user-1',
-          userName: 'Alice',
-          userAvatar: null,
+          participantId: 'user-1',
+          participantName: 'Alice',
+          participantAvatar: null,
+          participantType: 'member',
           totalPaid: 100,
           totalOwed: 33.333333,
           netBalance: 66.666667,
         },
         {
-          userId: 'user-2',
-          userName: 'Bob',
-          userAvatar: null,
+          participantId: 'user-2',
+          participantName: 'Bob',
+          participantAvatar: null,
+          participantType: 'member',
           totalPaid: 0,
           totalOwed: 33.333333,
           netBalance: -33.333333,
         },
         {
-          userId: 'user-3',
-          userName: 'Carol',
-          userAvatar: null,
+          participantId: 'user-3',
+          participantName: 'Carol',
+          participantAvatar: null,
+          participantType: 'member',
           totalPaid: 0,
           totalOwed: 33.333334,
           netBalance: -33.333334,
@@ -236,17 +253,19 @@ describe('Settlement Calculation', () => {
     it('should ignore very small balances (< 0.01)', () => {
       const balances: ParticipantBalance[] = [
         {
-          userId: 'user-1',
-          userName: 'Alice',
-          userAvatar: null,
+          participantId: 'user-1',
+          participantName: 'Alice',
+          participantAvatar: null,
+          participantType: 'member',
           totalPaid: 50,
           totalOwed: 50,
           netBalance: 0.005, // Very small positive
         },
         {
-          userId: 'user-2',
-          userName: 'Bob',
-          userAvatar: null,
+          participantId: 'user-2',
+          participantName: 'Bob',
+          participantAvatar: null,
+          participantType: 'member',
           totalPaid: 50,
           totalOwed: 50,
           netBalance: -0.005, // Very small negative
@@ -262,25 +281,28 @@ describe('Settlement Calculation', () => {
     it('should match largest creditors with largest debtors (greedy algorithm)', () => {
       const balances: ParticipantBalance[] = [
         {
-          userId: 'user-1',
-          userName: 'Alice',
-          userAvatar: null,
+          participantId: 'user-1',
+          participantName: 'Alice',
+          participantAvatar: null,
+          participantType: 'member',
           totalPaid: 100,
           totalOwed: 0,
           netBalance: 100, // Largest creditor
         },
         {
-          userId: 'user-2',
-          userName: 'Bob',
-          userAvatar: null,
+          participantId: 'user-2',
+          participantName: 'Bob',
+          participantAvatar: null,
+          participantType: 'member',
           totalPaid: 0,
           totalOwed: 60,
           netBalance: -60, // Largest debtor
         },
         {
-          userId: 'user-3',
-          userName: 'Carol',
-          userAvatar: null,
+          participantId: 'user-3',
+          participantName: 'Carol',
+          participantAvatar: null,
+          participantType: 'member',
           totalPaid: 0,
           totalOwed: 40,
           netBalance: -40, // Smaller debtor
@@ -291,47 +313,51 @@ describe('Settlement Calculation', () => {
 
       // First settlement should be largest debtor to largest creditor
       const firstSettlement = settlements[0];
-      expect(firstSettlement.from.userId).toBe('user-2'); // Bob (largest debtor)
-      expect(firstSettlement.to.userId).toBe('user-1'); // Alice (largest creditor)
+      expect(firstSettlement.from.participantId).toBe('user-2'); // Bob (largest debtor)
+      expect(firstSettlement.to.participantId).toBe('user-1'); // Alice (largest creditor)
       expect(firstSettlement.amount).toBe(60);
 
       // Second settlement should be Carol to Alice
       const secondSettlement = settlements[1];
-      expect(secondSettlement.from.userId).toBe('user-3'); // Carol
-      expect(secondSettlement.to.userId).toBe('user-1'); // Alice
+      expect(secondSettlement.from.participantId).toBe('user-3'); // Carol
+      expect(secondSettlement.to.participantId).toBe('user-1'); // Alice
       expect(secondSettlement.amount).toBe(40);
     });
 
     it('should handle case where one creditor receives from multiple debtors', () => {
       const balances: ParticipantBalance[] = [
         {
-          userId: 'user-1',
-          userName: 'Alice',
-          userAvatar: null,
+          participantId: 'user-1',
+          participantName: 'Alice',
+          participantAvatar: null,
+          participantType: 'member',
           totalPaid: 150,
           totalOwed: 50,
           netBalance: 100,
         },
         {
-          userId: 'user-2',
-          userName: 'Bob',
-          userAvatar: null,
+          participantId: 'user-2',
+          participantName: 'Bob',
+          participantAvatar: null,
+          participantType: 'member',
           totalPaid: 0,
           totalOwed: 30,
           netBalance: -30,
         },
         {
-          userId: 'user-3',
-          userName: 'Carol',
-          userAvatar: null,
+          participantId: 'user-3',
+          participantName: 'Carol',
+          participantAvatar: null,
+          participantType: 'member',
           totalPaid: 0,
           totalOwed: 40,
           netBalance: -40,
         },
         {
-          userId: 'user-4',
-          userName: 'Dave',
-          userAvatar: null,
+          participantId: 'user-4',
+          participantName: 'Dave',
+          participantAvatar: null,
+          participantType: 'member',
           totalPaid: 0,
           totalOwed: 30,
           netBalance: -30,
@@ -341,7 +367,7 @@ describe('Settlement Calculation', () => {
       const settlements = calculateSettlements(balances);
 
       // All settlements should be to Alice
-      expect(settlements.every((s) => s.to.userId === 'user-1')).toBe(true);
+      expect(settlements.every((s) => s.to.participantId === 'user-1')).toBe(true);
 
       // Total should equal what Alice is owed
       const totalToAlice = settlements.reduce((sum, s) => sum + s.amount, 0);
@@ -351,33 +377,37 @@ describe('Settlement Calculation', () => {
     it('should handle case where one debtor pays multiple creditors', () => {
       const balances: ParticipantBalance[] = [
         {
-          userId: 'user-1',
-          userName: 'Alice',
-          userAvatar: null,
+          participantId: 'user-1',
+          participantName: 'Alice',
+          participantAvatar: null,
+          participantType: 'member',
           totalPaid: 100,
           totalOwed: 50,
           netBalance: 50,
         },
         {
-          userId: 'user-2',
-          userName: 'Bob',
-          userAvatar: null,
+          participantId: 'user-2',
+          participantName: 'Bob',
+          participantAvatar: null,
+          participantType: 'member',
           totalPaid: 60,
           totalOwed: 50,
           netBalance: 10,
         },
         {
-          userId: 'user-3',
-          userName: 'Carol',
-          userAvatar: null,
+          participantId: 'user-3',
+          participantName: 'Carol',
+          participantAvatar: null,
+          participantType: 'member',
           totalPaid: 40,
           totalOwed: 50,
           netBalance: -10,
         },
         {
-          userId: 'user-4',
-          userName: 'Dave',
-          userAvatar: null,
+          participantId: 'user-4',
+          participantName: 'Dave',
+          participantAvatar: null,
+          participantType: 'member',
           totalPaid: 0,
           totalOwed: 50,
           netBalance: -50,
@@ -387,7 +417,7 @@ describe('Settlement Calculation', () => {
       const settlements = calculateSettlements(balances);
 
       // Dave should pay both Alice and Bob
-      const daveSettlements = settlements.filter((s) => s.from.userId === 'user-4');
+      const daveSettlements = settlements.filter((s) => s.from.participantId === 'user-4');
       expect(daveSettlements.length).toBeGreaterThan(0);
 
       const totalFromDave = daveSettlements.reduce((sum, s) => sum + s.amount, 0);
@@ -399,13 +429,13 @@ describe('Settlement Calculation', () => {
     it('should count unique participants across settlements', () => {
       const settlements = [
         {
-          from: { userId: 'user-1', userName: 'Alice', userAvatar: null },
-          to: { userId: 'user-2', userName: 'Bob', userAvatar: null },
+          from: { participantId: 'user-1', participantName: 'Alice', participantAvatar: null },
+          to: { participantId: 'user-2', participantName: 'Bob', participantAvatar: null },
           amount: 50,
         },
         {
-          from: { userId: 'user-3', userName: 'Carol', userAvatar: null },
-          to: { userId: 'user-2', userName: 'Bob', userAvatar: null },
+          from: { participantId: 'user-3', participantName: 'Carol', participantAvatar: null },
+          to: { participantId: 'user-2', participantName: 'Bob', participantAvatar: null },
           amount: 30,
         },
       ];
@@ -422,27 +452,27 @@ describe('Settlement Calculation', () => {
     });
   });
 
-  describe('getSettlementsForUser', () => {
+  describe('getSettlementsForParticipant', () => {
     it('should separate outgoing and incoming settlements', () => {
       const settlements = [
         {
-          from: { userId: 'user-1', userName: 'Alice', userAvatar: null },
-          to: { userId: 'user-2', userName: 'Bob', userAvatar: null },
+          from: { participantId: 'user-1', participantName: 'Alice', participantAvatar: null },
+          to: { participantId: 'user-2', participantName: 'Bob', participantAvatar: null },
           amount: 50,
         },
         {
-          from: { userId: 'user-3', userName: 'Carol', userAvatar: null },
-          to: { userId: 'user-2', userName: 'Bob', userAvatar: null },
+          from: { participantId: 'user-3', participantName: 'Carol', participantAvatar: null },
+          to: { participantId: 'user-2', participantName: 'Bob', participantAvatar: null },
           amount: 30,
         },
         {
-          from: { userId: 'user-2', userName: 'Bob', userAvatar: null },
-          to: { userId: 'user-4', userName: 'Dave', userAvatar: null },
+          from: { participantId: 'user-2', participantName: 'Bob', participantAvatar: null },
+          to: { participantId: 'user-4', participantName: 'Dave', participantAvatar: null },
           amount: 20,
         },
       ];
 
-      const bobSettlements = getSettlementsForUser(settlements, 'user-2');
+      const bobSettlements = getSettlementsForParticipant(settlements, 'user-2');
 
       expect(bobSettlements.incoming).toHaveLength(2); // From Alice and Carol
       expect(bobSettlements.outgoing).toHaveLength(1); // To Dave
@@ -451,13 +481,13 @@ describe('Settlement Calculation', () => {
     it('should return empty arrays for user not in settlements', () => {
       const settlements = [
         {
-          from: { userId: 'user-1', userName: 'Alice', userAvatar: null },
-          to: { userId: 'user-2', userName: 'Bob', userAvatar: null },
+          from: { participantId: 'user-1', participantName: 'Alice', participantAvatar: null },
+          to: { participantId: 'user-2', participantName: 'Bob', participantAvatar: null },
           amount: 50,
         },
       ];
 
-      const carolSettlements = getSettlementsForUser(settlements, 'user-3');
+      const carolSettlements = getSettlementsForParticipant(settlements, 'user-3');
 
       expect(carolSettlements.incoming).toHaveLength(0);
       expect(carolSettlements.outgoing).toHaveLength(0);
@@ -468,13 +498,13 @@ describe('Settlement Calculation', () => {
     it('should sum all outgoing payments for a user', () => {
       const settlements = [
         {
-          from: { userId: 'user-1', userName: 'Alice', userAvatar: null },
-          to: { userId: 'user-2', userName: 'Bob', userAvatar: null },
+          from: { participantId: 'user-1', participantName: 'Alice', participantAvatar: null },
+          to: { participantId: 'user-2', participantName: 'Bob', participantAvatar: null },
           amount: 50,
         },
         {
-          from: { userId: 'user-1', userName: 'Alice', userAvatar: null },
-          to: { userId: 'user-3', userName: 'Carol', userAvatar: null },
+          from: { participantId: 'user-1', participantName: 'Alice', participantAvatar: null },
+          to: { participantId: 'user-3', participantName: 'Carol', participantAvatar: null },
           amount: 30,
         },
       ];
@@ -487,8 +517,8 @@ describe('Settlement Calculation', () => {
     it('should return 0 for user with no outgoing payments', () => {
       const settlements = [
         {
-          from: { userId: 'user-1', userName: 'Alice', userAvatar: null },
-          to: { userId: 'user-2', userName: 'Bob', userAvatar: null },
+          from: { participantId: 'user-1', participantName: 'Alice', participantAvatar: null },
+          to: { participantId: 'user-2', participantName: 'Bob', participantAvatar: null },
           amount: 50,
         },
       ];
@@ -503,13 +533,13 @@ describe('Settlement Calculation', () => {
     it('should sum all incoming payments for a user', () => {
       const settlements = [
         {
-          from: { userId: 'user-1', userName: 'Alice', userAvatar: null },
-          to: { userId: 'user-2', userName: 'Bob', userAvatar: null },
+          from: { participantId: 'user-1', participantName: 'Alice', participantAvatar: null },
+          to: { participantId: 'user-2', participantName: 'Bob', participantAvatar: null },
           amount: 50,
         },
         {
-          from: { userId: 'user-3', userName: 'Carol', userAvatar: null },
-          to: { userId: 'user-2', userName: 'Bob', userAvatar: null },
+          from: { participantId: 'user-3', participantName: 'Carol', participantAvatar: null },
+          to: { participantId: 'user-2', participantName: 'Bob', participantAvatar: null },
           amount: 30,
         },
       ];
@@ -522,8 +552,8 @@ describe('Settlement Calculation', () => {
     it('should return 0 for user with no incoming payments', () => {
       const settlements = [
         {
-          from: { userId: 'user-1', userName: 'Alice', userAvatar: null },
-          to: { userId: 'user-2', userName: 'Bob', userAvatar: null },
+          from: { participantId: 'user-1', participantName: 'Alice', participantAvatar: null },
+          to: { participantId: 'user-2', participantName: 'Bob', participantAvatar: null },
           amount: 50,
         },
       ];

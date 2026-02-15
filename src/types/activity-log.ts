@@ -30,7 +30,8 @@ export type ActivityLogEntityType =
   | 'attachment'
   | 'receipt'
   | 'invite'
-  | 'trip_member';
+  | 'trip_member'
+  | 'group';
 
 export interface ActivityLogEntry extends TripActivityLog {
   users: {

@@ -167,6 +167,16 @@ export function AddExpenseDialog({
     avatar_url: p.displayAvatar,
   }));
 
+  const participantGroupMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const p of participants) {
+      if (p.groupId) {
+        map.set(p.id, p.groupId);
+      }
+    }
+    return map;
+  }, [participants]);
+
   // Receipt handlers
   const handleReceiptCapture = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -218,7 +228,7 @@ export function AddExpenseDialog({
   }, [receiptPreview]);
 
   const onSubmit = async (data: ExpenseFormValues) => {
-    const splitResult = calculateSplits(data);
+    const splitResult = calculateSplits(data, participantGroupMap);
     if (!splitResult) return;
 
     const { splits, amount, exchangeRate } = splitResult;
@@ -688,7 +698,9 @@ export function AddExpenseDialog({
                       <FormLabel>Participantes da divisão</FormLabel>
                       <MemberSplitSelector
                         participants={participants}
-                        splitType={watchSplitType as 'equal' | 'by_amount' | 'by_percentage'}
+                        splitType={
+                          watchSplitType as 'equal' | 'by_amount' | 'by_percentage' | 'by_group'
+                        }
                         selectedParticipants={watchSelectedMembers}
                         onSelectedParticipantsChange={(ids) =>
                           form.setValue('selected_members', ids, { shouldValidate: true })

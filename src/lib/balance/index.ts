@@ -7,6 +7,7 @@
 export {
   calculateBalances,
   calculateBalancesWithSettlements,
+  calculateGroupBalances,
   formatCurrency,
   getCreditors,
   getDebtors,
@@ -17,7 +18,7 @@ export {
 export {
   calculateSettlements,
   getSettlementParticipantCount,
-  getSettlementsForUser,
+  getSettlementsForParticipant,
   getTotalOutgoing,
   getTotalIncoming,
 } from './calculate-settlements';
@@ -25,9 +26,11 @@ export {
 export type {
   ParticipantBalance,
   ExpenseData,
-  ExpenseSplit,
-  TripMemberData,
+  ExpenseSplitData,
+  ParticipantData,
   BalanceCalculationResult,
   Settlement,
   PersistedSettlement,
+  GroupData,
+  EntityBalance,
 } from './types';

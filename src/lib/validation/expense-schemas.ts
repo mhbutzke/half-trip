@@ -20,6 +20,7 @@ export const splitTypes = [
     label: 'Por percentual',
     description: 'Definir percentual para cada um',
   },
+  { value: 'by_group', label: 'Por grupo', description: 'Dividir igualmente entre grupos/casais' },
 ] as const;
 
 export type SplitType = (typeof splitTypes)[number]['value'];
@@ -84,7 +85,7 @@ export const expenseFormSchema = z.object({
   ),
   paid_by_participant_id: z.string().min(1, 'Quem pagou é obrigatório'),
   notes: z.string().max(500, 'Observações devem ter no máximo 500 caracteres').optional(),
-  split_type: z.enum(['equal', 'by_amount', 'by_percentage'] as const),
+  split_type: z.enum(['equal', 'by_amount', 'by_percentage', 'by_group'] as const),
   selected_members: z.array(z.string()).min(1, 'Selecione pelo menos um participante'),
   // For by_amount: record of user_id -> amount string
   custom_amounts: z.record(z.string(), z.string()).optional(),
@@ -209,6 +210,60 @@ export function calculatePercentageSplits(
       percentage,
     };
   });
+}
+
+/**
+ * Calculate splits by group. Each entity (group or solo participant) gets
+ * an equal share. Within a group, the share is further split equally among members.
+ *
+ * @param totalAmount - Total expense amount
+ * @param participantIds - All selected participant IDs
+ * @param participantGroupMap - Map of participantId → groupId (only for grouped participants)
+ * @returns Array of individual splits (granularity is always per-participant)
+ */
+export function calculateGroupSplits(
+  totalAmount: number,
+  participantIds: string[],
+  participantGroupMap: Map<string, string>
+): ExpenseSplitInput[] {
+  if (participantIds.length === 0) return [];
+
+  // Build entities: group participants together, solo ones stay individual
+  const entityMap = new Map<string, string[]>(); // entityId → participantIds[]
+
+  for (const pid of participantIds) {
+    const groupId = participantGroupMap.get(pid);
+    const entityId = groupId ?? pid; // use groupId as entity or participantId for solos
+    const members = entityMap.get(entityId) ?? [];
+    members.push(pid);
+    entityMap.set(entityId, members);
+  }
+
+  const entityCount = entityMap.size;
+  const perEntity = Math.floor((totalAmount / entityCount) * 100) / 100;
+  const entityRemainder = Math.round((totalAmount - perEntity * entityCount) * 100) / 100;
+
+  const splits: ExpenseSplitInput[] = [];
+  let entityIndex = 0;
+
+  for (const [, memberIds] of entityMap) {
+    const entityShare = entityIndex === 0 ? perEntity + entityRemainder : perEntity;
+    const perMember = Math.floor((entityShare / memberIds.length) * 100) / 100;
+    const memberRemainder = Math.round((entityShare - perMember * memberIds.length) * 100) / 100;
+
+    for (let i = 0; i < memberIds.length; i++) {
+      splits.push({
+        participant_id: memberIds[i],
+        amount: i === 0 ? perMember + memberRemainder : perMember,
+        percentage:
+          Math.round(((i === 0 ? perMember + memberRemainder : perMember) / totalAmount) * 10000) /
+          100,
+      });
+    }
+    entityIndex++;
+  }
+
+  return splits;
 }
 
 /**

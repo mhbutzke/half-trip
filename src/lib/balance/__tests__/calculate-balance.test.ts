@@ -1,11 +1,26 @@
 import { describe, it, expect } from 'vitest';
 import { calculateBalances, validateBalances } from '../calculate-balance';
-import type { ExpenseData, TripMemberData } from '../types';
+import type { ExpenseData, ParticipantData } from '../types';
 
-const members: TripMemberData[] = [
-  { userId: 'alice', userName: 'Alice', userAvatar: null },
-  { userId: 'bob', userName: 'Bob', userAvatar: null },
-  { userId: 'carol', userName: 'Carol', userAvatar: null },
+const members: ParticipantData[] = [
+  {
+    participantId: 'alice',
+    participantName: 'Alice',
+    participantAvatar: null,
+    participantType: 'member',
+  },
+  {
+    participantId: 'bob',
+    participantName: 'Bob',
+    participantAvatar: null,
+    participantType: 'member',
+  },
+  {
+    participantId: 'carol',
+    participantName: 'Carol',
+    participantAvatar: null,
+    participantType: 'member',
+  },
 ];
 
 describe('calculateBalances with multi-currency', () => {
@@ -14,12 +29,12 @@ describe('calculateBalances with multi-currency', () => {
       {
         id: 'e1',
         amount: 300,
-        paidById: 'alice',
+        paidByParticipantId: 'alice',
         exchangeRate: 1,
         splits: [
-          { userId: 'alice', amount: 100 },
-          { userId: 'bob', amount: 100 },
-          { userId: 'carol', amount: 100 },
+          { participantId: 'alice', amount: 100 },
+          { participantId: 'bob', amount: 100 },
+          { participantId: 'carol', amount: 100 },
         ],
       },
     ];
@@ -28,7 +43,7 @@ describe('calculateBalances with multi-currency', () => {
     expect(result.totalExpenses).toBe(300);
     expect(validateBalances(result.participants)).toBe(true);
 
-    const alice = result.participants.find((p) => p.userId === 'alice')!;
+    const alice = result.participants.find((p) => p.participantId === 'alice')!;
     expect(alice.totalPaid).toBe(300);
     expect(alice.totalOwed).toBe(100);
     expect(alice.netBalance).toBeCloseTo(200);
@@ -40,11 +55,11 @@ describe('calculateBalances with multi-currency', () => {
       {
         id: 'e1',
         amount: 100, // 100 USD
-        paidById: 'alice',
+        paidByParticipantId: 'alice',
         exchangeRate: 5.78, // 1 USD = 5.78 BRL
         splits: [
-          { userId: 'alice', amount: 50 }, // 50 USD
-          { userId: 'bob', amount: 50 }, // 50 USD
+          { participantId: 'alice', amount: 50 }, // 50 USD
+          { participantId: 'bob', amount: 50 }, // 50 USD
         ],
       },
     ];
@@ -53,13 +68,13 @@ describe('calculateBalances with multi-currency', () => {
     // Total should be 100 * 5.78 = 578 BRL
     expect(result.totalExpenses).toBeCloseTo(578);
 
-    const alice = result.participants.find((p) => p.userId === 'alice')!;
+    const alice = result.participants.find((p) => p.participantId === 'alice')!;
     // Alice paid 578 BRL, owes 289 BRL (50/100 * 578)
     expect(alice.totalPaid).toBeCloseTo(578);
     expect(alice.totalOwed).toBeCloseTo(289);
     expect(alice.netBalance).toBeCloseTo(289);
 
-    const bob = result.participants.find((p) => p.userId === 'bob')!;
+    const bob = result.participants.find((p) => p.participantId === 'bob')!;
     expect(bob.totalPaid).toBe(0);
     expect(bob.totalOwed).toBeCloseTo(289);
     expect(bob.netBalance).toBeCloseTo(-289);
@@ -75,21 +90,21 @@ describe('calculateBalances with multi-currency', () => {
       {
         id: 'e1',
         amount: 100,
-        paidById: 'alice',
+        paidByParticipantId: 'alice',
         exchangeRate: 1,
         splits: [
-          { userId: 'alice', amount: 50 },
-          { userId: 'bob', amount: 50 },
+          { participantId: 'alice', amount: 50 },
+          { participantId: 'bob', amount: 50 },
         ],
       },
       {
         id: 'e2',
         amount: 200,
-        paidById: 'bob',
+        paidByParticipantId: 'bob',
         exchangeRate: 0.18,
         splits: [
-          { userId: 'alice', amount: 100 },
-          { userId: 'bob', amount: 100 },
+          { participantId: 'alice', amount: 100 },
+          { participantId: 'bob', amount: 100 },
         ],
       },
     ];
@@ -98,13 +113,13 @@ describe('calculateBalances with multi-currency', () => {
     // Total: 100 * 1 + 200 * 0.18 = 100 + 36 = 136 EUR
     expect(result.totalExpenses).toBeCloseTo(136);
 
-    const alice = result.participants.find((p) => p.userId === 'alice')!;
+    const alice = result.participants.find((p) => p.participantId === 'alice')!;
     // Alice paid: 100 EUR. Owes: 50/100 * 100 + 100/200 * 36 = 50 + 18 = 68
     expect(alice.totalPaid).toBeCloseTo(100);
     expect(alice.totalOwed).toBeCloseTo(68);
     expect(alice.netBalance).toBeCloseTo(32);
 
-    const bob = result.participants.find((p) => p.userId === 'bob')!;
+    const bob = result.participants.find((p) => p.participantId === 'bob')!;
     // Bob paid: 36 EUR. Owes: 50/100 * 100 + 100/200 * 36 = 50 + 18 = 68
     expect(bob.totalPaid).toBeCloseTo(36);
     expect(bob.totalOwed).toBeCloseTo(68);
@@ -122,34 +137,34 @@ describe('calculateBalances with multi-currency', () => {
       {
         id: 'e1',
         amount: 100,
-        paidById: 'alice',
+        paidByParticipantId: 'alice',
         exchangeRate: 1,
         splits: [
-          { userId: 'alice', amount: 34 },
-          { userId: 'bob', amount: 33 },
-          { userId: 'carol', amount: 33 },
+          { participantId: 'alice', amount: 34 },
+          { participantId: 'bob', amount: 33 },
+          { participantId: 'carol', amount: 33 },
         ],
       },
       {
         id: 'e2',
         amount: 50,
-        paidById: 'bob',
+        paidByParticipantId: 'bob',
         exchangeRate: 5,
         splits: [
-          { userId: 'alice', amount: 17 },
-          { userId: 'bob', amount: 17 },
-          { userId: 'carol', amount: 16 },
+          { participantId: 'alice', amount: 17 },
+          { participantId: 'bob', amount: 17 },
+          { participantId: 'carol', amount: 16 },
         ],
       },
       {
         id: 'e3',
         amount: 80,
-        paidById: 'carol',
+        paidByParticipantId: 'carol',
         exchangeRate: 6,
         splits: [
-          { userId: 'alice', amount: 27 },
-          { userId: 'bob', amount: 27 },
-          { userId: 'carol', amount: 26 },
+          { participantId: 'alice', amount: 27 },
+          { participantId: 'bob', amount: 27 },
+          { participantId: 'carol', amount: 26 },
         ],
       },
     ];
@@ -165,11 +180,11 @@ describe('calculateBalances with multi-currency', () => {
       {
         id: 'e1',
         amount: 100,
-        paidById: 'alice',
+        paidByParticipantId: 'alice',
         exchangeRate: undefined as unknown as number,
         splits: [
-          { userId: 'alice', amount: 50 },
-          { userId: 'bob', amount: 50 },
+          { participantId: 'alice', amount: 50 },
+          { participantId: 'bob', amount: 50 },
         ],
       },
     ];
@@ -183,11 +198,11 @@ describe('calculateBalances with multi-currency', () => {
       {
         id: 'e1',
         amount: 0,
-        paidById: 'alice',
+        paidByParticipantId: 'alice',
         exchangeRate: 5,
         splits: [
-          { userId: 'alice', amount: 0 },
-          { userId: 'bob', amount: 0 },
+          { participantId: 'alice', amount: 0 },
+          { participantId: 'bob', amount: 0 },
         ],
       },
     ];

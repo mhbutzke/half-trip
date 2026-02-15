@@ -72,6 +72,7 @@ describe('TripOverview layout (roteiro-first)', () => {
         }
         initialPolls={[]}
         initialRecapData={null}
+        participants={[]}
       />
     );
 

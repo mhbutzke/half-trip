@@ -155,9 +155,9 @@ describe('Expense Split Calculations', () => {
       const memberIds = ['user-1', 'user-2', 'user-3'];
       const splits = calculateEqualSplits(100, memberIds);
 
-      expect(splits[0].user_id).toBe('user-1');
-      expect(splits[1].user_id).toBe('user-2');
-      expect(splits[2].user_id).toBe('user-3');
+      expect(splits[0].participant_id).toBe('user-1');
+      expect(splits[1].participant_id).toBe('user-2');
+      expect(splits[2].participant_id).toBe('user-3');
     });
   });
 
@@ -323,8 +323,8 @@ describe('Expense Split Calculations', () => {
   describe('validateSplitsTotal', () => {
     it('should return valid when splits sum equals total', () => {
       const splits = [
-        { user_id: 'user-1', amount: 50, percentage: null },
-        { user_id: 'user-2', amount: 50, percentage: null },
+        { participant_id: 'user-1', amount: 50, percentage: null },
+        { participant_id: 'user-2', amount: 50, percentage: null },
       ];
 
       const result = validateSplitsTotal(splits, 100);
@@ -335,8 +335,8 @@ describe('Expense Split Calculations', () => {
 
     it('should return invalid when splits sum does not equal total', () => {
       const splits = [
-        { user_id: 'user-1', amount: 50, percentage: null },
-        { user_id: 'user-2', amount: 40, percentage: null },
+        { participant_id: 'user-1', amount: 50, percentage: null },
+        { participant_id: 'user-2', amount: 40, percentage: null },
       ];
 
       const result = validateSplitsTotal(splits, 100);
@@ -347,9 +347,9 @@ describe('Expense Split Calculations', () => {
 
     it('should allow small floating point differences within tolerance', () => {
       const splits = [
-        { user_id: 'user-1', amount: 33.34, percentage: null },
-        { user_id: 'user-2', amount: 33.33, percentage: null },
-        { user_id: 'user-3', amount: 33.33, percentage: null },
+        { participant_id: 'user-1', amount: 33.34, percentage: null },
+        { participant_id: 'user-2', amount: 33.33, percentage: null },
+        { participant_id: 'user-3', amount: 33.33, percentage: null },
       ];
 
       const result = validateSplitsTotal(splits, 100);
@@ -359,8 +359,8 @@ describe('Expense Split Calculations', () => {
 
     it('should reject differences larger than tolerance', () => {
       const splits = [
-        { user_id: 'user-1', amount: 50, percentage: null },
-        { user_id: 'user-2', amount: 40, percentage: null },
+        { participant_id: 'user-1', amount: 50, percentage: null },
+        { participant_id: 'user-2', amount: 40, percentage: null },
       ];
 
       const result = validateSplitsTotal(splits, 100, 0.01);
@@ -370,8 +370,8 @@ describe('Expense Split Calculations', () => {
 
     it('should handle custom tolerance', () => {
       const splits = [
-        { user_id: 'user-1', amount: 50, percentage: null },
-        { user_id: 'user-2', amount: 49, percentage: null },
+        { participant_id: 'user-1', amount: 50, percentage: null },
+        { participant_id: 'user-2', amount: 49, percentage: null },
       ];
 
       const strictResult = validateSplitsTotal(splits, 100, 0.01);
@@ -383,8 +383,8 @@ describe('Expense Split Calculations', () => {
 
     it('should return correct difference', () => {
       const splits = [
-        { user_id: 'user-1', amount: 60, percentage: null },
-        { user_id: 'user-2', amount: 30, percentage: null },
+        { participant_id: 'user-1', amount: 60, percentage: null },
+        { participant_id: 'user-2', amount: 30, percentage: null },
       ];
 
       const result = validateSplitsTotal(splits, 100);

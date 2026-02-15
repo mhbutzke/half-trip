@@ -34,6 +34,7 @@ import { useTripRealtime } from '@/hooks/use-trip-realtime';
 import { parseDateOnly } from '@/lib/utils/date-only';
 import { routes } from '@/lib/routes';
 import { getTripActivityLog } from '@/lib/supabase/activity-log';
+import type { TripParticipantResolved } from '@/lib/supabase/participants';
 import { TripItineraryPreview } from '@/components/itinerary/trip-itinerary-preview';
 import type { TripWithMembers } from '@/lib/supabase/trips';
 import type { DashboardData } from '@/lib/supabase/dashboard';
@@ -77,6 +78,7 @@ interface TripOverviewProps {
   dashboard?: DashboardData | null;
   initialPolls?: PollWithVotes[];
   initialRecapData?: TripRecapData | null;
+  participants?: TripParticipantResolved[];
 }
 
 export function TripOverview({
@@ -86,6 +88,7 @@ export function TripOverview({
   dashboard,
   initialPolls,
   initialRecapData,
+  participants = [],
 }: TripOverviewProps) {
   const router = useRouter();
   const [isInviteOpen, setIsInviteOpen] = useState(false);
@@ -100,6 +103,11 @@ export function TripOverview({
     entries: ActivityLogEntry[];
     hasMore: boolean;
   } | null>(null);
+
+  const currentParticipantId = useMemo(
+    () => participants.find((p) => p.userId === currentUserId)?.id ?? '',
+    [participants, currentUserId]
+  );
 
   const [openItineraryAdd, setOpenItineraryAdd] = useState<((date?: string) => void) | null>(null);
   const refreshTripData = useCallback(() => {
@@ -341,7 +349,7 @@ export function TripOverview({
               className="object-cover"
               unoptimized
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
+            <div className="absolute inset-0 bg-background/45" />
           </div>
         )}
 
@@ -603,8 +611,9 @@ export function TripOverview({
       {currentUserId && (
         <AddExpenseDialog
           tripId={trip.id}
-          members={trip.trip_members}
+          participants={participants}
           currentUserId={currentUserId}
+          currentParticipantId={currentParticipantId}
           baseCurrency={trip.base_currency}
           open={isExpenseOpen}
           onOpenChange={setIsExpenseOpen}

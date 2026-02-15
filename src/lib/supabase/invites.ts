@@ -447,6 +447,16 @@ export async function acceptInvite(code: string): Promise<AcceptInviteResult> {
     return { error: 'Você já é membro desta viagem', tripId: invite.trip_id };
   }
 
+  // Try to link an existing guest participant to this user (by email match)
+  if (authUser.email) {
+    await supabase.rpc('link_guest_to_user', {
+      p_trip_id: invite.trip_id,
+      p_user_id: authUser.id,
+      p_user_email: authUser.email,
+    });
+    // If a guest was linked, the trigger ON CONFLICT DO NOTHING handles the duplicate
+  }
+
   // Add user to trip as participant
   const { error: memberError } = await supabase.from('trip_members').insert({
     trip_id: invite.trip_id,

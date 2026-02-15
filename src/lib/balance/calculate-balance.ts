@@ -22,7 +22,9 @@
 
 import type {
   BalanceCalculationResult,
+  EntityBalance,
   ExpenseData,
+  GroupData,
   ParticipantBalance,
   ParticipantData,
   PersistedSettlement,
@@ -189,4 +191,97 @@ export function formatCurrency(amount: number, currency: string = 'BRL'): string
     style: 'currency',
     currency,
   }).format(amount);
+}
+
+/**
+ * Aggregate individual participant balances into group-level entity balances.
+ *
+ * Groups act as a single entity: their members' totals are summed together.
+ * Participants that don't belong to any group remain as individual entities.
+ *
+ * @param participantBalances - Array of individual participant balances
+ * @param groups - Array of group definitions with member participant IDs
+ * @param participants - Array of participant data (used for group member details)
+ * @returns Array of EntityBalance sorted by netBalance descending (creditors first)
+ */
+export function calculateGroupBalances(
+  participantBalances: ParticipantBalance[],
+  groups: GroupData[],
+  participants: ParticipantData[]
+): EntityBalance[] {
+  // 1. Build a map participantId → groupId
+  const participantToGroup = new Map<string, string>();
+  for (const group of groups) {
+    for (const memberId of group.memberParticipantIds) {
+      participantToGroup.set(memberId, group.groupId);
+    }
+  }
+
+  // Build a lookup for participant data by ID
+  const participantDataMap = new Map<string, ParticipantData>();
+  for (const p of participants) {
+    participantDataMap.set(p.participantId, p);
+  }
+
+  // Build a lookup for group data by groupId
+  const groupDataMap = new Map<string, GroupData>();
+  for (const group of groups) {
+    groupDataMap.set(group.groupId, group);
+  }
+
+  // Accumulators for group entities
+  const groupEntities = new Map<string, { totalPaid: number; totalOwed: number }>();
+  for (const group of groups) {
+    groupEntities.set(group.groupId, { totalPaid: 0, totalOwed: 0 });
+  }
+
+  const entities: EntityBalance[] = [];
+
+  // 2. Process each participant balance
+  for (const balance of participantBalances) {
+    const groupId = participantToGroup.get(balance.participantId);
+
+    if (groupId) {
+      // Participant belongs to a group — aggregate into group totals
+      const accum = groupEntities.get(groupId)!;
+      accum.totalPaid += balance.totalPaid;
+      accum.totalOwed += balance.totalOwed;
+    } else {
+      // Ungrouped participant — create individual entity
+      entities.push({
+        entityId: balance.participantId,
+        entityType: 'participant',
+        displayName: balance.participantName,
+        displayAvatar: balance.participantAvatar,
+        members: undefined,
+        totalPaid: balance.totalPaid,
+        totalOwed: balance.totalOwed,
+        netBalance: balance.netBalance,
+      });
+    }
+  }
+
+  // 3. Build group entity balances from accumulated totals
+  for (const [groupId, accum] of groupEntities) {
+    const group = groupDataMap.get(groupId)!;
+    const members = group.memberParticipantIds
+      .map((id) => participantDataMap.get(id))
+      .filter((p): p is ParticipantData => p !== undefined);
+
+    entities.push({
+      entityId: groupId,
+      entityType: 'group',
+      displayName: group.groupName,
+      displayAvatar: null,
+      members,
+      totalPaid: accum.totalPaid,
+      totalOwed: accum.totalOwed,
+      netBalance: accum.totalPaid - accum.totalOwed,
+    });
+  }
+
+  // Sort by netBalance descending (creditors first)
+  entities.sort((a, b) => b.netBalance - a.netBalance);
+
+  return entities;
 }

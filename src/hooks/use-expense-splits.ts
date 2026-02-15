@@ -8,13 +8,14 @@ import {
   calculateEqualSplits,
   calculateAmountSplits,
   calculatePercentageSplits,
+  calculateGroupSplits,
   validateSplitsTotal,
   validatePercentagesTotal,
 } from '@/lib/validation/expense-schemas';
 import type { ExpenseFormValues } from '@/lib/validation/expense-schemas';
 import type { ExpenseSplitInput } from '@/lib/validation/expense-schemas';
 
-type SplitType = 'equal' | 'by_amount' | 'by_percentage';
+type SplitType = 'equal' | 'by_amount' | 'by_percentage' | 'by_group';
 
 interface SplitResult {
   splits: ExpenseSplitInput[];
@@ -24,7 +25,7 @@ interface SplitResult {
 
 export function useExpenseSplits(baseCurrency: string) {
   const calculateSplits = useCallback(
-    (data: ExpenseFormValues): SplitResult | null => {
+    (data: ExpenseFormValues, participantGroupMap?: Map<string, string>): SplitResult | null => {
       const amount = parseAmount(data.amount);
       if (amount <= 0) {
         toast.error('Valor deve ser maior que zero');
@@ -51,6 +52,12 @@ export function useExpenseSplits(baseCurrency: string) {
           );
           return null;
         }
+      } else if (splitType === 'by_group') {
+        splits = calculateGroupSplits(
+          amount,
+          data.selected_members,
+          participantGroupMap ?? new Map()
+        );
       } else {
         splits = calculatePercentageSplits(
           amount,

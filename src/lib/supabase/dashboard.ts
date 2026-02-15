@@ -70,27 +70,27 @@ export async function getDashboardData(tripId: string): Promise<DashboardData | 
   const checklistCount = checklistCountResult.count ?? 0;
 
   // Find current user's balance
-  const userParticipant = summary?.participants.find((p) => p.userId === user.id);
+  const userParticipant = summary?.participants.find((p) => p.participantId === user.id);
   const userBalance = userParticipant?.netBalance ?? 0;
 
   // Count pending settlements involving current user
   const pendingForUser =
     summary?.suggestedSettlements.filter(
-      (s) => s.from.userId === user.id || s.to.userId === user.id
+      (s) => s.from.participantId === user.id || s.to.participantId === user.id
     ) ?? [];
   const pendingAmount = pendingForUser
-    .filter((s) => s.from.userId === user.id)
+    .filter((s) => s.from.participantId === user.id)
     .reduce((sum, s) => sum + s.amount, 0);
 
   // Balance description
   let balanceDescription = 'Tudo certo!';
   if (userBalance > 0.01) {
     const creditorsCount =
-      summary?.suggestedSettlements.filter((s) => s.to.userId === user.id).length ?? 0;
+      summary?.suggestedSettlements.filter((s) => s.to.participantId === user.id).length ?? 0;
     balanceDescription = `Você deve receber de ${creditorsCount} ${creditorsCount === 1 ? 'pessoa' : 'pessoas'}`;
   } else if (userBalance < -0.01) {
     const debtorsCount =
-      summary?.suggestedSettlements.filter((s) => s.from.userId === user.id).length ?? 0;
+      summary?.suggestedSettlements.filter((s) => s.from.participantId === user.id).length ?? 0;
     balanceDescription = `Você deve para ${debtorsCount} ${debtorsCount === 1 ? 'pessoa' : 'pessoas'}`;
   }
 

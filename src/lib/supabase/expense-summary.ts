@@ -50,10 +50,10 @@ export async function getTripExpenseSummary(tripId: string) {
   const expenseData: ExpenseData[] = expenses.map((expense) => ({
     id: expense.id,
     amount: expense.amount,
-    paidByParticipantId: expense.paid_by_participant_id,
+    paidByParticipantId: expense.paid_by_participant_id || '',
     exchangeRate: expense.exchange_rate ?? 1,
     splits: expense.expense_splits.map((split) => ({
-      participantId: split.participant_id,
+      participantId: split.participant_id || '',
       amount: split.amount,
     })),
   }));
@@ -68,8 +68,8 @@ export async function getTripExpenseSummary(tripId: string) {
 
   // Transform persisted settlements
   const persistedSettlements: PersistedSettlement[] = settledSettlements.map((settlement) => ({
-    fromParticipantId: settlement.from_participant_id,
-    toParticipantId: settlement.to_participant_id,
+    fromParticipantId: settlement.from_participant_id || '',
+    toParticipantId: settlement.to_participant_id || '',
     amount: settlement.amount,
   }));
 

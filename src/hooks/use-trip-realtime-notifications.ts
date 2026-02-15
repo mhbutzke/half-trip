@@ -97,8 +97,8 @@ export function useTripRealtimeNotifications({
       queryClient.invalidateQueries({ queryKey: ['balance', tripId] });
       queryClient.invalidateQueries({ queryKey: ['expense-summary', tripId] });
 
-      const newRecord = payload.new as { id: string; paid_by: string };
-      if (newRecord.paid_by !== currentUserId) {
+      const newRecord = payload.new as { id: string; paid_by: string | null };
+      if (!newRecord.paid_by || newRecord.paid_by !== currentUserId) {
         const supabase = createClient();
         const { data: expense } = await supabase
           .from('expenses')
@@ -124,8 +124,8 @@ export function useTripRealtimeNotifications({
       queryClient.invalidateQueries({ queryKey: ['balance', tripId] });
       queryClient.invalidateQueries({ queryKey: ['expense-summary', tripId] });
 
-      const newRecord = payload.new as { id: string; paid_by: string };
-      if (newRecord.paid_by !== currentUserId) {
+      const newRecord = payload.new as { id: string; paid_by: string | null };
+      if (!newRecord.paid_by || newRecord.paid_by !== currentUserId) {
         const supabase = createClient();
         const { data: expense } = await supabase
           .from('expenses')
@@ -293,7 +293,7 @@ export function useTripRealtimeNotifications({
           .eq('id', newRecord.id)
           .single();
 
-        if (settlement && settlement.from_user !== currentUserId) {
+        if (settlement && (!settlement.from_user || settlement.from_user !== currentUserId)) {
           const fromUserName = settlement.users?.name || 'Alguém';
           notifications.settlementMarkedPaid({
             tripId,

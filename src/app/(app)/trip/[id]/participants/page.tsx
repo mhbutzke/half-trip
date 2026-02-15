@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getTripById, getTripMembers, getUserRoleInTrip } from '@/lib/supabase/trips';
 import { getTripInvites, getEmailInvites } from '@/lib/supabase/invites';
 import { getTripParticipants } from '@/lib/supabase/participants';
+import { getTripGroups } from '@/lib/supabase/groups';
 import { PageContainer } from '@/components/layout/page-container';
 import { ParticipantsList } from './participants-list';
 import { ParticipantsHeader } from './participants-header';
@@ -24,7 +25,7 @@ async function ParticipantsContent({ tripId }: { tripId: string }) {
     redirect(routes.login());
   }
 
-  const [trip, members, userRole, linkInvites, emailInvites, participantsResult] =
+  const [trip, members, userRole, linkInvites, emailInvites, participantsResult, groupsResult] =
     await Promise.all([
       getTripById(tripId),
       getTripMembers(tripId),
@@ -32,6 +33,7 @@ async function ParticipantsContent({ tripId }: { tripId: string }) {
       getTripInvites(tripId),
       getEmailInvites(tripId),
       getTripParticipants(tripId),
+      getTripGroups(tripId),
     ]);
 
   if (!trip) {
@@ -41,8 +43,14 @@ async function ParticipantsContent({ tripId }: { tripId: string }) {
   // Combine and deduplicate invites (link invites without email)
   const pendingInvites = [...linkInvites.filter((inv) => !inv.email), ...emailInvites];
 
+  // All participants (members + guests resolved)
+  const allParticipants = participantsResult.data ?? [];
+
   // Filter only guests from participants
-  const guests = (participantsResult.data ?? []).filter((p) => p.type === 'guest');
+  const guests = allParticipants.filter((p) => p.type === 'guest');
+
+  // Groups
+  const groups = groupsResult.data ?? [];
 
   return (
     <div className="space-y-6">
@@ -51,10 +59,13 @@ async function ParticipantsContent({ tripId }: { tripId: string }) {
         tripName={trip.name}
         userRole={userRole}
         currentUserId={user.id}
+        allParticipants={allParticipants}
       />
       <ParticipantsList
         members={members}
         guests={guests}
+        groups={groups}
+        allParticipants={allParticipants}
         pendingInvites={pendingInvites}
         userRole={userRole}
         currentUserId={user.id}

@@ -8,15 +8,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { ParticipantCard } from './participant-card';
 import { GuestCard } from './guest-card';
+import { GroupCard } from './group-card';
 import { LeaveDialog } from './leave-dialog';
 import { useTripRealtime } from '@/hooks/use-trip-realtime';
 import type { TripMemberWithUser } from '@/lib/supabase/trips';
 import type { TripParticipantResolved } from '@/lib/supabase/participants';
 import type { TripInviteWithInviter } from '@/lib/supabase/invites';
+import type { TripGroupWithMembers } from '@/lib/supabase/groups';
 
 interface ParticipantsListProps {
   members: TripMemberWithUser[];
   guests: TripParticipantResolved[];
+  groups: TripGroupWithMembers[];
+  allParticipants: TripParticipantResolved[];
   pendingInvites: TripInviteWithInviter[];
   userRole: 'organizer' | 'participant' | null;
   currentUserId: string;
@@ -26,6 +30,8 @@ interface ParticipantsListProps {
 export function ParticipantsList({
   members,
   guests,
+  groups,
+  allParticipants,
   pendingInvites,
   userRole,
   currentUserId,
@@ -96,6 +102,36 @@ export function ParticipantsList({
                   />
                 ))}
               </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Groups */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Grupos ({groups.length})
+          </CardTitle>
+          <CardDescription>Agrupe participantes para organizar a viagem</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {groups.length > 0 ? (
+            <div className="space-y-2">
+              {groups.map((group) => (
+                <GroupCard
+                  key={group.id}
+                  group={group}
+                  participants={allParticipants}
+                  tripId={tripId}
+                  canManage={isOrganizer}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center rounded-lg border border-dashed p-6">
+              <p className="text-sm text-muted-foreground">Nenhum grupo criado.</p>
             </div>
           )}
         </CardContent>

@@ -89,6 +89,7 @@ describe('TripOverview readiness hub', () => {
         }
         initialPolls={[]}
         initialRecapData={null}
+        participants={[]}
       />
     );
 
@@ -136,6 +137,7 @@ describe('TripOverview readiness hub', () => {
         }
         initialPolls={[]}
         initialRecapData={null}
+        participants={[]}
       />
     );
 

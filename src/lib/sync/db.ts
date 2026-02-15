@@ -92,7 +92,8 @@ export interface CachedExpense extends SyncMetadata {
   exchange_rate: number;
   date: string;
   category: 'accommodation' | 'food' | 'transport' | 'tickets' | 'shopping' | 'other';
-  paid_by: string;
+  paid_by: string | null;
+  paid_by_participant_id: string | null;
   created_by: string;
   receipt_url: string | null;
   notes: string | null;
@@ -106,7 +107,8 @@ export interface CachedExpense extends SyncMetadata {
 export interface CachedExpenseSplit extends SyncMetadata {
   id: string;
   expense_id: string;
-  user_id: string;
+  user_id: string | null;
+  participant_id: string | null;
   amount: number;
   percentage: number | null;
   created_at: string;
@@ -170,7 +172,7 @@ export class HalfTripDB extends Dexie {
   constructor() {
     super('HalfTripDB');
 
-    this.version(4).stores({
+    this.version(5).stores({
       // Users table
       users: 'id, email, name',
 
@@ -184,10 +186,10 @@ export class HalfTripDB extends Dexie {
       activities: 'id, trip_id, date, [trip_id+date], created_by, sort_order',
 
       // Expenses - index by trip_id and date for filtering
-      expenses: 'id, trip_id, date, category, paid_by, created_by',
+      expenses: 'id, trip_id, date, category, paid_by, paid_by_participant_id, created_by',
 
-      // Expense splits - index by expense_id and user_id
-      expense_splits: 'id, expense_id, user_id, [expense_id+user_id]',
+      // Expense splits - index by expense_id, user_id, and participant_id
+      expense_splits: 'id, expense_id, user_id, participant_id, [expense_id+user_id]',
 
       // Trip notes - index by trip_id
       trip_notes: 'id, trip_id, created_by, created_at',

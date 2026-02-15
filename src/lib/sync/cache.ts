@@ -141,7 +141,7 @@ export async function cacheExpenseSplits(
   splits: Array<{
     id: string;
     expense_id: string;
-    user_id: string;
+    user_id: string | null;
     amount: number;
     percentage: number | null;
     created_at?: string;
@@ -233,7 +233,7 @@ export async function cacheTripBundle(data: {
   expenseSplits: Array<{
     id: string;
     expense_id: string;
-    user_id: string;
+    user_id: string | null;
     amount: number;
     percentage: number | null;
   }>;

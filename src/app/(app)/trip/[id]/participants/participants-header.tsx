@@ -6,12 +6,15 @@ import { ArrowLeft, UserPlus, UserRound, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { InviteDialog } from '@/components/invites/invite-dialog';
 import { AddGuestDialog } from './add-guest-dialog';
+import { CreateGroupDialog } from './create-group-dialog';
+import type { TripParticipantResolved } from '@/lib/supabase/participants';
 
 interface ParticipantsHeaderProps {
   tripId: string;
   tripName: string;
   userRole: 'organizer' | 'participant' | null;
   currentUserId?: string;
+  allParticipants: TripParticipantResolved[];
 }
 
 export function ParticipantsHeader({
@@ -19,9 +22,11 @@ export function ParticipantsHeader({
   tripName,
   userRole,
   currentUserId,
+  allParticipants,
 }: ParticipantsHeaderProps) {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [isGuestOpen, setIsGuestOpen] = useState(false);
+  const [isGroupOpen, setIsGroupOpen] = useState(false);
   const isOrganizer = userRole === 'organizer';
 
   return (
@@ -44,10 +49,16 @@ export function ParticipantsHeader({
 
         <div className="flex gap-2">
           {isOrganizer && (
-            <Button variant="outline" onClick={() => setIsGuestOpen(true)}>
-              <UserRound className="mr-2 h-4 w-4" />
-              Convidado
-            </Button>
+            <>
+              <Button variant="outline" onClick={() => setIsGroupOpen(true)}>
+                <Users className="mr-2 h-4 w-4" />
+                Grupo
+              </Button>
+              <Button variant="outline" onClick={() => setIsGuestOpen(true)}>
+                <UserRound className="mr-2 h-4 w-4" />
+                Convidado
+              </Button>
+            </>
           )}
           <Button onClick={() => setIsInviteOpen(true)}>
             <UserPlus className="mr-2 h-4 w-4" />
@@ -67,6 +78,15 @@ export function ParticipantsHeader({
 
       {isOrganizer && (
         <AddGuestDialog tripId={tripId} open={isGuestOpen} onOpenChange={setIsGuestOpen} />
+      )}
+
+      {isOrganizer && (
+        <CreateGroupDialog
+          tripId={tripId}
+          participants={allParticipants}
+          open={isGroupOpen}
+          onOpenChange={setIsGroupOpen}
+        />
       )}
     </>
   );

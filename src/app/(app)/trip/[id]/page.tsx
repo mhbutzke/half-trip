@@ -3,6 +3,7 @@ import { getUserProfile } from '@/lib/supabase/profile';
 import { getDashboardData } from '@/lib/supabase/dashboard';
 import { getTripPolls } from '@/lib/supabase/polls';
 import { getTripRecapData } from '@/lib/supabase/trip-recap-data';
+import { getTripParticipants } from '@/lib/supabase/participants';
 import { TripContent } from './trip-content';
 
 interface TripPageProps {
@@ -15,12 +16,13 @@ export default async function TripPage({ params }: TripPageProps) {
   const { id } = await params;
 
   // Fetch data from server (will be used when online)
-  const [trip, userRole, currentUser, dashboard, polls] = await Promise.all([
+  const [trip, userRole, currentUser, dashboard, polls, participantsResult] = await Promise.all([
     getTripById(id),
     getUserRoleInTrip(id),
     getUserProfile(),
     getDashboardData(id),
     getTripPolls(id),
+    getTripParticipants(id),
   ]);
 
   // Only fetch recap data if trip has ended
@@ -36,6 +38,7 @@ export default async function TripPage({ params }: TripPageProps) {
       initialDashboard={dashboard}
       initialPolls={polls}
       initialRecapData={recapData}
+      initialParticipants={participantsResult.data ?? []}
     />
   );
 }

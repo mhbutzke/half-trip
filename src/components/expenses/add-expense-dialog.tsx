@@ -52,6 +52,7 @@ import {
   formatAmountInput,
 } from '@/lib/validation/expense-schemas';
 import { CategorySelector } from './category-selector';
+import { SplitPreview } from './split-preview';
 import { createExpense, updateExpense } from '@/lib/supabase/expenses';
 import { uploadReceipt } from '@/lib/supabase/receipts';
 import { useDialogState } from '@/hooks/use-dialog-state';
@@ -517,6 +518,25 @@ export function AddExpenseDialog({
 
                 {/* Amount + Currency + Exchange Rate */}
                 <CurrencyAmountInput form={form} baseCurrency={baseCurrency} variant="compact" />
+
+                {/* Split Preview (if amount > 0) */}
+                {parseAmount(watchAmount || '0') > 0 && watchSelectedMembers.length > 0 && (
+                  <SplitPreview
+                    splits={watchSelectedMembers.map((userId) => {
+                      const member = members.find((m) => m.user_id === userId);
+                      const amount = parseAmount(watchAmount || '0') / watchSelectedMembers.length;
+                      return {
+                        userId,
+                        userName: member?.users.name || 'Desconhecido',
+                        userAvatar: member?.users.avatar_url || null,
+                        amount,
+                        isPayer: userId === form.watch('paid_by'),
+                      };
+                    })}
+                    currency={form.watch('currency')}
+                    totalAmount={parseAmount(watchAmount || '0')}
+                  />
+                )}
 
                 {/* Date and Category */}
                 <div className="grid grid-cols-2 gap-3">

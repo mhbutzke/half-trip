@@ -13,7 +13,7 @@ interface OptimizedImageProps extends Omit<ImageProps, 'onLoad'> {
 
 /**
  * OptimizedImage Component
- * 
+ *
  * Wrapper around Next.js Image with:
  * - Loading skeleton
  * - Fallback image on error
@@ -38,22 +38,18 @@ export function OptimizedImage({
   };
 
   const handleError = () => {
-    setError(true);
-    setIsLoading(false);
-    if (fallbackSrc && currentSrc !== fallbackSrc) {
+    if (!error && fallbackSrc && currentSrc !== fallbackSrc) {
       setCurrentSrc(fallbackSrc);
+    } else {
+      setIsLoading(false);
     }
+    setError(true);
   };
 
   return (
     <div className="relative">
       {showSkeleton && isLoading && (
-        <Skeleton
-          className={cn(
-            'absolute inset-0 z-10',
-            skeletonClassName
-          )}
-        />
+        <Skeleton className={cn('absolute inset-0 z-10', skeletonClassName)} />
       )}
       <Image
         src={currentSrc}

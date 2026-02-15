@@ -13,10 +13,10 @@ const breakpoints: Record<Breakpoint, number> = {
 
 /**
  * useBreakpoint Hook
- * 
+ *
  * Returns the current breakpoint based on window width.
  * Useful for conditional rendering based on screen size.
- * 
+ *
  * @example
  * const breakpoint = useBreakpoint();
  * const isMobile = breakpoint === 'xs' || breakpoint === 'sm';
@@ -25,9 +25,11 @@ export function useBreakpoint(): Breakpoint {
   const [breakpoint, setBreakpoint] = useState<Breakpoint>('md');
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
     const updateBreakpoint = () => {
       const width = window.innerWidth;
-      
+
       if (width >= breakpoints['2xl']) {
         setBreakpoint('2xl');
       } else if (width >= breakpoints.xl) {
@@ -45,7 +47,7 @@ export function useBreakpoint(): Breakpoint {
 
     updateBreakpoint();
     window.addEventListener('resize', updateBreakpoint);
-    
+
     return () => window.removeEventListener('resize', updateBreakpoint);
   }, []);
 
@@ -54,7 +56,7 @@ export function useBreakpoint(): Breakpoint {
 
 /**
  * useIsMobile Hook
- * 
+ *
  * Returns true if the current breakpoint is mobile (xs or sm)
  */
 export function useIsMobile(): boolean {
@@ -64,7 +66,7 @@ export function useIsMobile(): boolean {
 
 /**
  * useIsTablet Hook
- * 
+ *
  * Returns true if the current breakpoint is tablet (md)
  */
 export function useIsTablet(): boolean {
@@ -74,7 +76,7 @@ export function useIsTablet(): boolean {
 
 /**
  * useIsDesktop Hook
- * 
+ *
  * Returns true if the current breakpoint is desktop (lg or larger)
  */
 export function useIsDesktop(): boolean {

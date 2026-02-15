@@ -1,14 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Cloud, CloudOff, RefreshCw, Wifi, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useOnlineStatus } from '@/hooks/use-online-status';
 import { cn } from '@/lib/utils';
 
@@ -45,12 +41,6 @@ export function SyncStatusIndicator({
     if (!isOnline) return 'Offline';
     if (pendingCount > 0) return `${pendingCount} pendente${pendingCount > 1 ? 's' : ''}`;
     return 'Sincronizado';
-  };
-
-  const getStatusVariant = () => {
-    if (!isOnline) return 'secondary';
-    if (pendingCount > 0) return 'outline';
-    return 'secondary';
   };
 
   return (

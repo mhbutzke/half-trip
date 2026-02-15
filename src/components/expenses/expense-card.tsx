@@ -154,7 +154,7 @@ export const ExpenseCard = memo(function ExpenseCard({
                   <div className="space-y-1">
                     {expense.expense_splits.map((split) => (
                       <div key={split.id} className="flex items-center justify-between gap-4">
-                        <span>{split.users.name}</span>
+                        <span>{split.users?.name || 'Desconhecido'}</span>
                         <span className="font-medium">
                           {formatAmount(split.amount, expense.currency)}
                         </span>

@@ -15,19 +15,13 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CategorySelector } from './category-selector';
 import { AvatarSelector } from '@/components/ui/avatar-selector';
 import { createExpense } from '@/lib/supabase/expenses';
 import { useCurrencyInput } from '@/hooks/use-currency-input';
 import { parseAmount } from '@/lib/validation/expense-schemas';
 import type { TripMemberWithUser } from '@/lib/supabase/trips';
-import type { ExpenseCategory } from '@/types/database';
 
 const quickExpenseSchema = z.object({
   description: z.string().min(2, 'Mínimo 2 caracteres'),
@@ -86,6 +80,12 @@ export function QuickAddExpense({
     try {
       const amount = parseAmount(data.amount);
       const memberCount = members.length;
+
+      if (memberCount === 0) {
+        toast.error('Nenhum membro na viagem para dividir a despesa');
+        return;
+      }
+
       const splitAmount = amount / memberCount;
 
       const result = await createExpense({

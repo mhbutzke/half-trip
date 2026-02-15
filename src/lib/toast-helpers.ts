@@ -1,9 +1,10 @@
+import React from 'react';
 import { toast } from 'sonner';
 import { CheckCircle, XCircle, AlertCircle, Info, Loader2 } from 'lucide-react';
 
 /**
  * Toast Helpers
- * 
+ *
  * Enhanced toast notifications with custom styling and icons.
  * Built on top of Sonner for consistency.
  */
@@ -15,7 +16,7 @@ export const toastHelpers = {
   success: (message: string, description?: string) => {
     toast.success(message, {
       description,
-      icon: CheckCircle,
+      icon: React.createElement(CheckCircle, { className: 'h-4 w-4' }),
       duration: 4000,
     });
   },
@@ -26,7 +27,7 @@ export const toastHelpers = {
   error: (message: string, description?: string) => {
     toast.error(message, {
       description,
-      icon: XCircle,
+      icon: React.createElement(XCircle, { className: 'h-4 w-4' }),
       duration: 5000,
     });
   },
@@ -37,7 +38,7 @@ export const toastHelpers = {
   warning: (message: string, description?: string) => {
     toast.warning(message, {
       description,
-      icon: AlertCircle,
+      icon: React.createElement(AlertCircle, { className: 'h-4 w-4' }),
       duration: 4000,
     });
   },
@@ -48,7 +49,7 @@ export const toastHelpers = {
   info: (message: string, description?: string) => {
     toast.info(message, {
       description,
-      icon: Info,
+      icon: React.createElement(Info, { className: 'h-4 w-4' }),
       duration: 3000,
     });
   },
@@ -58,19 +59,19 @@ export const toastHelpers = {
    */
   loading: (message: string) => {
     return toast.loading(message, {
-      icon: Loader2,
+      icon: React.createElement(Loader2, { className: 'h-4 w-4 animate-spin' }),
     });
   },
 
   /**
    * Promise toast - automatically handles loading, success, and error states
    */
-  promise: <T,>(
+  promise: <T>(
     promise: Promise<T>,
     messages: {
       loading: string;
       success: string | ((data: T) => string);
-      error: string | ((error: any) => string);
+      error: string | ((error: unknown) => string);
     }
   ) => {
     return toast.promise(promise, messages);
@@ -103,7 +104,7 @@ export const toastHelpers = {
     }
   ) => {
     const { description, variant = 'default' } = options || {};
-    
+
     const toastFn = {
       default: toast,
       success: toast.success,
@@ -130,24 +131,15 @@ export const commonToasts = {
   deleted: () => toastHelpers.success('Excluído com sucesso'),
   updated: () => toastHelpers.success('Atualizado com sucesso'),
   copied: () => toastHelpers.success('Copiado para área de transferência'),
-  
-  networkError: () => toastHelpers.error(
-    'Erro de conexão',
-    'Verifique sua internet e tente novamente'
-  ),
-  
-  unauthorized: () => toastHelpers.error(
-    'Acesso negado',
-    'Você não tem permissão para esta ação'
-  ),
-  
-  notFound: (item: string = 'Item') => toastHelpers.error(
-    `${item} não encontrado`,
-    'O recurso solicitado não existe'
-  ),
-  
-  formError: () => toastHelpers.error(
-    'Erro no formulário',
-    'Verifique os campos e tente novamente'
-  ),
+
+  networkError: () =>
+    toastHelpers.error('Erro de conexão', 'Verifique sua internet e tente novamente'),
+
+  unauthorized: () => toastHelpers.error('Acesso negado', 'Você não tem permissão para esta ação'),
+
+  notFound: (item: string = 'Item') =>
+    toastHelpers.error(`${item} não encontrado`, 'O recurso solicitado não existe'),
+
+  formError: () =>
+    toastHelpers.error('Erro no formulário', 'Verifique os campos e tente novamente'),
 };

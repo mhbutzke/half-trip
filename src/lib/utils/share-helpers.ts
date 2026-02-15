@@ -5,16 +5,20 @@ import { getCategoryLabel, formatDuration } from './activity-categories';
 
 /**
  * Share Helpers
- * 
+ *
  * Utilities for sharing trip information via WhatsApp, SMS, clipboard, etc.
  */
 
 /**
  * Format a day's itinerary as text for sharing
  */
-export function formatDayItinerary(activities: Activity[], date: string, tripName?: string): string {
+export function formatDayItinerary(
+  activities: Activity[],
+  date: string,
+  tripName?: string
+): string {
   const formattedDate = format(new Date(date), "EEEE, d 'de' MMMM", { locale: ptBR });
-  
+
   const sortedActivities = [...activities].sort((a, b) => {
     if (!a.start_time && !b.start_time) return 0;
     if (!a.start_time) return 1;
@@ -106,7 +110,7 @@ export function shareViaWhatsApp(text: string): void {
  * Generate shareable link for a specific day
  */
 export function getDayShareUrl(tripId: string, date: string, origin?: string): string {
-  const base = origin || window.location.origin;
+  const base = origin || (typeof window !== 'undefined' ? window.location.origin : '');
   return `${base}/trip/${tripId}/itinerary?date=${date}`;
 }
 

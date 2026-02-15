@@ -38,24 +38,31 @@ export function KeyboardShortcuts({ shortcuts, enabled = true }: KeyboardShortcu
       if (!enabled) return;
 
       shortcuts.forEach((shortcut) => {
-        const modifiersMatch =
-          (!shortcut.modifiers || shortcut.modifiers.length === 0) &&
-          !event.ctrlKey &&
-          !event.altKey &&
-          !event.shiftKey &&
-          !event.metaKey;
+        const hasModifiers = shortcut.modifiers && shortcut.modifiers.length > 0;
 
-        const hasRequiredModifiers = shortcut.modifiers?.every((mod) => {
-          if (mod === 'ctrl') return event.ctrlKey;
-          if (mod === 'alt') return event.altKey;
-          if (mod === 'shift') return event.shiftKey;
-          if (mod === 'meta') return event.metaKey;
-          return false;
-        });
+        // Check if no modifiers are required and none are pressed
+        const noModifiersMatch =
+          !hasModifiers && !event.ctrlKey && !event.altKey && !event.shiftKey && !event.metaKey;
+
+        // Check if all required modifiers are pressed (and no extra ones)
+        const hasRequiredModifiers = hasModifiers
+          ? shortcut.modifiers!.every((mod) => {
+              if (mod === 'ctrl') return event.ctrlKey;
+              if (mod === 'alt') return event.altKey;
+              if (mod === 'shift') return event.shiftKey;
+              if (mod === 'meta') return event.metaKey;
+              return false;
+            }) &&
+            // Ensure no extra modifiers are pressed
+            shortcut.modifiers!.includes('ctrl') === event.ctrlKey &&
+            shortcut.modifiers!.includes('alt') === event.altKey &&
+            shortcut.modifiers!.includes('shift') === event.shiftKey &&
+            shortcut.modifiers!.includes('meta') === event.metaKey
+          : false;
 
         if (
           event.key.toLowerCase() === shortcut.key.toLowerCase() &&
-          (modifiersMatch || hasRequiredModifiers)
+          (noModifiersMatch || hasRequiredModifiers)
         ) {
           event.preventDefault();
           // Dispatch custom event for the shortcut
@@ -156,13 +163,9 @@ export function useKeyboardShortcut(
       }>;
 
       const modifiersMatch =
-        JSON.stringify(customEvent.detail.modifiers?.sort()) ===
-        JSON.stringify(modifiers?.sort());
+        JSON.stringify(customEvent.detail.modifiers?.sort()) === JSON.stringify(modifiers?.sort());
 
-      if (
-        customEvent.detail.key.toLowerCase() === key.toLowerCase() &&
-        modifiersMatch
-      ) {
+      if (customEvent.detail.key.toLowerCase() === key.toLowerCase() && modifiersMatch) {
         callback();
       }
     };

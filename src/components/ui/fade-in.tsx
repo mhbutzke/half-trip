@@ -15,7 +15,7 @@ interface FadeInProps {
 
 /**
  * FadeIn Component
- * 
+ *
  * Animates children with fade-in effect when they enter the viewport.
  * Uses Intersection Observer for performance.
  */
@@ -32,12 +32,15 @@ export function FadeIn({
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           setIsVisible(true);
-          if (triggerOnce && ref.current) {
-            observer.unobserve(ref.current);
+          if (triggerOnce) {
+            observer.unobserve(element);
           }
         } else if (!triggerOnce) {
           setIsVisible(false);
@@ -46,14 +49,10 @@ export function FadeIn({
       { threshold }
     );
 
-    if (ref.current) {
-      observer.observe(ref.current);
-    }
+    observer.observe(element);
 
     return () => {
-      if (ref.current) {
-        observer.unobserve(ref.current);
-      }
+      observer.unobserve(element);
     };
   }, [triggerOnce, threshold]);
 

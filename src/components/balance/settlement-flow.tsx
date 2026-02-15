@@ -72,34 +72,27 @@ export function SettlementFlow({
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {settlements.map((settlement, index) => {
+          {settlements.map((settlement) => {
             const isUserInvolved = canInteract(settlement);
             const isUserPaying = settlement.from.userId === currentUserId;
+            const settlementKey = `${settlement.from.userId}-${settlement.to.userId}-${settlement.amount}`;
 
             return (
               <div
-                key={index}
+                key={settlementKey}
                 className={cn(
                   'relative rounded-lg border p-4 transition-all',
-                  isUserInvolved
-                    ? 'border-primary/50 bg-primary/5'
-                    : 'border-border bg-background'
+                  isUserInvolved ? 'border-primary/50 bg-primary/5' : 'border-border bg-background'
                 )}
               >
                 {/* Highlight badge for current user */}
                 {isUserPaying && (
-                  <Badge
-                    variant="default"
-                    className="absolute -top-2 left-4 text-xs"
-                  >
+                  <Badge variant="default" className="absolute -top-2 left-4 text-xs">
                     Você deve
                   </Badge>
                 )}
                 {settlement.to.userId === currentUserId && (
-                  <Badge
-                    variant="secondary"
-                    className="absolute -top-2 left-4 text-xs"
-                  >
+                  <Badge variant="secondary" className="absolute -top-2 left-4 text-xs">
                     Você recebe
                   </Badge>
                 )}

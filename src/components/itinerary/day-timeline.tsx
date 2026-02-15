@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Clock, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getCategoryIcon, formatDuration } from '@/lib/utils/activity-categories';
-import type { Activity } from '@/types/database';
+import type { Activity, ActivityMetadata } from '@/types/database';
 
 interface DayTimelineProps {
   activities: Activity[];
@@ -15,7 +15,12 @@ interface DayTimelineProps {
   className?: string;
 }
 
-export function DayTimeline({ activities, date, onActivityClick, className }: DayTimelineProps) {
+export function DayTimeline({
+  activities,
+  date: _date,
+  onActivityClick,
+  className,
+}: DayTimelineProps) {
   // Sort activities by time
   const sortedActivities = useMemo(() => {
     return [...activities].sort((a, b) => {
@@ -61,7 +66,10 @@ export function DayTimeline({ activities, date, onActivityClick, className }: Da
       <CardContent className="p-4">
         <div className="relative space-y-0">
           {sortedActivities.map((activity, index) => {
-            const Icon = getCategoryIcon(activity.category, activity.metadata);
+            const Icon = getCategoryIcon(
+              activity.category,
+              activity.metadata as ActivityMetadata | null
+            );
             const isConflict = hasConflict(index);
             const isLast = index === sortedActivities.length - 1;
 
@@ -98,10 +106,7 @@ export function DayTimeline({ activities, date, onActivityClick, className }: Da
                       )}
                     >
                       <Icon
-                        className={cn(
-                          'h-5 w-5',
-                          isConflict ? 'text-destructive' : 'text-primary'
-                        )}
+                        className={cn('h-5 w-5', isConflict ? 'text-destructive' : 'text-primary')}
                       />
                     </div>
                     {activity.start_time && (

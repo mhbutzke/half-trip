@@ -20,8 +20,9 @@ interface BalanceBarChartProps {
 
 export function BalanceBarChart({ participants, currency, className }: BalanceBarChartProps) {
   // Find max absolute value for scaling
-  const maxAbsValue = Math.max(...participants.map((p) => Math.abs(p.balance)));
-  
+  const maxAbsValue =
+    participants.length > 0 ? Math.max(...participants.map((p) => Math.abs(p.balance))) : 0;
+
   // Separate positive and negative balances
   const sortedParticipants = [...participants].sort((a, b) => b.balance - a.balance);
 
@@ -98,7 +99,11 @@ export function BalanceBarChart({ participants, currency, className }: BalanceBa
                   >
                     {barWidth > 20 && (
                       <span className="text-xs font-semibold text-white px-2 truncate">
-                        {status === 'positive' ? 'Recebe' : status === 'negative' ? 'Deve' : 'Quitado'}
+                        {status === 'positive'
+                          ? 'Recebe'
+                          : status === 'negative'
+                            ? 'Deve'
+                            : 'Quitado'}
                       </span>
                     )}
                   </div>

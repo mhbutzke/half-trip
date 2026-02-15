@@ -35,6 +35,14 @@ const AddExpenseDialog = dynamic(
   { ssr: false }
 );
 
+const QuickAddExpense = dynamic(
+  () =>
+    import('@/components/expenses/quick-add-expense').then((mod) => ({
+      default: mod.QuickAddExpense,
+    })),
+  { ssr: false }
+);
+
 interface ExpensesListProps {
   tripId: string;
   baseCurrency: string;
@@ -62,6 +70,7 @@ export function ExpensesList({
   const [editingExpense, setEditingExpense] = useState<ExpenseWithDetails | null>(null);
   const [duplicatingExpense, setDuplicatingExpense] = useState<ExpenseWithDetails | null>(null);
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
 
   const handleExpenseAdded = () => {
     router.refresh();
@@ -381,10 +390,21 @@ export function ExpensesList({
         </div>
       )}
 
-      {/* Mobile FAB */}
+      {/* Mobile FAB - Quick Add */}
       {expenses.length > 0 && (
-        <FAB icon={Plus} label="Adicionar despesa" onClick={() => setIsAddOpen(true)} />
+        <FAB icon={Plus} label="Adicionar rápido" onClick={() => setIsQuickAddOpen(true)} />
       )}
+
+      {/* Quick Add Dialog */}
+      <QuickAddExpense
+        tripId={tripId}
+        members={members}
+        currentUserId={currentUserId}
+        baseCurrency={baseCurrency}
+        open={isQuickAddOpen}
+        onOpenChange={setIsQuickAddOpen}
+        onSuccess={handleExpenseAdded}
+      />
 
       <AddExpenseDialog
         tripId={tripId}

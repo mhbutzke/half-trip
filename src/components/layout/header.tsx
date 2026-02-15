@@ -233,12 +233,9 @@ export function Header({ user, onSignOut }: HeaderProps) {
             </>
           ) : (
             /* Auth buttons for logged out users */
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" asChild className="hidden min-h-[44px] sm:inline-flex">
-                <Link href={routes.login()}>Entrar</Link>
-              </Button>
+            <div className="flex items-center">
               <Button asChild className="min-h-[44px]">
-                <Link href={routes.register()}>Criar conta</Link>
+                <Link href={routes.login()}>Entrar</Link>
               </Button>
             </div>
           )}

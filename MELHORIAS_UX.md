@@ -54,6 +54,29 @@
 - ✅ Consistência visual em toda aplicação
 - ✅ Melhor acessibilidade com aria-labels
 
+### Balanço (Fase 3)
+
+#### 1. Visualização de Dívidas
+- ✅ Gráfico visual de barras para balanço
+- ✅ Cards de "quem deve para quem" mais destacados
+- ✅ Indicadores de status (pago, pendente)
+- ✅ Visualização em flow para acertos sugeridos
+
+### Componentes de Feedback (Fase 3)
+
+#### 1. Estados de Loading e Erro
+- ✅ SkeletonCard/List/Grid para loading states
+- ✅ ErrorState component para erros amigáveis
+- ✅ ErrorBoundaryFallback para erros não tratados
+- ✅ useAsyncAction hook para estados async
+
+### Acessibilidade (Fase 3)
+
+#### 1. Navegação por Teclado
+- ✅ KeyboardShortcuts component com diálogo de ajuda
+- ✅ useKeyboardShortcut hook para atalhos customizados
+- ✅ SkipLinks para navegação rápida por teclado
+
 ## 📋 Próximas Melhorias Sugeridas
 
 ### Gerenciamento de Viagens
@@ -188,10 +211,10 @@
 
 - ✅ **Fase 1 - Autenticação:** 100% completo
 - ✅ **Fase 2 - Viagens, Despesas e Itinerário:** 100% completo
-- 🚧 **Fase 3 - Balanço e Gráficos:** 0% (planejado)
+- ✅ **Fase 3 - Balanço, Feedback e Acessibilidade:** 100% completo
 - 🚧 **Fase 4 - Polish Global:** 0% (planejado)
 
-### Commits Realizados (8 total)
+### Commits Realizados (13 total)
 1. feat(auth): login e registro
 2. feat(auth): recuperação de senha
 3. docs: documento de melhorias
@@ -200,3 +223,8 @@
 6. docs: atualização de progresso
 7. feat(itinerary): formulário de atividades
 8. refactor: componentes reutilizáveis
+9. docs: atualização Fases 1 e 2
+10. feat(balance): gráficos e flow visual
+11. feat(ui): componentes de feedback e helpers
+12. feat(a11y): atalhos de teclado e skip links
+13. docs: atualização completa Fase 3

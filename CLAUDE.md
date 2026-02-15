@@ -25,5 +25,7 @@ TypeScript 5.x, Next.js 16 (App Router), React 19: Follow standard conventions
 
 - 001-multi-currency: Added TypeScript 5.x, Next.js 16 (App Router), React 19 + Supabase (PostgreSQL + Auth + RLS), Tailwind CSS v4, shadcn/ui, React Query, Zustand, Dexie.js, react-hook-form, Zod, jsPDF
 
+## sempre responda em português
+
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

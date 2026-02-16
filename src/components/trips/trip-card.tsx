@@ -117,7 +117,7 @@ export const TripCard = memo(function TripCard({
   const remainingMembers = Math.max(0, trip.memberCount - 4);
 
   return (
-    <Card className="group relative overflow-hidden transition-all hover:shadow-md hover:-translate-y-0.5 active:translate-y-0">
+    <Card className="group relative overflow-hidden transition-all hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] active:shadow-sm">
       <Link href={routes.trip.overview(trip.id)} className="absolute inset-0 z-0" />
 
       {trip.cover_url && (

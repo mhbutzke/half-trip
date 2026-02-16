@@ -19,10 +19,10 @@ interface StatItemProps {
 
 function StatItem({ icon: Icon, label, value }: StatItemProps) {
   return (
-    <div className="flex items-center gap-1.5">
-      <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-      <span className="text-sm text-muted-foreground">{label}:</span>
-      <span className="text-sm font-semibold tabular-nums">{value}</span>
+    <div className="flex items-center gap-2 rounded-full bg-background/85 px-3 py-1.5">
+      <Icon className="h-4 w-4 text-primary" aria-hidden="true" />
+      <span className="text-sm text-muted-foreground">{label}</span>
+      <span className="text-sm font-semibold tabular-nums text-foreground">{value}</span>
     </div>
   );
 }
@@ -34,7 +34,12 @@ export function TripsStats({
   className,
 }: TripsStatsProps) {
   return (
-    <div className={cn('flex flex-wrap items-center gap-3 text-sm', className)}>
+    <div
+      className={cn(
+        'flex flex-wrap items-center gap-2 rounded-xl border border-border/70 bg-muted/20 p-2 text-sm shadow-sm shadow-primary/5',
+        className
+      )}
+    >
       <StatItem icon={MapPin} label="Total" value={totalTrips} />
       <Separator orientation="vertical" className="h-4" />
       <StatItem icon={Calendar} label="Próximas" value={upcomingTrips} />

@@ -83,7 +83,7 @@ export function ActionCardsRow({
           return (
             <Card
               key={card.id}
-              className="min-w-[280px] flex-shrink-0 snap-center sm:min-w-0 sm:flex-1 transition-all hover:shadow-md hover:border-primary/20"
+              className="min-w-[280px] flex-shrink-0 snap-center border-border/70 bg-gradient-to-b from-card to-card/95 shadow-sm shadow-primary/5 transition-all hover:border-primary/20 hover:shadow-md hover:shadow-primary/10 sm:min-w-0 sm:flex-1"
             >
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-3">

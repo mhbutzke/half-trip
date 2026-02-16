@@ -144,7 +144,7 @@ export function TripContent({
 
   return (
     <PageContainer bottomNav>
-      <div className="space-y-6 animate-in fade-in duration-200">
+      <div className="space-y-7 animate-in fade-in duration-200">
         <TripHeader
           trip={trip}
           userRole={userRole}

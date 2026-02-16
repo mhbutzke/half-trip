@@ -38,7 +38,7 @@ export function WelcomeSection({ userName, userAvatar }: WelcomeSectionProps) {
   const firstName = userName.split(' ')[0];
 
   return (
-    <div className="flex items-center gap-4 pb-4">
+    <div className="flex items-center gap-4 rounded-xl border border-border/70 bg-gradient-to-r from-primary/5 via-background to-background p-4 shadow-sm shadow-primary/5">
       <Avatar className="h-12 w-12 shrink-0 ring-2 ring-primary/10">
         <AvatarImage src={userAvatar || undefined} alt={userName} />
         <AvatarFallback className="bg-primary/10 text-primary font-semibold">

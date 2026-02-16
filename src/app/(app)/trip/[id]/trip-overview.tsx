@@ -204,7 +204,7 @@ export function TripOverview({
   };
 
   const readinessCard = readiness ? (
-    <Card>
+    <Card className="border-border/70 bg-gradient-to-b from-card to-card/95 shadow-sm shadow-primary/5">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -274,7 +274,7 @@ export function TripOverview({
             return (
               <div
                 key={item.key}
-                className="flex items-start justify-between gap-3 rounded-lg border bg-muted/20 p-3"
+                className="flex items-start justify-between gap-3 rounded-lg border border-border/60 bg-background/80 p-3.5"
               >
                 <div className="flex min-w-0 items-start gap-3">
                   <div
@@ -339,7 +339,7 @@ export function TripOverview({
 
   return (
     <>
-      <div className="space-y-4">
+      <div data-testid="trip-overview-root" className="space-y-6">
         {/* Cover Image Hero */}
         {trip.cover_url && (
           <div className="relative -mx-4 -mt-6 h-40 overflow-hidden rounded-b-xl sm:mx-0 sm:mt-0 sm:rounded-xl">
@@ -367,7 +367,7 @@ export function TripOverview({
         {isPreTrip ? readinessCard : null}
 
         {/* Progresso da viagem (timezone do usuário) */}
-        <Card>
+        <Card className="border-border/70 bg-gradient-to-b from-card to-card/95 shadow-sm shadow-primary/5">
           <CardContent className="p-4">
             <div className="space-y-3">
               {/* Trip Days Progress */}
@@ -399,7 +399,7 @@ export function TripOverview({
         </Card>
 
         {/* Mais (colapsável) */}
-        <Card>
+        <Card className="border-border/70 bg-gradient-to-b from-card to-card/95 shadow-sm shadow-primary/5">
           <button
             type="button"
             className="w-full text-left"
@@ -445,7 +445,7 @@ export function TripOverview({
                     ))}
                   </div>
                 ) : (
-                  <div className="rounded-lg border border-dashed bg-muted/20 p-4 text-sm text-muted-foreground">
+                  <div className="rounded-lg border border-dashed border-border/70 bg-muted/15 p-4 text-sm text-muted-foreground">
                     Nenhuma votação ainda.
                   </div>
                 )}
@@ -495,7 +495,7 @@ export function TripOverview({
         </Card>
 
         {/* Finanças (colapsável) */}
-        <Card>
+        <Card className="border-border/70 bg-gradient-to-b from-card to-card/95 shadow-sm shadow-primary/5">
           <button
             type="button"
             className="w-full text-left"

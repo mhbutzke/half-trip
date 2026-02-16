@@ -178,7 +178,7 @@ export function TripHeader({ trip, userRole, currentUserId, currentUser }: TripH
 
   return (
     <>
-      <div className="space-y-4">
+      <div className="space-y-5">
         {/* Back link and actions */}
         <div className="flex items-center justify-between">
           <Link
@@ -253,7 +253,7 @@ export function TripHeader({ trip, userRole, currentUserId, currentUser }: TripH
         </div>
 
         {/* Trip info */}
-        <div className="space-y-4">
+        <div className="space-y-4 rounded-xl border border-border/70 bg-gradient-to-b from-card to-card/95 p-4 shadow-sm shadow-primary/5">
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant={status.variant}>{status.label}</Badge>
             {isArchived && <Badge variant="outline">Arquivada</Badge>}
@@ -265,13 +265,13 @@ export function TripHeader({ trip, userRole, currentUserId, currentUser }: TripH
             )}
           </div>
 
-          <h1 className="text-3xl font-bold tracking-tight">{trip.name}</h1>
+          <h1 className="text-3xl font-bold tracking-tight sm:text-[2rem]">{trip.name}</h1>
 
           {trip.description && (
             <p className="text-muted-foreground max-w-2xl">{trip.description}</p>
           )}
 
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-muted-foreground">
             <div className="flex items-center gap-2">
               <MapPin className="h-4 w-4 shrink-0" />
               <span>{trip.destination}</span>

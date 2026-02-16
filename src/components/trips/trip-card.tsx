@@ -120,7 +120,7 @@ export const TripCard = memo(function TripCard({
   const remainingMembers = Math.max(0, trip.memberCount - 4);
 
   return (
-    <Card className="group relative overflow-hidden transition-all hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] active:shadow-sm">
+    <Card className="group relative overflow-hidden border-border/70 bg-gradient-to-b from-card to-card/95 shadow-sm shadow-primary/5 transition-all hover:-translate-y-0.5 hover:shadow-md hover:shadow-primary/10 active:translate-y-0 active:scale-[0.98] active:shadow-sm">
       <Link href={routes.trip.overview(trip.id)} className="absolute inset-0 z-0" />
 
       {trip.cover_url && (
@@ -236,7 +236,7 @@ export const TripCard = memo(function TripCard({
           </div>
         )}
 
-        <div className="flex items-center justify-between pt-2 border-t">
+        <div className="flex items-center justify-between border-t border-border/60 pt-2.5">
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
             <div className="flex -space-x-2">

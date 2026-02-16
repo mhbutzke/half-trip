@@ -12,14 +12,7 @@ import { signIn } from '@/lib/supabase/auth';
 import { routes } from '@/lib/routes';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -32,8 +25,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 function LoginFormSkeleton() {
   return (
-    <Card>
-      <CardHeader className="text-center">
+    <Card className="border-border/70 bg-card/95 shadow-lg shadow-primary/5 backdrop-blur-sm">
+      <CardHeader className="space-y-2 text-center">
         <Skeleton className="mx-auto h-8 w-24" />
         <Skeleton className="mx-auto h-4 w-64" />
       </CardHeader>
@@ -96,18 +89,20 @@ function LoginForm() {
   }
 
   return (
-    <Card>
-      <CardHeader className="text-center">
+    <Card className="border-border/70 bg-card/95 shadow-lg shadow-primary/5 backdrop-blur-sm">
+      <CardHeader className="space-y-2 text-center">
         <h1 className="text-2xl font-semibold leading-none" data-slot="card-title">
           Entrar
         </h1>
-        <CardDescription>Entre com sua conta para acessar suas viagens</CardDescription>
+        <CardDescription className="mx-auto max-w-[28ch] text-sm leading-relaxed">
+          Entre com sua conta para acessar suas viagens
+        </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-1">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
             {error && (
-              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+              <div className="rounded-md border border-destructive/25 bg-destructive/10 p-3 text-sm text-destructive">
                 {error}
               </div>
             )}
@@ -123,6 +118,7 @@ function LoginForm() {
                       type="email"
                       placeholder="seu@email.com"
                       autoComplete="email"
+                      className="h-11"
                       disabled={isLoading}
                       {...field}
                     />
@@ -141,7 +137,7 @@ function LoginForm() {
                     <FormLabel>Senha</FormLabel>
                     <Link
                       href={routes.forgotPassword()}
-                      className="text-sm text-muted-foreground hover:text-primary"
+                      className="text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-primary hover:underline"
                     >
                       Esqueceu a senha?
                     </Link>
@@ -152,6 +148,7 @@ function LoginForm() {
                         type={showPassword ? 'text' : 'password'}
                         placeholder="********"
                         autoComplete="current-password"
+                        className="h-11 pr-12"
                         disabled={isLoading}
                         {...field}
                       />
@@ -159,7 +156,7 @@ function LoginForm() {
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className="absolute right-0 top-0 h-full min-w-[44px] px-3 hover:bg-transparent"
+                        className="absolute right-0 top-0 h-full min-w-[44px] px-3 text-muted-foreground hover:bg-transparent hover:text-foreground"
                         onClick={() => setShowPassword(!showPassword)}
                         aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
                         tabIndex={-1}
@@ -177,13 +174,17 @@ function LoginForm() {
               )}
             />
 
-            <Button type="submit" className="w-full" loading={isLoading}>
+            <Button
+              type="submit"
+              className="h-11 w-full font-semibold shadow-sm"
+              loading={isLoading}
+            >
               Entrar
             </Button>
           </form>
         </Form>
       </CardContent>
-      <CardFooter className="justify-center">
+      <CardFooter className="justify-center border-t border-border/60 pt-5">
         <p className="text-sm text-muted-foreground">
           Ainda não tem conta?{' '}
           <Link

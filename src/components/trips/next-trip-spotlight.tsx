@@ -31,7 +31,7 @@ export function NextTripSpotlight({ trip }: NextTripSpotlightProps) {
   const remainingMembers = Math.max(0, trip.memberCount - 4);
 
   return (
-    <Card className="relative overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 via-background to-accent/5">
+    <Card className="relative overflow-hidden border-border/70 bg-gradient-to-br from-primary/10 via-background to-accent/10 shadow-sm shadow-primary/10">
       {trip.cover_url && (
         <div className="absolute inset-0 opacity-10">
           <Image src={trip.cover_url} alt="" fill className="object-cover" unoptimized />
@@ -39,17 +39,17 @@ export function NextTripSpotlight({ trip }: NextTripSpotlightProps) {
         </div>
       )}
 
-      <CardContent className="relative p-6 space-y-4">
+      <CardContent className="relative space-y-4 p-6">
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 space-y-1">
-            <p className="text-sm font-medium text-primary">Sua próxima aventura</p>
+            <p className="text-sm font-semibold text-primary">Sua próxima aventura</p>
             <h3 className="text-2xl font-bold tracking-tight line-clamp-2">{trip.name}</h3>
           </div>
           {isImminent && (
             <Badge
               variant="default"
-              className="shrink-0 bg-primary/10 text-primary border-primary/20"
+              className="shrink-0 border-primary/20 bg-primary/10 text-primary"
             >
               Em breve!
             </Badge>
@@ -108,7 +108,7 @@ export function NextTripSpotlight({ trip }: NextTripSpotlightProps) {
         </div>
 
         {/* Actions */}
-        <div className="flex flex-wrap gap-2 pt-2">
+        <div className="flex flex-wrap gap-2 pt-3">
           <Button asChild size="sm" className="flex-1 sm:flex-none">
             <Link href={routes.trip.overview(trip.id)}>
               Ver detalhes

@@ -239,7 +239,7 @@ export function TripsList({ emptyState }: TripsListProps) {
   }
 
   const searchBar = (
-    <div className="relative mb-4">
+    <div className="relative mb-2">
       <Search
         className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
         aria-hidden="true"
@@ -248,7 +248,7 @@ export function TripsList({ emptyState }: TripsListProps) {
         placeholder="Buscar viagens..."
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
-        className="pl-9 pr-9"
+        className="h-11 border-border/70 bg-background/90 pl-9 pr-9"
       />
       {searchTerm && (
         <button
@@ -277,7 +277,7 @@ export function TripsList({ emptyState }: TripsListProps) {
   const pendingChecklistsCount = 0; // TODO: fetch from checklists
 
   return (
-    <PullToRefresh onRefresh={loadTrips}>
+    <PullToRefresh onRefresh={loadTrips} className="space-y-5">
       {currentUserName && (
         <WelcomeSection userName={currentUserName} userAvatar={currentUserAvatar} />
       )}
@@ -303,8 +303,11 @@ export function TripsList({ emptyState }: TripsListProps) {
         onValueChange={(v) => setActiveTab(v as 'upcoming' | 'completed')}
         className="w-full"
       >
-        <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
-          <TabsTrigger value="upcoming" className="flex items-center gap-2">
+        <TabsList className="grid w-full max-w-[420px] grid-cols-2 border border-border/70 bg-muted/20 p-1">
+          <TabsTrigger
+            value="upcoming"
+            className="flex items-center gap-2 rounded-md data-[state=active]:shadow-sm"
+          >
             Próximas
             {filteredUpcomingTrips.length > 0 && (
               <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs">
@@ -312,7 +315,10 @@ export function TripsList({ emptyState }: TripsListProps) {
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="completed" className="flex items-center gap-2">
+          <TabsTrigger
+            value="completed"
+            className="flex items-center gap-2 rounded-md data-[state=active]:shadow-sm"
+          >
             Concluídas
             {filteredCompletedTrips.length > 0 && (
               <span className="rounded-full bg-muted px-2 py-0.5 text-xs">

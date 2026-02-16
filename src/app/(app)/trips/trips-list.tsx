@@ -229,9 +229,6 @@ export function TripsList({ emptyState }: TripsListProps) {
   const totalTrips = allTrips.length;
   const upcomingTrips = trips.filter((trip) => isFuture(parseDateOnly(trip.start_date))).length;
   const completedTrips = allTrips.filter((trip) => isPast(parseDateOnly(trip.end_date))).length;
-  const totalDestinations = new Set(
-    allTrips.map((trip) => trip.destination?.trim().toLowerCase()).filter(Boolean)
-  ).size;
 
   return (
     <PullToRefresh onRefresh={loadTrips}>
@@ -239,7 +236,6 @@ export function TripsList({ emptyState }: TripsListProps) {
         totalTrips={totalTrips}
         upcomingTrips={upcomingTrips}
         completedTrips={completedTrips}
-        totalDestinations={totalDestinations}
       />
       {searchBar}
       {hasArchivedTrips ? (

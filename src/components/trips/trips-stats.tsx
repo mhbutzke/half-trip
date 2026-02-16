@@ -1,13 +1,12 @@
 'use client';
 
-import { Calendar, MapPin, Receipt, TrendingUp } from 'lucide-react';
+import { Calendar, MapPin, TrendingUp } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 
 interface TripsStatsProps {
   totalTrips: number;
   upcomingTrips: number;
   completedTrips: number;
-  totalDestinations: number;
 }
 
 interface StatCardProps {
@@ -36,18 +35,12 @@ function StatCard({ icon: Icon, label, value, unit }: StatCardProps) {
   );
 }
 
-export function TripsStats({
-  totalTrips,
-  upcomingTrips,
-  completedTrips,
-  totalDestinations,
-}: TripsStatsProps) {
+export function TripsStats({ totalTrips, upcomingTrips, completedTrips }: TripsStatsProps) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <StatCard icon={MapPin} label="Total de viagens" value={totalTrips} />
-      <StatCard icon={Calendar} label="Próximas viagens" value={upcomingTrips} />
+    <div className="grid grid-cols-3 gap-3">
+      <StatCard icon={MapPin} label="Total" value={totalTrips} />
+      <StatCard icon={Calendar} label="Próximas" value={upcomingTrips} />
       <StatCard icon={TrendingUp} label="Concluídas" value={completedTrips} />
-      <StatCard icon={Receipt} label="Destinos visitados" value={totalDestinations} />
     </div>
   );
 }

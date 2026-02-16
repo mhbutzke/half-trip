@@ -51,6 +51,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  viewportFit: 'cover',
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#F8FAFC' }, // Ice White
     { media: '(prefers-color-scheme: dark)', color: '#1E293B' }, // Deep Blue

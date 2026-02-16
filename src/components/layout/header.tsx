@@ -56,6 +56,7 @@ export function Header({ user, onSignOut }: HeaderProps) {
         <Link
           href={user ? routes.trips() : routes.home()}
           className="flex min-h-[44px] items-center gap-2"
+          aria-label="Half Trip - Ir para página inicial"
         >
           <Image
             src="/brand/icon.svg"

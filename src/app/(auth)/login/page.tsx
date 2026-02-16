@@ -188,7 +188,8 @@ function LoginForm() {
           Ainda não tem conta?{' '}
           <Link
             href={registerHref}
-            className="font-semibold text-primary underline underline-offset-4 hover:text-primary/80"
+            className="font-semibold text-primary underline underline-offset-4 hover:text-primary/80 focus-visible:ring-2 focus-visible:ring-ring"
+            style={{ color: 'var(--brand-ocean-cyan)' }}
           >
             Criar conta
           </Link>

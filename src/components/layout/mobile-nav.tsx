@@ -106,9 +106,7 @@ export function MobileNav() {
                 strokeWidth={active ? 2.5 : 2}
                 aria-hidden="true"
               />
-              <span
-                className={cn('text-[11px] font-medium leading-tight', active && 'text-primary')}
-              >
+              <span className={cn('text-xs font-medium leading-tight', active && 'text-primary')}>
                 {item.name}
               </span>
             </Link>

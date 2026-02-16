@@ -23,7 +23,8 @@ import { getActivityAttachments, type AttachmentWithUrl } from '@/lib/supabase/a
 import { FileUpload, AttachmentsList } from '@/components/attachments';
 import { ActivityFormFields } from './activity-form-fields';
 import type { LocationCoords } from './location-autocomplete';
-import type { Activity, ActivityLink, ActivityMetadata, Json } from '@/types/database';
+import { format } from 'date-fns';
+import type { Activity, ActivityLink, ActivityMetadata, FlightData, Json } from '@/types/database';
 
 interface EditActivityDialogProps {
   activity: Activity | null;
@@ -44,6 +45,8 @@ export function EditActivityDialog({
   const [newLinkLabel, setNewLinkLabel] = useState('');
   const [linkError, setLinkError] = useState('');
   const [locationCoords, setLocationCoords] = useState<LocationCoords | null>(null);
+  const [flightNumber, setFlightNumber] = useState('');
+  const [flightData, setFlightData] = useState<FlightData | null>(null);
   const [attachments, setAttachments] = useState<AttachmentWithUrl[]>([]);
   const [loadingAttachments, setLoadingAttachments] = useState(false);
 
@@ -111,6 +114,10 @@ export function EditActivityDialog({
       } else {
         setLocationCoords(null);
       }
+
+      // Restore flight number from metadata
+      setFlightNumber(meta?.flight_number ? String(meta.flight_number) : '');
+      setFlightData(null);
     }
   }, [activity, form]);
 
@@ -139,6 +146,34 @@ export function EditActivityDialog({
     setNewLinkLabel('');
   };
 
+  const handleFlightData = (data: FlightData | null) => {
+    setFlightData(data);
+    if (!data) return;
+
+    const title =
+      `Voo ${data.carrier || ''} ${data.flight_number || ''}: ${data.departure.iata || '?'} → ${data.arrival.iata || '?'}`.trim();
+    form.setValue('title', title);
+
+    if (data.departure.scheduled) {
+      try {
+        form.setValue('start_time', format(new Date(data.departure.scheduled), 'HH:mm'));
+      } catch {
+        // ignore invalid date
+      }
+    }
+
+    if (data.duration) {
+      form.setValue('duration_minutes', data.duration);
+    }
+
+    if (data.departure.airport) {
+      form.setValue('location', data.departure.airport);
+    }
+
+    const desc = `Voo de ${data.departure.airport || data.departure.iata || '?'} (${data.departure.iata || ''}) para ${data.arrival.airport || data.arrival.iata || '?'} (${data.arrival.iata || ''}).`;
+    form.setValue('description', desc);
+  };
+
   const onSubmit = async (data: UpdateActivityInput) => {
     if (!activity) return;
 
@@ -154,6 +189,16 @@ export function EditActivityDialog({
         metadata.transport_type = data.transport_type;
       } else {
         delete metadata.transport_type;
+      }
+
+      // Update flight data if a new search was performed
+      if (flightData) {
+        metadata.carrier = flightData.carrier;
+        metadata.flight_number = flightData.flight_number;
+        metadata.status = flightData.status;
+        metadata.departure = flightData.departure as unknown as Json;
+        metadata.arrival = flightData.arrival as unknown as Json;
+        if (flightData.duration) metadata.duration = flightData.duration;
       }
 
       // Update location coords
@@ -203,6 +248,8 @@ export function EditActivityDialog({
         setLinkError('');
         setAttachments([]);
         setLocationCoords(null);
+        setFlightNumber('');
+        setFlightData(null);
       }
     }
   };
@@ -249,6 +296,10 @@ export function EditActivityDialog({
                   addLink={addLink}
                   locationCoords={locationCoords}
                   setLocationCoords={setLocationCoords}
+                  flightNumber={flightNumber}
+                  onFlightNumberChange={setFlightNumber}
+                  onFlightData={handleFlightData}
+                  flightData={flightData}
                 />
 
                 <DialogFooter className="pt-4">

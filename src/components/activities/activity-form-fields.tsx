@@ -18,7 +18,8 @@ import { transportTypeList } from '@/lib/utils/transport-types';
 import { DurationInput } from './duration-input';
 import { LocationAutocomplete, type LocationCoords } from './location-autocomplete';
 import { ActivityCategorySelector } from './activity-category-selector';
-import type { ActivityLink } from '@/types/database';
+import { FlightNumberInput } from './flight-number-input';
+import type { ActivityLink, FlightData } from '@/types/database';
 
 function RequiredMark() {
   return (
@@ -43,6 +44,10 @@ interface ActivityFormFieldsProps {
   locationCoords: LocationCoords | null;
   setLocationCoords: (coords: LocationCoords | null) => void;
   quickMode?: boolean;
+  flightNumber?: string;
+  onFlightNumberChange?: (value: string) => void;
+  onFlightData?: (data: FlightData | null) => void;
+  flightData?: FlightData | null;
 }
 
 export function ActivityFormFields({
@@ -58,8 +63,13 @@ export function ActivityFormFields({
   locationCoords,
   setLocationCoords,
   quickMode = false,
+  flightNumber,
+  onFlightNumberChange,
+  onFlightData,
+  flightData,
 }: ActivityFormFieldsProps) {
   const watchCategory = form.watch('category');
+  const watchTransportType = form.watch('transport_type');
   const [expanded, setExpanded] = useState(false);
 
   // Clear transport_type when category changes away from 'transport'
@@ -142,6 +152,17 @@ export function ActivityFormFields({
               <FormMessage />
             </FormItem>
           )}
+        />
+      )}
+
+      {/* Flight number (conditional: transport + plane) */}
+      {watchTransportType === 'plane' && onFlightData && onFlightNumberChange && (
+        <FlightNumberInput
+          value={flightNumber || ''}
+          onChange={onFlightNumberChange}
+          date={form.watch('date')}
+          onFlightData={onFlightData}
+          flightData={flightData || null}
         />
       )}
 

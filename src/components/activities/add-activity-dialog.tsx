@@ -15,13 +15,14 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { ResponsiveFormContainer } from '@/components/ui/responsive-form-container';
 import { Form } from '@/components/ui/form';
+import { format } from 'date-fns';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { useDialogState } from '@/hooks/use-dialog-state';
 import { createActivitySchema, type CreateActivityInput } from '@/lib/validation/activity-schemas';
 import { createActivity } from '@/lib/supabase/activities';
 import { ActivityFormFields } from './activity-form-fields';
 import type { LocationCoords } from './location-autocomplete';
-import type { ActivityLink, Json } from '@/types/database';
+import type { ActivityLink, FlightData, Json } from '@/types/database';
 
 interface AddActivityDialogProps {
   tripId: string;
@@ -50,6 +51,8 @@ export function AddActivityDialog({
   const [newLinkLabel, setNewLinkLabel] = useState('');
   const [linkError, setLinkError] = useState('');
   const [locationCoords, setLocationCoords] = useState<LocationCoords | null>(null);
+  const [flightNumber, setFlightNumber] = useState('');
+  const [flightData, setFlightData] = useState<FlightData | null>(null);
   const isMobile = useMediaQuery('(max-width: 768px)');
 
   const {
@@ -77,6 +80,8 @@ export function AddActivityDialog({
       setNewLinkLabel('');
       setLinkError('');
       setLocationCoords(null);
+      setFlightNumber('');
+      setFlightData(null);
     },
   });
 
@@ -127,6 +132,35 @@ export function AddActivityDialog({
     setNewLinkLabel('');
   };
 
+  const handleFlightData = (data: FlightData | null) => {
+    setFlightData(data);
+    if (!data) return;
+
+    // Auto-fill form fields from flight data
+    const title =
+      `Voo ${data.carrier || ''} ${data.flight_number || ''}: ${data.departure.iata || '?'} → ${data.arrival.iata || '?'}`.trim();
+    form.setValue('title', title);
+
+    if (data.departure.scheduled) {
+      try {
+        form.setValue('start_time', format(new Date(data.departure.scheduled), 'HH:mm'));
+      } catch {
+        // ignore invalid date
+      }
+    }
+
+    if (data.duration) {
+      form.setValue('duration_minutes', data.duration);
+    }
+
+    if (data.departure.airport) {
+      form.setValue('location', data.departure.airport);
+    }
+
+    const desc = `Voo de ${data.departure.airport || data.departure.iata || '?'} (${data.departure.iata || ''}) para ${data.arrival.airport || data.arrival.iata || '?'} (${data.arrival.iata || ''}).`;
+    form.setValue('description', desc);
+  };
+
   const onSubmit = async (data: CreateActivityInput) => {
     setIsSubmitting(true);
 
@@ -139,6 +173,14 @@ export function AddActivityDialog({
         metadata.location_lat = locationCoords.lat;
         metadata.location_lng = locationCoords.lng;
         metadata.location_place_id = locationCoords.place_id;
+      }
+      if (flightData) {
+        metadata.carrier = flightData.carrier;
+        metadata.flight_number = flightData.flight_number;
+        metadata.status = flightData.status;
+        metadata.departure = flightData.departure as unknown as Json;
+        metadata.arrival = flightData.arrival as unknown as Json;
+        if (flightData.duration) metadata.duration = flightData.duration;
       }
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -163,6 +205,8 @@ export function AddActivityDialog({
       form.reset();
       setLinks([]);
       setLocationCoords(null);
+      setFlightNumber('');
+      setFlightData(null);
       onSuccess?.();
     } catch {
       toast.error('Erro ao adicionar atividade');
@@ -240,6 +284,10 @@ export function AddActivityDialog({
               locationCoords={locationCoords}
               setLocationCoords={setLocationCoords}
               quickMode={isMobile}
+              flightNumber={flightNumber}
+              onFlightNumberChange={setFlightNumber}
+              onFlightData={handleFlightData}
+              flightData={flightData}
             />
 
             <div className="flex justify-end gap-2 pt-4">

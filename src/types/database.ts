@@ -1380,6 +1380,30 @@ export type ActivityMetadata = {
   [key: string]: unknown;
 };
 
+// Flight data returned from AviationStack Edge Function
+export interface FlightData {
+  [key: string]: unknown;
+  found: boolean;
+  carrier?: string;
+  flight_number?: string;
+  departure: {
+    airport?: string;
+    iata?: string;
+    scheduled?: string;
+    terminal?: string;
+    gate?: string;
+  };
+  arrival: {
+    airport?: string;
+    iata?: string;
+    scheduled?: string;
+    terminal?: string;
+    gate?: string;
+  };
+  duration?: number;
+  status?: string;
+}
+
 // Activity link type
 export type ActivityLink = {
   url: string;

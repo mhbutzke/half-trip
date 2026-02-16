@@ -29,8 +29,9 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { createActivity } from '@/lib/supabase/activities';
+import { createClient } from '@/lib/supabase/client';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import type { Json } from '@/types/database';
+import type { FlightData, Json } from '@/types/database';
 
 const formSchema = z.object({
   flightNumber: z.string().min(2, {
@@ -40,29 +41,6 @@ const formSchema = z.object({
     message: 'Data deve ser AAAA-MM-DD',
   }),
 });
-
-interface FlightData {
-  [key: string]: unknown;
-  found: boolean;
-  carrier?: string;
-  flight_number?: string;
-  departure: {
-    airport?: string;
-    iata?: string;
-    scheduled?: string;
-    terminal?: string;
-    gate?: string;
-  };
-  arrival: {
-    airport?: string;
-    iata?: string;
-    scheduled?: string;
-    terminal?: string;
-    gate?: string;
-  };
-  duration?: number;
-  status?: string;
-}
 
 interface FlightSearchDialogProps {
   tripId: string;
@@ -114,24 +92,20 @@ export function FlightSearchDialog({
     setFlightData(null);
 
     try {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const response = await fetch(`${supabaseUrl}/functions/v1/fetch-flight-data`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ flight_number: values.flightNumber, date: values.date }),
+      const supabase = createClient();
+      const { data, error: fnError } = await supabase.functions.invoke('fetch-flight-data', {
+        body: { flight_number: values.flightNumber, date: values.date },
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error: ${response.status}`);
+      if (fnError) {
+        throw new Error(fnError.message || 'Erro ao chamar a função de busca de voo');
       }
 
-      const data = await response.json();
-
-      if (data.error) {
+      if (data?.error) {
         throw new Error(data.error);
       }
 
-      if (data.found === false) {
+      if (data?.found === false) {
         setError('Voo não encontrado. Verifique o número e a data.');
       } else {
         setFlightData(data as FlightData);

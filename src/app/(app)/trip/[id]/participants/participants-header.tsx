@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
-import { ArrowLeft, UserPlus, UserRound, Users } from 'lucide-react';
+import { UserPlus, UserRound, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { routes } from '@/lib/routes';
 import { InviteDialog } from '@/components/invites/invite-dialog';
 import { AddGuestDialog } from './add-guest-dialog';
 import { CreateGroupDialog } from './create-group-dialog';
@@ -31,39 +32,40 @@ export function ParticipantsHeader({
 
   return (
     <>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-1">
-          <Link
-            href={`/trip/${tripId}`}
-            className="inline-flex min-h-[44px] items-center gap-1 text-sm text-muted-foreground hover:text-foreground active:text-foreground"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Voltar
-          </Link>
-          <h1 className="flex items-center gap-2 text-2xl font-bold">
-            <Users className="h-6 w-6 text-primary" />
-            Participantes
-          </h1>
-          <p className="text-muted-foreground">{tripName}</p>
-        </div>
+      <div className="space-y-4">
+        <Breadcrumb
+          items={[
+            { label: tripName, href: routes.trip.overview(tripId) },
+            { label: 'Participantes' },
+          ]}
+        />
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1">
+            <h1 className="flex items-center gap-2 text-2xl font-bold">
+              <Users className="h-6 w-6 text-primary" aria-hidden="true" />
+              Participantes
+            </h1>
+            <p className="text-muted-foreground">{tripName}</p>
+          </div>
 
-        <div className="flex gap-2">
-          {isOrganizer && (
-            <>
-              <Button variant="outline" onClick={() => setIsGroupOpen(true)}>
-                <Users className="mr-2 h-4 w-4" />
-                Grupo
-              </Button>
-              <Button variant="outline" onClick={() => setIsGuestOpen(true)}>
-                <UserRound className="mr-2 h-4 w-4" />
-                Convidado
-              </Button>
-            </>
-          )}
-          <Button onClick={() => setIsInviteOpen(true)}>
-            <UserPlus className="mr-2 h-4 w-4" />
-            Convidar
-          </Button>
+          <div className="flex gap-2">
+            {isOrganizer && (
+              <>
+                <Button variant="outline" onClick={() => setIsGroupOpen(true)}>
+                  <Users className="mr-2 h-4 w-4" />
+                  Grupo
+                </Button>
+                <Button variant="outline" onClick={() => setIsGuestOpen(true)}>
+                  <UserRound className="mr-2 h-4 w-4" />
+                  Convidado
+                </Button>
+              </>
+            )}
+            <Button onClick={() => setIsInviteOpen(true)}>
+              <UserPlus className="mr-2 h-4 w-4" />
+              Convidar
+            </Button>
+          </div>
         </div>
       </div>
 

@@ -28,7 +28,11 @@ import { useOnlineStatus } from '@/hooks/use-online-status';
 import { cacheTrips, getCachedUserTrips, getCachedTripMembers, getCachedUser } from '@/lib/sync';
 import { getCurrentAuthUserId, getTripsForCurrentUser } from '@/lib/supabase/trips-client';
 import { archiveTrip, unarchiveTrip, type TripWithMembers } from '@/lib/supabase/trips';
-import { getTripProgressBatch } from '@/lib/supabase/trip-progress';
+import {
+  getTripProgressBatch,
+  getActionCardStats,
+  type ActionCardStats,
+} from '@/lib/supabase/trip-progress';
 import type { TripProgressData } from '@/components/trips/trip-progress';
 
 interface TripsListProps {
@@ -49,6 +53,11 @@ export function TripsList({ emptyState }: TripsListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'upcoming' | 'completed'>('upcoming');
   const [progressData, setProgressData] = useState<Map<string, TripProgressData>>(new Map());
+  const [actionStats, setActionStats] = useState<ActionCardStats>({
+    pendingSettlements: 0,
+    recentExpensesCount: 0,
+    pendingChecklistsCount: 0,
+  });
 
   const loadTrips = useCallback(async () => {
     setIsLoading(true);
@@ -75,11 +84,13 @@ export function TripsList({ emptyState }: TripsListProps) {
           await cacheTrips(allTrips);
         }
 
-        // Fetch progress data for all trips
+        // Fetch progress data and action card stats for all trips
         if (allTrips.length > 0) {
           const tripIds = allTrips.map((t) => t.id);
           const progress = await getTripProgressBatch(tripIds);
           setProgressData(progress);
+          const stats = await getActionCardStats(tripIds, progress);
+          setActionStats(stats);
         }
       } else {
         // Load from cache when offline
@@ -126,8 +137,13 @@ export function TripsList({ emptyState }: TripsListProps) {
           setTrips(active);
           setArchivedTrips(archived);
 
-          // Note: Progress data not available offline
+          // Note: Progress and action card data not available offline
           setProgressData(new Map());
+          setActionStats({
+            pendingSettlements: 0,
+            recentExpensesCount: 0,
+            pendingChecklistsCount: 0,
+          });
         }
       }
     } catch {
@@ -271,11 +287,6 @@ export function TripsList({ emptyState }: TripsListProps) {
         )[0]
       : null;
 
-  // Mock data for action cards (in real implementation, fetch from API)
-  const pendingSettlements = 0; // TODO: fetch from getTripExpenseSummary
-  const recentExpensesCount = 0; // TODO: fetch recent expenses
-  const pendingChecklistsCount = 0; // TODO: fetch from checklists
-
   return (
     <PullToRefresh onRefresh={loadTrips} className="space-y-5">
       {currentUserName && (
@@ -291,9 +302,9 @@ export function TripsList({ emptyState }: TripsListProps) {
       {nextTrip && <NextTripSpotlight trip={nextTrip} />}
 
       <ActionCardsRow
-        pendingSettlements={pendingSettlements}
-        recentExpensesCount={recentExpensesCount}
-        pendingChecklistsCount={pendingChecklistsCount}
+        pendingSettlements={actionStats.pendingSettlements}
+        recentExpensesCount={actionStats.recentExpensesCount}
+        pendingChecklistsCount={actionStats.pendingChecklistsCount}
         upcomingTripId={nextTrip?.id}
       />
 

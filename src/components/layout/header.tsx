@@ -3,7 +3,7 @@
 import { Link } from 'next-view-transitions';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
-import { LogOut, Menu, Moon, Plane, Settings, Sun } from 'lucide-react';
+import { Command, LogOut, Menu, Moon, Plane, Settings, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -16,10 +16,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { routes } from '@/lib/routes';
 import { SyncStatus } from '@/components/sync';
 import { NotificationPanel, NotificationSettingsDialog } from '@/components/notifications';
+import {
+  KeyboardShortcutsDialog,
+  useKeyboardShortcutsDialog,
+} from '@/components/ui/keyboard-shortcuts';
 
 interface HeaderProps {
   user?: {
@@ -36,6 +41,7 @@ export function Header({ user, onSignOut }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notificationSettingsOpen, setNotificationSettingsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const shortcuts = useKeyboardShortcutsDialog();
   useEffect(() => {
     queueMicrotask(() => setMounted(true));
   }, []);
@@ -101,6 +107,30 @@ export function Header({ user, onSignOut }: HeaderProps) {
 
           {/* Notifications - only show for authenticated users */}
           {user && <NotificationPanel onOpenSettings={() => setNotificationSettingsOpen(true)} />}
+
+          {/* Keyboard shortcuts - desktop only */}
+          {user && (
+            <TooltipProvider delayDuration={300}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => shortcuts.setOpen(true)}
+                    className="hidden h-11 w-11 md:flex"
+                    aria-label="Atalhos de teclado"
+                  >
+                    <Command className="h-5 w-5" aria-hidden="true" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    Atalhos de teclado <kbd className="ml-1 rounded border px-1 text-xs">?</kbd>
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
 
           {/* Theme toggle - 44px touch target */}
           <Button
@@ -271,6 +301,9 @@ export function Header({ user, onSignOut }: HeaderProps) {
           onOpenChange={setNotificationSettingsOpen}
         />
       )}
+
+      {/* Keyboard shortcuts dialog */}
+      <KeyboardShortcutsDialog open={shortcuts.open} onOpenChange={shortcuts.setOpen} />
     </header>
   );
 }

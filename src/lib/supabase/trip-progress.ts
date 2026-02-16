@@ -126,3 +126,55 @@ export async function getTripProgress(tripId: string): Promise<TripProgressData>
   const progressMap = await getTripProgressBatch([tripId]);
   return progressMap.get(tripId) || { checklist: null, budget: null };
 }
+
+export type ActionCardStats = {
+  pendingSettlements: number;
+  recentExpensesCount: number;
+  pendingChecklistsCount: number;
+};
+
+/**
+ * Derive action card stats from progress data + additional queries.
+ * - pendingChecklistsCount: computed from progressData (no extra query)
+ * - recentExpensesCount: expenses created in last 7 days
+ * - pendingSettlements: recorded settlements count
+ */
+export async function getActionCardStats(
+  tripIds: string[],
+  progressData: Map<string, TripProgressData>
+): Promise<ActionCardStats> {
+  if (tripIds.length === 0) {
+    return { pendingSettlements: 0, recentExpensesCount: 0, pendingChecklistsCount: 0 };
+  }
+
+  // Derive pending checklists from already-loaded progress data
+  let pendingChecklistsCount = 0;
+  for (const [, data] of progressData) {
+    if (data.checklist) {
+      pendingChecklistsCount += data.checklist.total - data.checklist.completed;
+    }
+  }
+
+  const supabase = createClient();
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+  const [expensesResult, settlementsResult] = await Promise.all([
+    // Recent expenses: created in last 7 days
+    supabase
+      .from('expenses')
+      .select('id', { count: 'exact', head: true })
+      .in('trip_id', tripIds)
+      .gte('created_at', sevenDaysAgo),
+    // Recorded settlements
+    supabase
+      .from('settlements')
+      .select('id', { count: 'exact', head: true })
+      .in('trip_id', tripIds),
+  ]);
+
+  return {
+    pendingSettlements: settlementsResult.count ?? 0,
+    recentExpensesCount: expensesResult.count ?? 0,
+    pendingChecklistsCount,
+  };
+}

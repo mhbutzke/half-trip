@@ -66,6 +66,20 @@
   --color-budget-safe: var(--success);
   --color-budget-warning: var(--warning);
   --color-budget-exceeded: var(--destructive);
+  /* Expense category colors */
+  --color-category-accommodation: var(--category-accommodation);
+  --color-category-food: var(--category-food);
+  --color-category-transport: var(--category-transport);
+  --color-category-tickets: var(--category-tickets);
+  --color-category-shopping: var(--category-shopping);
+  --color-category-other: var(--category-other);
+  /* Activity category colors */
+  --color-activity-transport: var(--activity-transport);
+  --color-activity-accommodation: var(--activity-accommodation);
+  --color-activity-tour: var(--activity-tour);
+  --color-activity-meal: var(--activity-meal);
+  --color-activity-event: var(--activity-event);
+  --color-activity-other: var(--activity-other);
 }
 
 :root {
@@ -122,6 +136,20 @@
   --chart-3: var(--brand-sunset-coral);
   --chart-4: var(--brand-concrete-gray);
   --chart-5: oklch(0.65 0.15 145); /* Green - keep for semantic success */
+  /* Expense category colors */
+  --category-accommodation: oklch(0.55 0.17 260);
+  --category-food: oklch(0.65 0.17 55);
+  --category-transport: oklch(0.6 0.17 145);
+  --category-tickets: oklch(0.6 0.17 310);
+  --category-shopping: oklch(0.65 0.18 340);
+  --category-other: oklch(0.55 0.02 260);
+  /* Activity category colors */
+  --activity-transport: oklch(0.55 0.17 260);
+  --activity-accommodation: oklch(0.6 0.17 310);
+  --activity-tour: oklch(0.6 0.17 145);
+  --activity-meal: oklch(0.65 0.17 55);
+  --activity-event: oklch(0.65 0.18 340);
+  --activity-other: oklch(0.55 0.02 260);
   /* Sidebar */
   --sidebar: color-mix(in oklab, var(--brand-deep-blue) 2%, var(--brand-ice-white));
   --sidebar-foreground: var(--brand-deep-blue);
@@ -176,6 +204,20 @@
   --chart-3: var(--brand-sunset-coral);
   --chart-4: var(--brand-concrete-gray);
   --chart-5: oklch(0.7 0.15 145);
+  /* Expense category colors (lighter for dark mode) */
+  --category-accommodation: oklch(0.7 0.15 260);
+  --category-food: oklch(0.75 0.15 55);
+  --category-transport: oklch(0.7 0.15 145);
+  --category-tickets: oklch(0.7 0.15 310);
+  --category-shopping: oklch(0.75 0.15 340);
+  --category-other: oklch(0.65 0.02 260);
+  /* Activity category colors (lighter for dark mode) */
+  --activity-transport: oklch(0.7 0.15 260);
+  --activity-accommodation: oklch(0.7 0.15 310);
+  --activity-tour: oklch(0.7 0.15 145);
+  --activity-meal: oklch(0.75 0.15 55);
+  --activity-event: oklch(0.75 0.15 340);
+  --activity-other: oklch(0.65 0.02 260);
   /* Sidebar */
   --sidebar: color-mix(in oklab, var(--brand-deep-blue) 92%, #000000);
   --sidebar-foreground: var(--brand-ice-white);

@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react';
 import { Lightbulb, type LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 export interface EmptyStateProps {
@@ -10,11 +11,17 @@ export interface EmptyStateProps {
   action?: {
     label: string;
     onClick: () => void;
+    variant?: 'default' | 'outline' | 'secondary';
+  };
+  secondaryAction?: {
+    label: string;
+    onClick: () => void;
   };
   illustration?: ReactNode;
   tips?: string[];
   tipTitle?: string;
   mobileBottomNavSafe?: boolean;
+  variant?: 'default' | 'card' | 'inline';
   className?: string;
 }
 
@@ -23,35 +30,59 @@ export function EmptyState({
   title,
   description,
   action,
+  secondaryAction,
   illustration,
   tips,
   tipTitle = 'Dicas úteis',
   mobileBottomNavSafe = false,
+  variant = 'default',
   className,
 }: EmptyStateProps) {
-  return (
+  const content = (
     <div
       className={cn(
-        'flex flex-col items-center justify-center px-4 py-10 text-center sm:py-14 md:py-16',
-        mobileBottomNavSafe && 'pb-[calc(7rem+env(safe-area-inset-bottom))] sm:pb-14 md:pb-16',
-        className
+        'flex flex-col items-center justify-center text-center',
+        variant === 'inline' ? 'px-4 py-6' : 'px-4 py-10 sm:py-14 md:py-16',
+        variant === 'default' &&
+          mobileBottomNavSafe &&
+          'pb-[calc(7rem+env(safe-area-inset-bottom))] sm:pb-14 md:pb-16',
+        variant !== 'card' && className
       )}
     >
       {illustration ? (
         <div className="mb-6 flex size-32 items-center justify-center">{illustration}</div>
       ) : (
-        <div className="mb-6 rounded-full bg-muted p-8">
-          <Icon className="size-12 text-muted-foreground" aria-hidden="true" />
+        <div className={cn('mb-6 rounded-full bg-muted', variant === 'inline' ? 'p-4' : 'p-8')}>
+          <Icon
+            className={cn('text-muted-foreground', variant === 'inline' ? 'size-8' : 'size-12')}
+            aria-hidden="true"
+          />
         </div>
       )}
-      <h2 className="mb-3 text-2xl font-bold tracking-tight">{title}</h2>
+      <h2
+        className={cn(
+          'mb-3 font-bold tracking-tight',
+          variant === 'inline' ? 'text-xl' : 'text-2xl'
+        )}
+      >
+        {title}
+      </h2>
       {description && (
         <p className="mb-8 max-w-md text-base leading-relaxed text-foreground/70">{description}</p>
       )}
-      {action && (
-        <Button onClick={action.onClick} size="lg" className="mb-8">
-          {action.label}
-        </Button>
+      {(action || secondaryAction) && (
+        <div className="mb-8 flex flex-col gap-3 sm:flex-row">
+          {action && (
+            <Button onClick={action.onClick} variant={action.variant || 'default'} size="lg">
+              {action.label}
+            </Button>
+          )}
+          {secondaryAction && (
+            <Button variant="outline" onClick={secondaryAction.onClick} size="lg">
+              {secondaryAction.label}
+            </Button>
+          )}
+        </div>
       )}
       {tips && tips.length > 0 && (
         <div className="mt-4 w-full max-w-lg">
@@ -73,4 +104,14 @@ export function EmptyState({
       )}
     </div>
   );
+
+  if (variant === 'card') {
+    return (
+      <Card className={className}>
+        <CardContent className="py-8">{content}</CardContent>
+      </Card>
+    );
+  }
+
+  return content;
 }

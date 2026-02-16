@@ -73,14 +73,14 @@ export function BalanceBarChart({
   };
 
   const getStatusColor = (status: string) => {
-    if (status === 'positive') return 'bg-green-500';
-    if (status === 'negative') return 'bg-red-500';
-    return 'bg-gray-400';
+    if (status === 'positive') return 'bg-positive';
+    if (status === 'negative') return 'bg-negative';
+    return 'bg-muted-foreground/40';
   };
 
   const getStatusTextColor = (status: string) => {
-    if (status === 'positive') return 'text-green-600 dark:text-green-400';
-    if (status === 'negative') return 'text-red-600 dark:text-red-400';
+    if (status === 'positive') return 'text-positive';
+    if (status === 'negative') return 'text-negative';
     return 'text-muted-foreground';
   };
 
@@ -147,15 +147,15 @@ export function BalanceBarChart({
         {/* Legend */}
         <div className="mt-6 flex flex-wrap gap-4 text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
-            <div className="h-3 w-3 rounded-full bg-green-500" />
+            <div className="h-3 w-3 rounded-full bg-positive" />
             <span>Recebe dinheiro</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="h-3 w-3 rounded-full bg-red-500" />
+            <div className="h-3 w-3 rounded-full bg-negative" />
             <span>Deve dinheiro</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="h-3 w-3 rounded-full bg-gray-400" />
+            <div className="h-3 w-3 rounded-full bg-muted-foreground/40" />
             <span>Quitado</span>
           </div>
         </div>

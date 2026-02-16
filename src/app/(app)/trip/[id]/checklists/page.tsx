@@ -1,12 +1,11 @@
 import { Suspense } from 'react';
 import { notFound, redirect } from 'next/navigation';
-import Link from 'next/link';
-import { ArrowLeft, CheckSquare } from 'lucide-react';
+import { CheckSquare } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { getTripById, getUserRoleInTrip } from '@/lib/supabase/trips';
 import { getTripChecklists } from '@/lib/supabase/checklists';
 import { PageContainer } from '@/components/layout/page-container';
-import { Button } from '@/components/ui/button';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { ChecklistsContent } from './checklists-content';
 import ChecklistsLoading from './loading';
 import { routes } from '@/lib/routes';
@@ -38,15 +37,12 @@ async function ChecklistsPageContent({ tripId }: { tripId: string }) {
   return (
     <div className="space-y-6">
       <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" className="h-8 gap-1 px-2" asChild>
-            <Link href={routes.trip.overview(tripId)}>
-              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-              <span className="hidden sm:inline">{trip.name}</span>
-            </Link>
-          </Button>
-        </div>
-
+        <Breadcrumb
+          items={[
+            { label: trip.name, href: routes.trip.overview(tripId) },
+            { label: 'Checklists' },
+          ]}
+        />
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Checklists</h1>
           <div className="mt-1 flex items-center gap-2 text-muted-foreground">

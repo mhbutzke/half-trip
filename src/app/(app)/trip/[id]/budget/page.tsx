@@ -6,6 +6,7 @@ import { getTripById, getUserRoleInTrip } from '@/lib/supabase/trips';
 import { getTripBudgets, getBudgetSummary } from '@/lib/supabase/budgets';
 import { PageContainer } from '@/components/layout/page-container';
 import { FinancesTabBar } from '@/components/layout/finances-tab-bar';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { BudgetContent } from './budget-content';
 import BudgetLoading from './loading';
 import { routes } from '@/lib/routes';
@@ -44,11 +45,16 @@ async function BudgetPageContent({ tripId }: { tripId: string }) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Orçamento</h1>
-        <div className="mt-1 flex items-center gap-2 text-muted-foreground">
-          <Wallet className="h-4 w-4" aria-hidden="true" />
-          <span className="text-sm">Defina limites e acompanhe os gastos</span>
+      <div className="space-y-4">
+        <Breadcrumb
+          items={[{ label: trip.name, href: routes.trip.overview(tripId) }, { label: 'Orçamento' }]}
+        />
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Orçamento</h1>
+          <div className="mt-1 flex items-center gap-2 text-muted-foreground">
+            <Wallet className="h-4 w-4" aria-hidden="true" />
+            <span className="text-sm">Defina limites e acompanhe os gastos</span>
+          </div>
         </div>
       </div>
       <FinancesTabBar tripId={tripId} />

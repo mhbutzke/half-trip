@@ -7,6 +7,8 @@ import { getUser } from '@/lib/supabase/auth';
 import { getParticipantId } from '@/lib/supabase/participants';
 import { PageContainer } from '@/components/layout/page-container';
 import { FinancesTabBar } from '@/components/layout/finances-tab-bar';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { routes } from '@/lib/routes';
 import { BalanceContent } from './balance-content';
 import { BalanceSkeleton } from './balance-skeleton';
 
@@ -48,12 +50,17 @@ async function BalancePageContent({ tripId }: { tripId: string }) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Balanço</h1>
-        <p className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-          <Scale className="h-4 w-4" aria-hidden="true" />
-          <span>Veja quem deve para quem e acerte as contas</span>
-        </p>
+      <div className="space-y-4">
+        <Breadcrumb
+          items={[{ label: trip.name, href: routes.trip.overview(tripId) }, { label: 'Balanço' }]}
+        />
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Balanço</h1>
+          <p className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+            <Scale className="h-4 w-4" aria-hidden="true" />
+            <span>Veja quem deve para quem e acerte as contas</span>
+          </p>
+        </div>
       </div>
       <FinancesTabBar tripId={tripId} settlementsCount={settlementsCount} />
       <BalanceContent

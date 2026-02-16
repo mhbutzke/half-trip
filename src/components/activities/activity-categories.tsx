@@ -19,32 +19,32 @@ export const activityCategoryConfig: Record<
   transport: {
     label: 'Transporte',
     icon: Plane,
-    color: 'text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-900/30',
+    color: 'text-activity-transport bg-activity-transport/15',
   },
   accommodation: {
     label: 'Hospedagem',
     icon: Hotel,
-    color: 'text-purple-600 bg-purple-100 dark:text-purple-400 dark:bg-purple-900/30',
+    color: 'text-activity-accommodation bg-activity-accommodation/15',
   },
   tour: {
     label: 'Passeio',
     icon: MapPin,
-    color: 'text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-900/30',
+    color: 'text-activity-tour bg-activity-tour/15',
   },
   meal: {
     label: 'Refeicao',
     icon: Utensils,
-    color: 'text-orange-600 bg-orange-100 dark:text-orange-400 dark:bg-orange-900/30',
+    color: 'text-activity-meal bg-activity-meal/15',
   },
   event: {
     label: 'Evento',
     icon: Calendar,
-    color: 'text-pink-600 bg-pink-100 dark:text-pink-400 dark:bg-pink-900/30',
+    color: 'text-activity-event bg-activity-event/15',
   },
   other: {
     label: 'Outro',
     icon: MoreHorizontal,
-    color: 'text-gray-600 bg-gray-100 dark:text-gray-400 dark:bg-gray-800/50',
+    color: 'text-activity-other bg-activity-other/15',
   },
 };
 

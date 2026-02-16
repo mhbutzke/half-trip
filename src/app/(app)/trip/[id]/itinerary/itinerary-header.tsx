@@ -1,13 +1,14 @@
 'use client';
 
-import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Calendar, CalendarSync, Link2 } from 'lucide-react';
+import { Calendar, CalendarSync, Link2 } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { routes } from '@/lib/routes';
 import type { TripWithMembers } from '@/lib/supabase/trips';
 
 interface ItineraryHeaderProps {
@@ -72,20 +73,9 @@ export function ItineraryHeader({ trip, googleCalendarConnected }: ItineraryHead
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-11 min-w-[44px] gap-1 px-2 sm:h-8 sm:min-w-0"
-          asChild
-        >
-          <Link href={`/trip/${trip.id}`}>
-            <ArrowLeft className="h-4 w-4" />
-            <span className="hidden sm:inline">{trip.name}</span>
-          </Link>
-        </Button>
-      </div>
-
+      <Breadcrumb
+        items={[{ label: trip.name, href: routes.trip.overview(trip.id) }, { label: 'Roteiro' }]}
+      />
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Roteiro</h1>

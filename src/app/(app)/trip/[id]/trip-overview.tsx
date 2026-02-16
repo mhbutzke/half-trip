@@ -9,6 +9,7 @@ import {
   Calendar,
   CheckCircle2,
   CheckSquare,
+  ChevronDown,
   DollarSign,
   Plus,
   Receipt,
@@ -406,10 +407,18 @@ export function TripOverview({
             onClick={() => setIsMoreOpen((v) => !v)}
           >
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Mais</CardTitle>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Votações, recap e atividade recente
-              </p>
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <CardTitle className="text-base">Mais</CardTitle>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Votações, recap e atividade recente
+                  </p>
+                </div>
+                <ChevronDown
+                  className={`mt-0.5 h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200 ${isMoreOpen ? 'rotate-180' : ''}`}
+                  aria-hidden="true"
+                />
+              </div>
             </CardHeader>
           </button>
           {isMoreOpen && (
@@ -494,10 +503,18 @@ export function TripOverview({
             onClick={() => setIsFinancesOpen((v) => !v)}
           >
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Finanças</CardTitle>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Saldo, despesas, pendências e orçamento
-              </p>
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <CardTitle className="text-base">Finanças</CardTitle>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Saldo, despesas, pendências e orçamento
+                  </p>
+                </div>
+                <ChevronDown
+                  className={`mt-0.5 h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200 ${isFinancesOpen ? 'rotate-180' : ''}`}
+                  aria-hidden="true"
+                />
+              </div>
             </CardHeader>
           </button>
           {isFinancesOpen && (

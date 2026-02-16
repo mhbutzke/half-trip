@@ -1,5 +1,10 @@
 import type { ExpenseCategory } from './database';
-import type { ParticipantBalance, Settlement } from '@/lib/balance';
+import type {
+  EntityBalance,
+  EntitySettlement,
+  ParticipantBalance,
+  Settlement,
+} from '@/lib/balance';
 import type { SettlementWithUsers } from '@/lib/supabase/settlements';
 
 export type CategorySummary = {
@@ -23,7 +28,13 @@ export type TripExpenseSummary = {
   baseCurrency: string;
   totalExpenses: number;
   expenseCount: number;
+  hasGroups: boolean;
+  // Individual mode (hasGroups = false)
   participants: ParticipantBalance[];
   suggestedSettlements: Settlement[];
+  // Entity mode (hasGroups = true)
+  entities?: EntityBalance[];
+  entitySettlements?: EntitySettlement[];
+  // Always present
   settledSettlements: SettlementWithUsers[];
 };

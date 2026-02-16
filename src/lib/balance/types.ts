@@ -86,3 +86,21 @@ export interface EntityBalance {
   totalOwed: number;
   netBalance: number;
 }
+
+export interface EntitySettlement {
+  from: {
+    entityId: string;
+    entityType: 'participant' | 'group';
+    displayName: string;
+    displayAvatar: string | null;
+    members?: ParticipantData[];
+  };
+  to: {
+    entityId: string;
+    entityType: 'participant' | 'group';
+    displayName: string;
+    displayAvatar: string | null;
+    members?: ParticipantData[];
+  };
+  amount: number;
+}

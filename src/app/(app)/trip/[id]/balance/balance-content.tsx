@@ -13,10 +13,17 @@ interface BalanceContentProps {
   summary: TripExpenseSummary;
   trip: Trip;
   currentUserId: string;
+  currentParticipantId: string;
   isOrganizer: boolean;
 }
 
-export function BalanceContent({ summary, trip, currentUserId, isOrganizer }: BalanceContentProps) {
+export function BalanceContent({
+  summary,
+  trip,
+  currentUserId,
+  currentParticipantId,
+  isOrganizer,
+}: BalanceContentProps) {
   const router = useRouter();
 
   // Enable real-time updates for this trip
@@ -47,7 +54,12 @@ export function BalanceContent({ summary, trip, currentUserId, isOrganizer }: Ba
 
   return (
     <div className="animate-in fade-in duration-200">
-      <TripSummary summary={summary} currentUserId={currentUserId} isOrganizer={isOrganizer} />
+      <TripSummary
+        summary={summary}
+        currentUserId={currentUserId}
+        currentParticipantId={currentParticipantId}
+        isOrganizer={isOrganizer}
+      />
     </div>
   );
 }

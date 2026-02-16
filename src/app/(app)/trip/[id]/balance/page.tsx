@@ -4,6 +4,7 @@ import { Scale } from 'lucide-react';
 import { getTripById, getUserRoleInTrip } from '@/lib/supabase/trips';
 import { getTripExpenseSummary } from '@/lib/supabase/expense-summary';
 import { getUser } from '@/lib/supabase/auth';
+import { getParticipantId } from '@/lib/supabase/participants';
 import { PageContainer } from '@/components/layout/page-container';
 import { FinancesTabBar } from '@/components/layout/finances-tab-bar';
 import { BalanceContent } from './balance-content';
@@ -32,10 +33,11 @@ async function BalancePageContent({ tripId }: { tripId: string }) {
     notFound();
   }
 
-  const [trip, summary, userRole] = await Promise.all([
+  const [trip, summary, userRole, currentParticipantId] = await Promise.all([
     getTripById(tripId),
     getTripExpenseSummary(tripId),
     getUserRoleInTrip(tripId),
+    getParticipantId(tripId, user.id),
   ]);
 
   if (!trip || !summary || !userRole) {
@@ -56,6 +58,7 @@ async function BalancePageContent({ tripId }: { tripId: string }) {
         summary={summary}
         trip={trip}
         currentUserId={user.id}
+        currentParticipantId={currentParticipantId ?? ''}
         isOrganizer={userRole === 'organizer'}
       />
     </div>

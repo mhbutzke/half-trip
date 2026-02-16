@@ -18,7 +18,7 @@
  * Complexity: O(n log n) for sorting, O(n) for matching = O(n log n) overall
  */
 
-import type { ParticipantBalance, Settlement } from './types';
+import type { EntityBalance, EntitySettlement, ParticipantBalance, Settlement } from './types';
 
 /**
  * Calculate optimized settlements to minimize number of transactions
@@ -79,6 +79,67 @@ export function calculateSettlements(balances: ParticipantBalance[]): Settlement
     }
 
     // Move to next debtor if current one is fully settled
+    if (debtor.netBalance < 0.01) {
+      debtorIndex++;
+    }
+  }
+
+  return settlements;
+}
+
+/**
+ * Calculate optimized settlements for entity-level balances (groups + solos).
+ * Same greedy algorithm as calculateSettlements but operates on EntityBalance[].
+ */
+export function calculateEntitySettlements(balances: EntityBalance[]): EntitySettlement[] {
+  const settlements: EntitySettlement[] = [];
+
+  const creditors = balances
+    .filter((b) => b.netBalance > 0.01)
+    .map((b) => ({ ...b }))
+    .sort((a, b) => b.netBalance - a.netBalance);
+
+  const debtors = balances
+    .filter((b) => b.netBalance < -0.01)
+    .map((b) => ({ ...b, netBalance: Math.abs(b.netBalance) }))
+    .sort((a, b) => b.netBalance - a.netBalance);
+
+  let creditorIndex = 0;
+  let debtorIndex = 0;
+
+  while (creditorIndex < creditors.length && debtorIndex < debtors.length) {
+    const creditor = creditors[creditorIndex];
+    const debtor = debtors[debtorIndex];
+
+    const settleAmount = Math.min(creditor.netBalance, debtor.netBalance);
+
+    if (settleAmount > 0.01) {
+      settlements.push({
+        from: {
+          entityId: debtor.entityId,
+          entityType: debtor.entityType,
+          displayName: debtor.displayName,
+          displayAvatar: debtor.displayAvatar,
+          members: debtor.members,
+        },
+        to: {
+          entityId: creditor.entityId,
+          entityType: creditor.entityType,
+          displayName: creditor.displayName,
+          displayAvatar: creditor.displayAvatar,
+          members: creditor.members,
+        },
+        amount: Math.round(settleAmount * 100) / 100,
+      });
+    }
+
+    creditor.netBalance -= settleAmount;
+    debtor.netBalance -= settleAmount;
+
+    if (creditor.netBalance < 0.01) {
+      creditorIndex++;
+    }
+
     if (debtor.netBalance < 0.01) {
       debtorIndex++;
     }

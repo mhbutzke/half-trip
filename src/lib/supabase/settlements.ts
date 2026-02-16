@@ -3,6 +3,8 @@
 import { createClient } from './server';
 import { revalidate } from '@/lib/utils/revalidation';
 import { logActivity } from './activity-log';
+import { splitEntitySettlement } from '@/lib/balance/settlement-helpers';
+import type { EntitySettlement } from '@/lib/balance/types';
 import type { Settlement } from '@/types/database';
 
 export type SettlementResult = {
@@ -110,6 +112,89 @@ export async function createSettlement(input: CreateSettlementInput): Promise<Se
   });
 
   return { success: true, settlementId: settlement.id };
+}
+
+/**
+ * Creates settlement records for an entity-level settlement.
+ * Splits the entity settlement into individual participant settlements.
+ */
+export async function createEntitySettlement(input: {
+  trip_id: string;
+  entitySettlement: EntitySettlement;
+}): Promise<SettlementResult> {
+  const supabase = await createClient();
+
+  const {
+    data: { user: authUser },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !authUser) {
+    return { error: 'Não autorizado' };
+  }
+
+  // Check if user is a member of the trip
+  const { data: member } = await supabase
+    .from('trip_members')
+    .select('id')
+    .eq('trip_id', input.trip_id)
+    .eq('user_id', authUser.id)
+    .single();
+
+  if (!member) {
+    return { error: 'Você não é membro desta viagem' };
+  }
+
+  // Split entity settlement into individual settlements
+  const individualSettlements = splitEntitySettlement(input.entitySettlement);
+
+  // Load trip participants to derive user_ids
+  const { data: tripParticipants } = await supabase
+    .from('trip_participants')
+    .select('id, user_id, type')
+    .eq('trip_id', input.trip_id);
+
+  const participantById = new Map((tripParticipants || []).map((p) => [p.id, p]));
+
+  // Create all individual settlements
+  const rows = individualSettlements.map((s) => {
+    const fromP = participantById.get(s.fromParticipantId);
+    const toP = participantById.get(s.toParticipantId);
+
+    return {
+      trip_id: input.trip_id,
+      from_user: fromP?.user_id || null,
+      to_user: toP?.user_id || null,
+      from_participant_id: s.fromParticipantId,
+      to_participant_id: s.toParticipantId,
+      amount: s.amount,
+    };
+  });
+
+  const { data: settlements, error: insertError } = await supabase
+    .from('settlements')
+    .insert(rows)
+    .select('id');
+
+  if (insertError) {
+    return { error: insertError.message };
+  }
+
+  revalidate.tripBalance(input.trip_id);
+
+  logActivity({
+    tripId: input.trip_id,
+    action: 'created',
+    entityType: 'settlement',
+    entityId: settlements?.[0]?.id ?? '',
+    metadata: {
+      amount: input.entitySettlement.amount,
+      type: 'entity',
+      count: rows.length,
+    },
+  });
+
+  return { success: true, settlementId: settlements?.[0]?.id };
 }
 
 /**

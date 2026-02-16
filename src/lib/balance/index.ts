@@ -17,11 +17,14 @@ export {
 
 export {
   calculateSettlements,
+  calculateEntitySettlements,
   getSettlementParticipantCount,
   getSettlementsForParticipant,
   getTotalOutgoing,
   getTotalIncoming,
 } from './calculate-settlements';
+
+export { splitEntitySettlement } from './settlement-helpers';
 
 export type {
   ParticipantBalance,
@@ -33,4 +36,5 @@ export type {
   PersistedSettlement,
   GroupData,
   EntityBalance,
+  EntitySettlement,
 } from './types';

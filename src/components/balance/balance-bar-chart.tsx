@@ -2,8 +2,9 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { MoneyDisplay } from '@/components/ui/money-display';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { EntityBalance } from '@/lib/balance';
 
 interface BalanceItem {
   participantId: string;
@@ -14,18 +15,44 @@ interface BalanceItem {
 }
 
 interface BalanceBarChartProps {
-  participants: BalanceItem[];
+  participants?: BalanceItem[];
+  entities?: EntityBalance[];
   currency: string;
   className?: string;
 }
 
-export function BalanceBarChart({ participants, currency, className }: BalanceBarChartProps) {
-  // Find max absolute value for scaling
-  const maxAbsValue =
-    participants.length > 0 ? Math.max(...participants.map((p) => Math.abs(p.balance))) : 0;
+type ChartItem = {
+  id: string;
+  name: string;
+  balance: number;
+  isGroup: boolean;
+};
 
-  // Separate positive and negative balances
-  const sortedParticipants = [...participants].sort((a, b) => b.balance - a.balance);
+export function BalanceBarChart({
+  participants,
+  entities,
+  currency,
+  className,
+}: BalanceBarChartProps) {
+  // Normalize to chart items
+  const items: ChartItem[] = entities
+    ? entities.map((e) => ({
+        id: e.entityId,
+        name: e.displayName,
+        balance: e.netBalance,
+        isGroup: e.entityType === 'group',
+      }))
+    : (participants ?? []).map((p) => ({
+        id: p.participantId,
+        name: p.participantName,
+        balance: p.balance,
+        isGroup: false,
+      }));
+
+  // Find max absolute value for scaling
+  const maxAbsValue = items.length > 0 ? Math.max(...items.map((i) => Math.abs(i.balance))) : 0;
+
+  const sortedItems = [...items].sort((a, b) => b.balance - a.balance);
 
   const getBarWidth = (balance: number) => {
     if (maxAbsValue === 0) return 0;
@@ -38,10 +65,11 @@ export function BalanceBarChart({ participants, currency, className }: BalanceBa
     return 'neutral';
   };
 
-  const getStatusIcon = (status: string) => {
-    if (status === 'positive') return <TrendingUp className="h-4 w-4" />;
-    if (status === 'negative') return <TrendingDown className="h-4 w-4" />;
-    return <Minus className="h-4 w-4" />;
+  const getStatusIcon = (status: string, isGroup: boolean) => {
+    if (isGroup) return <Users className="h-4 w-4" aria-hidden="true" />;
+    if (status === 'positive') return <TrendingUp className="h-4 w-4" aria-hidden="true" />;
+    if (status === 'negative') return <TrendingDown className="h-4 w-4" aria-hidden="true" />;
+    return <Minus className="h-4 w-4" aria-hidden="true" />;
   };
 
   const getStatusColor = (status: string) => {
@@ -66,21 +94,23 @@ export function BalanceBarChart({ participants, currency, className }: BalanceBa
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          {sortedParticipants.map((participant) => {
-            const status = getBalanceStatus(participant.balance);
-            const barWidth = getBarWidth(participant.balance);
+          {sortedItems.map((item) => {
+            const status = getBalanceStatus(item.balance);
+            const barWidth = getBarWidth(item.balance);
 
             return (
-              <div key={participant.participantId} className="space-y-1">
+              <div key={item.id} className="space-y-1">
                 {/* Name and balance */}
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
-                    {getStatusIcon(status)}
-                    <span className="font-medium">{participant.participantName.split(' ')[0]}</span>
+                    {getStatusIcon(status, item.isGroup)}
+                    <span className="font-medium">
+                      {item.isGroup ? item.name : item.name.split(' ')[0]}
+                    </span>
                   </div>
                   <span className={cn('font-semibold', getStatusTextColor(status))}>
                     <MoneyDisplay
-                      amount={Math.abs(participant.balance)}
+                      amount={Math.abs(item.balance)}
                       currency={currency}
                       size="sm"
                       showSign={false}

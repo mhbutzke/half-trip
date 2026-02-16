@@ -15,7 +15,10 @@ export function useScrollDirection(threshold = 10) {
           const currentScrollY = window.scrollY;
           const diff = currentScrollY - lastScrollY.current;
 
-          if (Math.abs(diff) > threshold) {
+          // Asymmetric: easy to show (2px up), harder to hide (threshold down)
+          const effectiveThreshold = diff < 0 ? 2 : threshold;
+
+          if (Math.abs(diff) > effectiveThreshold) {
             setDirection(diff > 0 ? 'down' : 'up');
             lastScrollY.current = currentScrollY;
           }

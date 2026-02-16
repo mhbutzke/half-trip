@@ -17,27 +17,54 @@ const CreateTripDialog = dynamic(() =>
 
 function TripsLoading() {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {[1, 2, 3].map((i) => (
-        <Card key={i}>
-          <CardHeader className="pb-2">
-            <Skeleton className="h-5 w-20 mb-2" />
-            <Skeleton className="h-6 w-3/4" />
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Skeleton className="h-4 w-2/3" />
-            <Skeleton className="h-4 w-1/2" />
-            <div className="flex items-center justify-between pt-2 border-t">
-              <div className="flex -space-x-2">
-                <Skeleton className="h-6 w-6 rounded-full" />
-                <Skeleton className="h-6 w-6 rounded-full" />
-                <Skeleton className="h-6 w-6 rounded-full" />
+    <div className="space-y-6">
+      {/* Welcome skeleton */}
+      <div className="flex items-center gap-4">
+        <Skeleton className="h-12 w-12 rounded-full" />
+        <div className="flex-1 space-y-2">
+          <Skeleton className="h-6 w-32" />
+          <Skeleton className="h-4 w-48" />
+        </div>
+      </div>
+
+      {/* Stats skeleton */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {[1, 2, 3].map((i) => (
+          <Card key={i}>
+            <CardContent className="flex items-center gap-4 p-4">
+              <Skeleton className="h-12 w-12 rounded-xl" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-6 w-8" />
               </div>
-              <Skeleton className="h-4 w-20" />
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Cards skeleton */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {[1, 2, 3].map((i) => (
+          <Card key={i}>
+            <CardHeader className="pb-2">
+              <Skeleton className="h-5 w-20 mb-2" />
+              <Skeleton className="h-6 w-3/4" />
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="h-4 w-1/2" />
+              <div className="flex items-center justify-between pt-2 border-t">
+                <div className="flex -space-x-2">
+                  <Skeleton className="h-6 w-6 rounded-full" />
+                  <Skeleton className="h-6 w-6 rounded-full" />
+                  <Skeleton className="h-6 w-6 rounded-full" />
+                </div>
+                <Skeleton className="h-4 w-20" />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }

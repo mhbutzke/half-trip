@@ -35,10 +35,12 @@ import { can } from '@/lib/permissions';
 import { parseDateOnly } from '@/lib/utils/date-only';
 import { routes } from '@/lib/routes';
 import type { TripMemberRole, TripStyle } from '@/types/database';
+import { TripProgress, type TripProgressData } from './trip-progress';
 
 interface TripCardProps {
   trip: TripWithMembers;
   userRole?: TripMemberRole | null;
+  progress?: TripProgressData;
   onEdit?: (trip: TripWithMembers) => void;
   onArchive?: (tripId: string) => void;
   onUnarchive?: (tripId: string) => void;
@@ -90,6 +92,7 @@ function getTripStatus(startDate: string, endDate: string) {
 export const TripCard = memo(function TripCard({
   trip,
   userRole,
+  progress,
   onEdit,
   onArchive,
   onUnarchive,
@@ -256,6 +259,8 @@ export const TripCard = memo(function TripCard({
             {trip.memberCount} {trip.memberCount === 1 ? 'viajante' : 'viajantes'}
           </span>
         </div>
+
+        {progress && <TripProgress progress={progress} />}
       </CardContent>
     </Card>
   );

@@ -4,10 +4,13 @@ import { useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { isFuture, isPast } from 'date-fns';
-import { Archive, Search, X } from 'lucide-react';
+import { isPast } from 'date-fns';
+import { Search, X } from 'lucide-react';
 import { TripCard } from '@/components/trips/trip-card';
 import { TripsStats } from '@/components/trips/trips-stats';
+import { WelcomeSection } from '@/components/trips/welcome-section';
+import { NextTripSpotlight } from '@/components/trips/next-trip-spotlight';
+import { ActionCardsRow } from '@/components/trips/action-cards-row';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -25,6 +28,8 @@ import { useOnlineStatus } from '@/hooks/use-online-status';
 import { cacheTrips, getCachedUserTrips, getCachedTripMembers, getCachedUser } from '@/lib/sync';
 import { getCurrentAuthUserId, getTripsForCurrentUser } from '@/lib/supabase/trips-client';
 import { archiveTrip, unarchiveTrip, type TripWithMembers } from '@/lib/supabase/trips';
+import { getTripProgressBatch } from '@/lib/supabase/trip-progress';
+import type { TripProgressData } from '@/components/trips/trip-progress';
 
 interface TripsListProps {
   emptyState: ReactNode;
@@ -36,10 +41,14 @@ export function TripsList({ emptyState }: TripsListProps) {
   const [trips, setTrips] = useState<TripWithMembers[]>([]);
   const [archivedTrips, setArchivedTrips] = useState<TripWithMembers[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentUserName, setCurrentUserName] = useState<string>('');
+  const [currentUserAvatar, setCurrentUserAvatar] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [editingTrip, setEditingTrip] = useState<TripWithMembers | null>(null);
   const [deletingTripId, setDeletingTripId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState<'upcoming' | 'completed'>('upcoming');
+  const [progressData, setProgressData] = useState<Map<string, TripProgressData>>(new Map());
 
   const loadTrips = useCallback(async () => {
     setIsLoading(true);
@@ -51,10 +60,26 @@ export function TripsList({ emptyState }: TripsListProps) {
         setTrips(activeTrips);
         setArchivedTrips(archived);
 
+        // Get current user info from first trip member
+        if (userId && activeTrips.length > 0) {
+          const currentMember = activeTrips[0].trip_members?.find((m) => m.user_id === userId);
+          if (currentMember) {
+            setCurrentUserName(currentMember.users.name);
+            setCurrentUserAvatar(currentMember.users.avatar_url);
+          }
+        }
+
         // Cache trips for offline use
         const allTrips = [...activeTrips, ...archived];
         if (userId && allTrips.length > 0) {
           await cacheTrips(allTrips);
+        }
+
+        // Fetch progress data for all trips
+        if (allTrips.length > 0) {
+          const tripIds = allTrips.map((t) => t.id);
+          const progress = await getTripProgressBatch(tripIds);
+          setProgressData(progress);
         }
       } else {
         // Load from cache when offline
@@ -100,6 +125,9 @@ export function TripsList({ emptyState }: TripsListProps) {
           const archived = tripsWithMembers.filter((t) => t.archived_at);
           setTrips(active);
           setArchivedTrips(archived);
+
+          // Note: Progress data not available offline
+          setProgressData(new Map());
         }
       }
     } catch {
@@ -168,34 +196,45 @@ export function TripsList({ emptyState }: TripsListProps) {
     return member?.role || null;
   };
 
+  // Calculate statistics and filter by date
+  const allTrips = [...trips, ...archivedTrips];
+  const totalTrips = allTrips.length;
+
+  // Split trips by completion status (based on end date)
+  const upcomingTripsData = allTrips.filter((trip) => !isPast(parseDateOnly(trip.end_date)));
+  const completedTripsData = allTrips.filter((trip) => isPast(parseDateOnly(trip.end_date)));
+
+  const upcomingTrips = upcomingTripsData.length;
+  const completedTrips = completedTripsData.length;
+
   // Filter trips by search term
   const normalizedSearch = searchTerm.trim().toLowerCase();
-  const filteredTrips = useMemo(() => {
-    if (!normalizedSearch) return trips;
-    return trips.filter((trip) =>
+  const filteredUpcomingTrips = useMemo(() => {
+    if (!normalizedSearch) return upcomingTripsData;
+    return upcomingTripsData.filter((trip) =>
       [trip.name, trip.destination || ''].some((field) =>
         field.toLowerCase().includes(normalizedSearch)
       )
     );
-  }, [trips, normalizedSearch]);
+  }, [upcomingTripsData, normalizedSearch]);
 
-  const filteredArchivedTrips = useMemo(() => {
-    if (!normalizedSearch) return archivedTrips;
-    return archivedTrips.filter((trip) =>
+  const filteredCompletedTrips = useMemo(() => {
+    if (!normalizedSearch) return completedTripsData;
+    return completedTripsData.filter((trip) =>
       [trip.name, trip.destination || ''].some((field) =>
         field.toLowerCase().includes(normalizedSearch)
       )
     );
-  }, [archivedTrips, normalizedSearch]);
+  }, [completedTripsData, normalizedSearch]);
 
   if (isLoading) {
     return null; // Suspense will show loading state
   }
 
-  const hasTrips = trips.length > 0;
-  const hasArchivedTrips = archivedTrips.length > 0;
+  const hasUpcomingTrips = upcomingTripsData.length > 0;
+  const hasCompletedTrips = completedTripsData.length > 0;
 
-  if (!hasTrips && !hasArchivedTrips) {
+  if (!hasUpcomingTrips && !hasCompletedTrips) {
     return emptyState;
   }
 
@@ -224,106 +263,116 @@ export function TripsList({ emptyState }: TripsListProps) {
     </div>
   );
 
-  // Calculate statistics
-  const allTrips = [...trips, ...archivedTrips];
-  const totalTrips = allTrips.length;
-  const upcomingTrips = trips.filter((trip) => isFuture(parseDateOnly(trip.start_date))).length;
-  const completedTrips = allTrips.filter((trip) => isPast(parseDateOnly(trip.end_date))).length;
+  // Get next upcoming trip (closest start date)
+  const nextTrip =
+    upcomingTripsData.length > 0
+      ? upcomingTripsData.sort(
+          (a, b) => parseDateOnly(a.start_date).getTime() - parseDateOnly(b.start_date).getTime()
+        )[0]
+      : null;
+
+  // Mock data for action cards (in real implementation, fetch from API)
+  const pendingSettlements = 0; // TODO: fetch from getTripExpenseSummary
+  const recentExpensesCount = 0; // TODO: fetch recent expenses
+  const pendingChecklistsCount = 0; // TODO: fetch from checklists
 
   return (
     <PullToRefresh onRefresh={loadTrips}>
+      {currentUserName && (
+        <WelcomeSection userName={currentUserName} userAvatar={currentUserAvatar} />
+      )}
+
       <TripsStats
         totalTrips={totalTrips}
         upcomingTrips={upcomingTrips}
         completedTrips={completedTrips}
       />
+
+      {nextTrip && <NextTripSpotlight trip={nextTrip} />}
+
+      <ActionCardsRow
+        pendingSettlements={pendingSettlements}
+        recentExpensesCount={recentExpensesCount}
+        pendingChecklistsCount={pendingChecklistsCount}
+        upcomingTripId={nextTrip?.id}
+      />
+
       {searchBar}
-      {hasArchivedTrips ? (
-        <Tabs defaultValue="active" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
-            <TabsTrigger value="active" className="flex items-center gap-2">
-              Ativas
-              {filteredTrips.length > 0 && (
-                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs">
-                  {filteredTrips.length}
-                </span>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="archived" className="flex items-center gap-2">
-              <Archive className="h-4 w-4" />
-              Arquivadas
-              <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
-                {filteredArchivedTrips.length}
+      <Tabs
+        value={activeTab}
+        onValueChange={(v) => setActiveTab(v as 'upcoming' | 'completed')}
+        className="w-full"
+      >
+        <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
+          <TabsTrigger value="upcoming" className="flex items-center gap-2">
+            Próximas
+            {filteredUpcomingTrips.length > 0 && (
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs">
+                {filteredUpcomingTrips.length}
               </span>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="active" className="mt-6">
-            {filteredTrips.length > 0 ? (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {filteredTrips.map((trip) => (
-                  <TripCard
-                    key={trip.id}
-                    trip={trip}
-                    userRole={getUserRole(trip)}
-                    onEdit={handleEdit}
-                    onArchive={handleArchive}
-                    onDelete={handleDelete}
-                  />
-                ))}
-              </div>
-            ) : normalizedSearch ? (
-              <p className="py-8 text-center text-sm text-muted-foreground">
-                Nenhuma viagem encontrada para &ldquo;{searchTerm}&rdquo;
-              </p>
-            ) : (
-              emptyState
             )}
-          </TabsContent>
-
-          <TabsContent value="archived" className="mt-6">
-            {filteredArchivedTrips.length > 0 ? (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {filteredArchivedTrips.map((trip) => (
-                  <TripCard
-                    key={trip.id}
-                    trip={trip}
-                    userRole={getUserRole(trip)}
-                    onEdit={handleEdit}
-                    onUnarchive={handleUnarchive}
-                    onDelete={handleDelete}
-                  />
-                ))}
-              </div>
-            ) : (
-              <p className="py-8 text-center text-sm text-muted-foreground">
-                Nenhuma viagem arquivada encontrada
-              </p>
+          </TabsTrigger>
+          <TabsTrigger value="completed" className="flex items-center gap-2">
+            Concluídas
+            {filteredCompletedTrips.length > 0 && (
+              <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
+                {filteredCompletedTrips.length}
+              </span>
             )}
-          </TabsContent>
-        </Tabs>
-      ) : (
-        <>
-          {filteredTrips.length > 0 ? (
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="upcoming" className="mt-6">
+          {filteredUpcomingTrips.length > 0 ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredTrips.map((trip) => (
+              {filteredUpcomingTrips.map((trip) => (
                 <TripCard
                   key={trip.id}
                   trip={trip}
                   userRole={getUserRole(trip)}
+                  progress={progressData.get(trip.id)}
                   onEdit={handleEdit}
                   onArchive={handleArchive}
                   onDelete={handleDelete}
                 />
               ))}
             </div>
-          ) : (
+          ) : normalizedSearch ? (
             <p className="py-8 text-center text-sm text-muted-foreground">
               Nenhuma viagem encontrada para &ldquo;{searchTerm}&rdquo;
             </p>
+          ) : (
+            <p className="py-8 text-center text-sm text-muted-foreground">Nenhuma viagem próxima</p>
           )}
-        </>
-      )}
+        </TabsContent>
+
+        <TabsContent value="completed" className="mt-6">
+          {filteredCompletedTrips.length > 0 ? (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {filteredCompletedTrips.map((trip) => (
+                <TripCard
+                  key={trip.id}
+                  trip={trip}
+                  userRole={getUserRole(trip)}
+                  progress={progressData.get(trip.id)}
+                  onEdit={handleEdit}
+                  onUnarchive={trip.archived_at ? handleUnarchive : undefined}
+                  onArchive={!trip.archived_at ? handleArchive : undefined}
+                  onDelete={handleDelete}
+                />
+              ))}
+            </div>
+          ) : normalizedSearch ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              Nenhuma viagem encontrada para &ldquo;{searchTerm}&rdquo;
+            </p>
+          ) : (
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              Nenhuma viagem concluída
+            </p>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {editingTrip && (
         <EditTripDialog
@@ -337,7 +386,7 @@ export function TripsList({ emptyState }: TripsListProps) {
       {deletingTripId && (
         <DeleteTripDialog
           tripId={deletingTripId}
-          tripName={[...trips, ...archivedTrips].find((t) => t.id === deletingTripId)?.name}
+          tripName={allTrips.find((t) => t.id === deletingTripId)?.name}
           open={!!deletingTripId}
           onOpenChange={(open) => !open && setDeletingTripId(null)}
           onSuccess={handleDeleteSuccess}

@@ -9,14 +9,42 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const CRON_SECRET_HEADER = 'X-Cron-Secret';
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
+    // This function runs with SUPABASE_SERVICE_ROLE_KEY, so it must be protected from arbitrary invocation.
+    // Supabase cron uses `Authorization: Bearer <SUPABASE_SERVICE_ROLE_KEY>` by default. We also optionally
+    // support `X-Cron-Secret` so callers can avoid sending the service role key over the wire.
+    const cronSecret = Deno.env.get('CRON_SECRET');
+    const authHeader = req.headers.get('Authorization') || '';
+    const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+    const authorizedByCronSecret =
+      !!cronSecret && req.headers.get(CRON_SECRET_HEADER) === cronSecret;
+    const authorizedByServiceRole = !!serviceRoleKey && bearerToken === serviceRoleKey;
+
+    if (!authorizedByCronSecret && !authorizedByServiceRole) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 401,
+      });
+    }
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    if (!serviceRoleKey) {
+      return new Response(JSON.stringify({ error: 'SUPABASE_SERVICE_ROLE_KEY not configured' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      });
+    }
+
+    const supabaseServiceKey = serviceRoleKey;
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
     const appUrl = Deno.env.get('APP_URL') || 'https://halftrip.com';
 

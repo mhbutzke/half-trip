@@ -32,27 +32,35 @@ serve(async (req) => {
 
     console.log(`Searching for flight ${normalizedFlightNumber} on ${date || 'today'}`);
 
-    // Construct URL for AviationStack
-    // Note: Free tier might not support historical data far back or future data too far ahead properly without specific addon,
-    // but usually works for "active" flights.
-    // For specific date, AviationStack uses 'flight_date' or 'flight_status'.
-    // If date is provided, we try to filter.
-
-    // Example URL: http://api.aviationstack.com/v1/flights?access_key=KEY&flight_iata=AA100
-    const url = new URL('http://api.aviationstack.com/v1/flights');
+    // Always use HTTPS for outbound requests (API key is in query string).
+    const url = new URL('https://api.aviationstack.com/v1/flights');
     url.searchParams.append('access_key', apiKey);
-    url.searchParams.append('flight_iata', normalizedFlightNumber); // Assuming IATA code like 'AA100'
-    // limit to 1 result for simplicity in this demo, usually we want the most relevant
+    url.searchParams.append('flight_iata', normalizedFlightNumber);
     url.searchParams.append('limit', '1');
 
     if (date) {
-      // aviationstack expects YYYY-MM-DD? No, it often just returns recent.
-      // We might not be able to strict filter on free plan easily without checking docs on 'flight_date'.
-      // Let's not strict filter in API call yet to avoid empty results if API is picky,
-      // we can filter in memory or just return what we find.
+      url.searchParams.append('flight_date', date);
     }
 
-    const response = await fetch(url.toString());
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+    let response: Response;
+    try {
+      response = await fetch(url.toString(), { signal: controller.signal });
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        throw new Error('AviationStack API timeout (10s)');
+      }
+      throw err;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+
+    if (!response.ok) {
+      throw new Error(`AviationStack API HTTP ${response.status}`);
+    }
+
     const data = await response.json();
 
     if (data.error) {

@@ -3,7 +3,6 @@
 import { createClient } from './server';
 import { createAdminClient } from './admin';
 import { redirect } from 'next/navigation';
-import { headers } from 'next/headers';
 import { sendConfirmationEmail } from '@/lib/email/send-confirmation-email';
 import { sendPasswordResetEmail } from '@/lib/email/send-password-reset-email';
 import { routes } from '@/lib/routes';
@@ -16,6 +15,12 @@ export type AuthResult = {
   emailError?: boolean;
 };
 
+function getAppUrl(): string | null {
+  const raw = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || null;
+  if (!raw) return null;
+  return raw.endsWith('/') ? raw.slice(0, -1) : raw;
+}
+
 export async function signUp(
   name: string,
   email: string,
@@ -23,8 +28,10 @@ export async function signUp(
   redirectTo?: string
 ): Promise<AuthResult> {
   const adminClient = createAdminClient();
-  const headersList = await headers();
-  const origin = headersList.get('origin') || '';
+  const appUrl = getAppUrl();
+  if (!appUrl) {
+    return { error: 'Configuração inválida do servidor (NEXT_PUBLIC_APP_URL)' };
+  }
 
   // Use admin.generateLink to create user WITHOUT triggering Supabase's built-in
   // email system (which has strict rate limits on the free tier)
@@ -64,7 +71,7 @@ export async function signUp(
   if (redirectTo) {
     callbackParams.set('redirect', redirectTo);
   }
-  const confirmationUrl = `${origin}/auth/callback?${callbackParams.toString()}`;
+  const confirmationUrl = `${appUrl}/auth/callback?${callbackParams.toString()}`;
 
   // Send confirmation email via Resend (bypasses Supabase rate limits)
   const emailResult = await sendConfirmationEmail({
@@ -89,8 +96,10 @@ export async function signUp(
 
 export async function resendConfirmationEmail(email: string, name: string): Promise<AuthResult> {
   const adminClient = createAdminClient();
-  const headersList = await headers();
-  const origin = headersList.get('origin') || '';
+  const appUrl = getAppUrl();
+  if (!appUrl) {
+    return { error: 'Configuração inválida do servidor (NEXT_PUBLIC_APP_URL)' };
+  }
 
   // Use magiclink type to regenerate a verification link for existing unconfirmed users
   // (signup type requires password and could change the user's existing password)
@@ -114,7 +123,7 @@ export async function resendConfirmationEmail(email: string, name: string): Prom
     token_hash: data.properties.hashed_token,
     type: 'magiclink',
   });
-  const confirmationUrl = `${origin}/auth/callback?${callbackParams.toString()}`;
+  const confirmationUrl = `${appUrl}/auth/callback?${callbackParams.toString()}`;
 
   const emailResult = await sendConfirmationEmail({
     userId: data.user.id,
@@ -160,8 +169,11 @@ export async function signOut(): Promise<void> {
 
 export async function forgotPassword(email: string): Promise<AuthResult> {
   const adminClient = createAdminClient();
-  const headersList = await headers();
-  const origin = headersList.get('origin') || '';
+  const appUrl = getAppUrl();
+  if (!appUrl) {
+    // Avoid leaking whether a user exists if reset isn't configured.
+    return { success: true };
+  }
 
   const { data, error } = await adminClient.auth.admin.generateLink({
     type: 'recovery',
@@ -184,7 +196,7 @@ export async function forgotPassword(email: string): Promise<AuthResult> {
     token_hash: data.properties.hashed_token,
     type: 'recovery',
   });
-  const resetUrl = `${origin}/auth/callback?${callbackParams.toString()}`;
+  const resetUrl = `${appUrl}/auth/callback?${callbackParams.toString()}`;
 
   const emailResult = await sendPasswordResetEmail({
     userEmail: email,

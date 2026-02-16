@@ -80,7 +80,7 @@ export function AvatarSelector({
             onClick={() => onSelect(p.id)}
             onKeyDown={(e) => handleKeyDown(e, p.id)}
             className={cn(
-              'flex flex-col items-center gap-1 rounded-lg p-1.5 transition-all',
+              'flex flex-col items-center gap-1.5 rounded-lg p-2 transition-all min-w-0',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
               isSelected ? 'opacity-100' : 'opacity-50 hover:opacity-75'
             )}
@@ -88,14 +88,16 @@ export function AvatarSelector({
             <Avatar
               className={cn(
                 s.avatar,
-                'transition-all',
+                'transition-all shrink-0',
                 isSelected && 'ring-2 ring-primary ring-offset-2 ring-offset-background'
               )}
             >
               {p.avatar_url && <AvatarImage src={p.avatar_url} alt="" />}
               <AvatarFallback className={s.text}>{getInitials(p.name)}</AvatarFallback>
             </Avatar>
-            <span className={cn('max-w-14 truncate', s.text)}>{p.name}</span>
+            <span className={cn('max-w-20 truncate text-center', s.text)} title={p.name}>
+              {p.name}
+            </span>
           </button>
         );
       })}

@@ -11,8 +11,10 @@ import {
   CalendarSync,
   ExternalLink,
   Paperclip,
+  Globe,
 } from 'lucide-react';
 import { PlaceDetailsCard } from '@/components/activities/place-details-card';
+import { ActivityQuickInfo } from '@/components/itinerary/activity-quick-info';
 import {
   Sheet,
   SheetContent,
@@ -22,6 +24,7 @@ import {
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import { getCategoryInfo, formatDuration, formatTime } from '@/lib/utils/activity-categories';
 import { transportTypeMap } from '@/lib/utils/transport-types';
 import { useMediaQuery } from '@/hooks/use-media-query';
@@ -110,6 +113,11 @@ function ActivityDetailContent({
   const { isPending } = useSyncStatus('activities', activity.id);
   const attachmentsCount = activity.attachments_count ?? 0;
 
+  // Get place details for rating if available
+  const placeRating = typeof meta?.rating === 'number' ? meta.rating : undefined;
+  const placeReviewCount =
+    typeof meta?.user_ratings_total === 'number' ? meta.user_ratings_total : undefined;
+
   return (
     <>
       {/* Mobile drag handle indicator */}
@@ -118,13 +126,13 @@ function ActivityDetailContent({
       <SheetHeader className="px-0">
         <div className="flex items-start gap-3">
           <div
-            className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl ${categoryInfo.bgColor}`}
+            className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg ${categoryInfo.bgColor}`}
           >
-            <CategoryIcon className={`h-6 w-6 ${categoryInfo.color}`} aria-hidden="true" />
+            <CategoryIcon className={`h-5 w-5 ${categoryInfo.color}`} aria-hidden="true" />
           </div>
           <div className="min-w-0 flex-1">
-            <SheetTitle className="text-lg leading-tight">{activity.title}</SheetTitle>
-            <SheetDescription className="mt-0.5">
+            <SheetTitle className="text-base leading-tight">{activity.title}</SheetTitle>
+            <SheetDescription className="mt-0.5 text-xs">
               {categoryInfo.label}
               {isPending && (
                 <span className="ml-2">
@@ -136,63 +144,50 @@ function ActivityDetailContent({
         </div>
       </SheetHeader>
 
-      <div className="space-y-4 pt-2">
-        {/* Time & Duration */}
-        {(activity.start_time || activity.duration_minutes) && (
-          <div className="flex flex-wrap items-center gap-3 text-sm">
-            {activity.start_time && (
-              <div className="flex items-center gap-1.5 text-foreground">
-                <Clock className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                <span className="font-medium">{formatTime(activity.start_time)}</span>
-              </div>
-            )}
-            {activity.duration_minutes && (
-              <Badge variant="secondary">{formatDuration(activity.duration_minutes)}</Badge>
-            )}
-            {attachmentsCount > 0 && (
-              <div className="flex items-center gap-1 text-muted-foreground">
-                <Paperclip className="h-3.5 w-3.5" aria-hidden="true" />
-                <span className="text-xs">
-                  {attachmentsCount} anexo{attachmentsCount > 1 ? 's' : ''}
-                </span>
-              </div>
+      <div className="space-y-3 pt-2">
+        {/* Quick Info Card */}
+        <ActivityQuickInfo
+          startTime={activity.start_time ? formatTime(activity.start_time) : undefined}
+          duration={
+            activity.duration_minutes ? formatDuration(activity.duration_minutes) : undefined
+          }
+          rating={placeRating}
+          reviewCount={placeReviewCount}
+        />
+
+        {attachmentsCount > 0 && (
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Paperclip className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>
+              {attachmentsCount} anexo{attachmentsCount > 1 ? 's' : ''}
+            </span>
+          </div>
+        )}
+
+        {/* Location with Maps button */}
+        {activity.location && (
+          <div className="space-y-2">
+            <div className="flex items-start gap-1.5 text-sm">
+              <MapPin
+                className="h-4 w-4 flex-shrink-0 text-muted-foreground mt-0.5"
+                aria-hidden="true"
+              />
+              <span className="text-muted-foreground flex-1">{activity.location}</span>
+            </div>
+            {locationMapsUrl && (
+              <Button variant="outline" size="sm" className="w-full h-9" asChild>
+                <a href={locationMapsUrl} target="_blank" rel="noopener noreferrer">
+                  <Navigation className="mr-2 h-4 w-4" aria-hidden="true" />
+                  Abrir no Maps
+                </a>
+              </Button>
             )}
           </div>
         )}
 
-        {/* Location */}
-        {activity.location && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-1.5 text-sm">
-              <MapPin className="h-4 w-4 flex-shrink-0 text-muted-foreground" aria-hidden="true" />
-              {locationMapsUrl ? (
-                <a
-                  href={locationMapsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-foreground hover:underline"
-                >
-                  {activity.location}
-                </a>
-              ) : (
-                <span>{activity.location}</span>
-              )}
-            </div>
-            {locationMapsUrl && (
-              <a
-                href={locationMapsUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-md border bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-100 dark:bg-blue-950 dark:text-blue-300 dark:hover:bg-blue-900"
-              >
-                <Navigation className="h-3.5 w-3.5" aria-hidden="true" />
-                Abrir no Maps
-              </a>
-            )}
-            {meta?.location_place_id && (
-              <PlaceDetailsCard placeId={meta.location_place_id} compact={false} />
-            )}
-          </div>
+        {/* Place Details Card */}
+        {meta?.location_place_id && (
+          <PlaceDetailsCard placeId={meta.location_place_id} compact={false} />
         )}
 
         {/* Flight Details */}
@@ -243,32 +238,35 @@ function ActivityDetailContent({
         {links.length > 0 && (
           <div className="space-y-2">
             <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Links
+              Links úteis
             </span>
-            <div className="flex flex-wrap gap-2">
+            <div className="space-y-1.5">
               {links.map((link, index) => (
-                <a
+                <Button
                   key={index}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-md border bg-muted/50 px-2.5 py-1.5 text-sm transition-colors hover:bg-muted"
+                  variant="outline"
+                  size="sm"
+                  className="w-full h-9 justify-start"
+                  asChild
                 >
-                  <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
-                  {link.label}
-                </a>
+                  <a href={link.url} target="_blank" rel="noopener noreferrer">
+                    <Globe className="mr-2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                    <span className="truncate">{link.label}</span>
+                  </a>
+                </Button>
               ))}
             </div>
           </div>
         )}
 
         {/* Actions */}
-        <div className="border-t pt-4">
-          <div className="grid grid-cols-2 gap-2">
+        <Separator className="my-4" />
+        <div className="space-y-2">
+          <div className="flex gap-2">
             <Button
               variant="outline"
               size="sm"
-              className="w-full"
+              className="flex-1"
               onClick={async () => {
                 const url = `${window.location.origin}/trip/${activity.trip_id}/itinerary`;
                 if (navigator.share) {
@@ -291,17 +289,19 @@ function ActivityDetailContent({
             <Button
               variant="outline"
               size="sm"
-              className="w-full"
+              className="flex-1"
               onClick={() => onSync(activity)}
               disabled={isSyncing}
             >
               <CalendarSync className="mr-1.5 h-4 w-4" aria-hidden="true" />
               {isSyncing ? 'Sincronizando...' : 'Agenda'}
             </Button>
+          </div>
+          <div className="flex gap-2">
             <Button
               variant="outline"
               size="sm"
-              className="w-full"
+              className="flex-1"
               onClick={() => {
                 onClose();
                 onEdit(activity);
@@ -313,7 +313,7 @@ function ActivityDetailContent({
             <Button
               variant="outline"
               size="sm"
-              className="w-full text-destructive hover:text-destructive"
+              className="flex-1 text-destructive hover:text-destructive"
               onClick={() => {
                 onClose();
                 onDelete(activity);

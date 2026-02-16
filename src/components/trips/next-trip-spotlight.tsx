@@ -2,7 +2,7 @@
 
 import { Link } from 'next-view-transitions';
 import Image from 'next/image';
-import { differenceInDays, format } from 'date-fns';
+import { differenceInDays, format, isFuture, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Calendar, MapPin, Users, ArrowRight } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -20,8 +20,12 @@ interface NextTripSpotlightProps {
 export function NextTripSpotlight({ trip }: NextTripSpotlightProps) {
   const startDate = parseDateOnly(trip.start_date);
   const endDate = parseDateOnly(trip.end_date);
-  const daysUntil = differenceInDays(startDate, new Date());
+  const today = new Date();
+  const daysUntil = differenceInDays(startDate, today);
   const isImminent = daysUntil <= 7 && daysUntil >= 0;
+
+  // Check if trip is currently happening (between start and end dates)
+  const isInProgress = !isFuture(startDate) && !isPast(endDate);
 
   const formattedStartDate = format(startDate, "d 'de' MMMM", { locale: ptBR });
   const formattedEndDate = format(endDate, "d 'de' MMMM, yyyy", { locale: ptBR });
@@ -43,21 +47,32 @@ export function NextTripSpotlight({ trip }: NextTripSpotlightProps) {
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 space-y-1">
-            <p className="text-sm font-semibold text-primary">Sua próxima aventura</p>
+            <p className="text-sm font-semibold text-primary">
+              {isInProgress ? 'Sua aventura atual' : 'Sua próxima aventura'}
+            </p>
             <h3 className="text-2xl font-bold tracking-tight line-clamp-2">{trip.name}</h3>
           </div>
-          {isImminent && (
+          {isInProgress ? (
             <Badge
               variant="default"
               className="shrink-0 border-primary/20 bg-primary/10 text-primary"
             >
-              Em breve!
+              Em andamento
             </Badge>
+          ) : (
+            isImminent && (
+              <Badge
+                variant="default"
+                className="shrink-0 border-primary/20 bg-primary/10 text-primary"
+              >
+                Em breve!
+              </Badge>
+            )
           )}
         </div>
 
         {/* Countdown */}
-        {daysUntil >= 0 && (
+        {!isInProgress && daysUntil >= 0 && (
           <div className="flex items-baseline gap-2">
             <span className="text-5xl font-bold tabular-nums text-primary">{daysUntil}</span>
             <div className="text-sm text-muted-foreground">
@@ -83,11 +98,11 @@ export function NextTripSpotlight({ trip }: NextTripSpotlightProps) {
             </span>
           </div>
           {trip.memberCount > 0 && (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-row items-center gap-2">
               <Users className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-              <div className="flex -space-x-2">
+              <div className="flex flex-row -space-x-2">
                 {displayMembers.map((member) => (
-                  <Avatar key={member.id} className="h-6 w-6 border-2 border-background">
+                  <Avatar key={member.id} className="h-6 w-6 shrink-0 border-2 border-background">
                     <AvatarImage src={member.users.avatar_url || undefined} alt="" />
                     <AvatarFallback className="text-[10px]">
                       {member.users.name

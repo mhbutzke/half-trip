@@ -107,7 +107,7 @@ export function MobileNav() {
                 aria-hidden="true"
               />
               <span
-                className={cn('text-[9px] font-medium leading-tight', active && 'text-primary')}
+                className={cn('text-[11px] font-medium leading-tight', active && 'text-primary')}
               >
                 {item.name}
               </span>

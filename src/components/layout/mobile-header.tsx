@@ -91,7 +91,7 @@ export function MobileHeader({ user, onSignOut }: MobileHeaderProps) {
                 <ChevronLeft className="h-5 w-5" />
               </Link>
             ) : null}
-            <h1 className="truncate text-base font-semibold">{title}</h1>
+            <span className="truncate text-base font-semibold">{title}</span>
           </div>
 
           {/* Right: Actions */}

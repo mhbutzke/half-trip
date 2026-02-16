@@ -98,7 +98,9 @@ function LoginForm() {
   return (
     <Card>
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">Entrar</CardTitle>
+        <h1 className="text-2xl font-semibold leading-none" data-slot="card-title">
+          Entrar
+        </h1>
         <CardDescription>Entre com sua conta para acessar suas viagens</CardDescription>
       </CardHeader>
       <CardContent>
@@ -184,7 +186,7 @@ function LoginForm() {
       <CardFooter className="justify-center">
         <p className="text-sm text-muted-foreground">
           Ainda não tem conta?{' '}
-          <Link href={registerHref} className="font-medium text-primary hover:underline">
+          <Link href={registerHref} className="font-semibold text-primary hover:underline">
             Criar conta
           </Link>
         </p>

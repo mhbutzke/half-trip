@@ -41,7 +41,7 @@ async function ExpensesContent({ tripId }: { tripId: string }) {
   return (
     <div className="space-y-6">
       <ExpensesHeader tripId={tripId} tripName={trip.name} />
-      <FinancesTabBar tripId={tripId} />
+      <FinancesTabBar tripId={tripId} expensesCount={expenses.length} />
       <ExpensesList
         tripId={tripId}
         baseCurrency={trip.base_currency}

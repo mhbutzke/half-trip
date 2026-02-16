@@ -44,16 +44,18 @@ async function BalancePageContent({ tripId }: { tripId: string }) {
     notFound();
   }
 
+  const settlementsCount = summary.suggestedSettlements?.length ?? 0;
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Balanço</h1>
-        <div className="mt-1 flex items-center gap-2 text-muted-foreground">
+        <p className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
           <Scale className="h-4 w-4" aria-hidden="true" />
-          <span className="text-sm">Veja quem deve para quem e acerte as contas</span>
-        </div>
+          <span>Veja quem deve para quem e acerte as contas</span>
+        </p>
       </div>
-      <FinancesTabBar tripId={tripId} />
+      <FinancesTabBar tripId={tripId} settlementsCount={settlementsCount} />
       <BalanceContent
         summary={summary}
         trip={trip}

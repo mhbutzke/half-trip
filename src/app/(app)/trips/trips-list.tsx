@@ -4,11 +4,14 @@ import { useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import { isFuture, isPast } from 'date-fns';
 import { Archive, Search, X } from 'lucide-react';
 import { TripCard } from '@/components/trips/trip-card';
+import { TripsStats } from '@/components/trips/trips-stats';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { parseDateOnly } from '@/lib/utils/date-only';
 
 // Lazy load dialogs - only needed when user clicks actions
 const EditTripDialog = dynamic(() =>
@@ -221,8 +224,23 @@ export function TripsList({ emptyState }: TripsListProps) {
     </div>
   );
 
+  // Calculate statistics
+  const allTrips = [...trips, ...archivedTrips];
+  const totalTrips = allTrips.length;
+  const upcomingTrips = trips.filter((trip) => isFuture(parseDateOnly(trip.start_date))).length;
+  const completedTrips = allTrips.filter((trip) => isPast(parseDateOnly(trip.end_date))).length;
+  const totalDestinations = new Set(
+    allTrips.map((trip) => trip.destination?.trim().toLowerCase()).filter(Boolean)
+  ).size;
+
   return (
     <PullToRefresh onRefresh={loadTrips}>
+      <TripsStats
+        totalTrips={totalTrips}
+        upcomingTrips={upcomingTrips}
+        completedTrips={completedTrips}
+        totalDestinations={totalDestinations}
+      />
       {searchBar}
       {hasArchivedTrips ? (
         <Tabs defaultValue="active" className="w-full">

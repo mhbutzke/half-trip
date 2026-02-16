@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Bell,
   Check,
@@ -100,136 +101,149 @@ export function NotificationPanel({ onOpenSettings }: NotificationPanelProps) {
   };
 
   return (
-    <DropdownMenu open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
-          {unreadCount > 0 && (
-            <Badge
-              variant="destructive"
-              className="absolute -right-1 -top-1 h-5 min-w-[1.25rem] rounded-full px-1 text-xs"
-            >
-              {unreadCount > 9 ? '9+' : unreadCount}
-            </Badge>
-          )}
-          <span className="sr-only">Notificações</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80">
-        <DropdownMenuLabel className="flex items-center justify-between">
-          <span>Notificações</span>
-          {notifications.length > 0 && (
-            <div className="flex gap-1">
-              {unreadCount > 0 && (
+    <TooltipProvider>
+      <DropdownMenu open={open} onOpenChange={setOpen}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="relative h-11 w-11">
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <Badge
+                    variant="destructive"
+                    className="absolute -right-1 -top-1 h-5 min-w-[1.25rem] rounded-full px-1 text-xs"
+                  >
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </Badge>
+                )}
+                <span className="sr-only">Notificações</span>
+              </Button>
+            </DropdownMenuTrigger>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>
+              {unreadCount > 0
+                ? `${unreadCount} ${unreadCount === 1 ? 'notificação não lida' : 'notificações não lidas'}`
+                : 'Notificações'}
+            </p>
+          </TooltipContent>
+        </Tooltip>
+        <DropdownMenuContent align="end" className="w-80">
+          <DropdownMenuLabel className="flex items-center justify-between">
+            <span>Notificações</span>
+            {notifications.length > 0 && (
+              <div className="flex gap-1">
+                {unreadCount > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto p-1 text-xs"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      markAllAsRead();
+                    }}
+                  >
+                    <Check className="mr-1 h-3 w-3" />
+                    Marcar todas como lidas
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
                   className="h-auto p-1 text-xs"
                   onClick={(e) => {
                     e.preventDefault();
-                    markAllAsRead();
+                    clearAll();
                   }}
                 >
-                  <Check className="mr-1 h-3 w-3" />
-                  Marcar todas como lidas
+                  <Trash2 className="mr-1 h-3 w-3" />
+                  Limpar
                 </Button>
-              )}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-auto p-1 text-xs"
-                onClick={(e) => {
-                  e.preventDefault();
-                  clearAll();
-                }}
-              >
-                <Trash2 className="mr-1 h-3 w-3" />
-                Limpar
-              </Button>
-            </div>
-          )}
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {notifications.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 text-center">
-            <Bell className="mb-2 h-12 w-12 text-muted-foreground/50" />
-            <p className="text-sm text-muted-foreground">Nenhuma notificação</p>
-          </div>
-        ) : (
-          <>
-            <ScrollArea className="max-h-[400px]">
-              {notifications.map((notification) => {
-                const Icon = getNotificationIcon(notification.type);
-                return (
-                  <DropdownMenuItem
-                    key={notification.id}
-                    className={cn(
-                      'flex cursor-pointer flex-col items-start gap-2 p-3',
-                      !notification.read && 'bg-primary/5'
-                    )}
-                    onClick={() => handleNotificationClick(notification)}
-                  >
-                    <div className="flex w-full items-start gap-3">
-                      <div
-                        className={cn(
-                          'rounded-full p-2',
-                          !notification.read
-                            ? 'bg-primary/10 text-primary'
-                            : 'bg-muted text-muted-foreground'
-                        )}
-                      >
-                        <Icon className="h-4 w-4" />
-                      </div>
-                      <div className="flex-1 space-y-1">
-                        <div className="flex items-start justify-between gap-2">
-                          <p
-                            className={cn(
-                              'text-sm font-medium leading-tight',
-                              !notification.read && 'text-foreground'
-                            )}
-                          >
-                            {notification.title}
-                          </p>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-auto p-0 hover:bg-transparent"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              removeNotification(notification.id);
-                            }}
-                          >
-                            <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
-                          </Button>
-                        </div>
-                        <p className="text-xs text-muted-foreground">{notification.message}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(notification.createdAt), {
-                            addSuffix: true,
-                            locale: ptBR,
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                  </DropdownMenuItem>
-                );
-              })}
-            </ScrollArea>
-            {onOpenSettings && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={onOpenSettings}
-                  className="cursor-pointer justify-center"
-                >
-                  <Settings className="mr-2 h-4 w-4" />
-                  Configurações de notificações
-                </DropdownMenuItem>
-              </>
+              </div>
             )}
-          </>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {notifications.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <Bell className="mb-2 h-12 w-12 text-muted-foreground/50" />
+              <p className="text-sm text-muted-foreground">Nenhuma notificação</p>
+            </div>
+          ) : (
+            <>
+              <ScrollArea className="max-h-[400px]">
+                {notifications.map((notification) => {
+                  const Icon = getNotificationIcon(notification.type);
+                  return (
+                    <DropdownMenuItem
+                      key={notification.id}
+                      className={cn(
+                        'flex cursor-pointer flex-col items-start gap-2 p-3',
+                        !notification.read && 'bg-primary/5'
+                      )}
+                      onClick={() => handleNotificationClick(notification)}
+                    >
+                      <div className="flex w-full items-start gap-3">
+                        <div
+                          className={cn(
+                            'rounded-full p-2',
+                            !notification.read
+                              ? 'bg-primary/10 text-primary'
+                              : 'bg-muted text-muted-foreground'
+                          )}
+                        >
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        <div className="flex-1 space-y-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <p
+                              className={cn(
+                                'text-sm font-medium leading-tight',
+                                !notification.read && 'text-foreground'
+                              )}
+                            >
+                              {notification.title}
+                            </p>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-auto p-0 hover:bg-transparent"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeNotification(notification.id);
+                              }}
+                            >
+                              <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
+                            </Button>
+                          </div>
+                          <p className="text-xs text-muted-foreground">{notification.message}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatDistanceToNow(new Date(notification.createdAt), {
+                              addSuffix: true,
+                              locale: ptBR,
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                    </DropdownMenuItem>
+                  );
+                })}
+              </ScrollArea>
+              {onOpenSettings && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={onOpenSettings}
+                    className="cursor-pointer justify-center"
+                  >
+                    <Settings className="mr-2 h-4 w-4" />
+                    Configurações de notificações
+                  </DropdownMenuItem>
+                </>
+              )}
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </TooltipProvider>
   );
 }

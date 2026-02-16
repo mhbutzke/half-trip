@@ -7,6 +7,8 @@ import { routes } from '@/lib/routes';
 
 interface FinancesTabBarProps {
   tripId: string;
+  expensesCount?: number;
+  settlementsCount?: number;
 }
 
 const tabs = [
@@ -15,7 +17,7 @@ const tabs = [
   { label: 'Orçamento', key: 'budget' as const },
 ];
 
-export function FinancesTabBar({ tripId }: FinancesTabBarProps) {
+export function FinancesTabBar({ tripId, expensesCount, settlementsCount }: FinancesTabBarProps) {
   const pathname = usePathname();
 
   const activeIndex = tabs.findIndex((tab) => {
@@ -40,16 +42,35 @@ export function FinancesTabBar({ tripId }: FinancesTabBarProps) {
           const href = routes.trip[tab.key](tripId);
           const isActive = pathname.startsWith(href);
 
+          const count =
+            tab.key === 'expenses'
+              ? expensesCount
+              : tab.key === 'balance'
+                ? settlementsCount
+                : undefined;
+
           return (
             <Link
               key={tab.key}
               href={href}
               className={cn(
-                'relative z-10 flex h-8 flex-1 items-center justify-center text-center text-sm transition-colors',
+                'relative z-10 flex h-8 flex-1 items-center justify-center gap-1.5 text-center text-sm transition-colors',
                 isActive ? 'font-semibold text-foreground' : 'text-muted-foreground'
               )}
             >
-              {tab.label}
+              <span>{tab.label}</span>
+              {count !== undefined && (
+                <span
+                  className={cn(
+                    'rounded-full px-1.5 py-0.5 text-xs font-medium',
+                    isActive
+                      ? 'bg-primary/10 text-primary'
+                      : 'bg-muted-foreground/10 text-muted-foreground'
+                  )}
+                >
+                  {count}
+                </span>
+              )}
             </Link>
           );
         })}

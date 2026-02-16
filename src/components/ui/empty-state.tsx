@@ -24,40 +24,47 @@ export function EmptyState({
   action,
   illustration,
   tips,
-  tipTitle = 'Dica',
+  tipTitle = 'Dicas úteis',
   className,
 }: EmptyStateProps) {
   return (
     <div
-      className={cn('flex flex-col items-center justify-center py-12 px-4 text-center', className)}
+      className={cn('flex flex-col items-center justify-center py-16 px-4 text-center', className)}
     >
       {illustration ? (
-        <div className="mb-4 flex size-20 items-center justify-center">{illustration}</div>
+        <div className="mb-6 flex size-32 items-center justify-center">{illustration}</div>
       ) : (
-        <div className="mb-4 rounded-full bg-muted p-6">
-          <Icon className="size-8 text-muted-foreground" />
+        <div className="mb-6 rounded-full bg-muted p-8">
+          <Icon className="size-12 text-muted-foreground" aria-hidden="true" />
         </div>
       )}
-      <h3 className="mb-2 text-lg font-semibold">{title}</h3>
-      {description && <p className="mb-6 max-w-sm text-sm text-muted-foreground">{description}</p>}
+      <h2 className="mb-3 text-2xl font-bold tracking-tight">{title}</h2>
+      {description && (
+        <p className="mb-8 max-w-md text-base text-muted-foreground leading-relaxed">
+          {description}
+        </p>
+      )}
       {action && (
-        <Button onClick={action.onClick} size="lg">
+        <Button onClick={action.onClick} size="lg" className="mb-8">
           {action.label}
         </Button>
       )}
       {tips && tips.length > 0 && (
-        <div className="mt-6 w-full max-w-sm rounded-lg border border-border/50 bg-muted/30 p-4 text-left">
-          <div className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
-            <Lightbulb className="size-4" aria-hidden="true" />
+        <div className="mt-4 w-full max-w-lg">
+          <div className="mb-3 flex items-center justify-center gap-2 text-sm font-semibold text-foreground">
+            <Lightbulb className="size-4 text-primary" aria-hidden="true" />
             {tipTitle}
           </div>
-          <ul className="space-y-1">
-            {tips.map((tip) => (
-              <li key={tip} className="text-xs text-muted-foreground/80">
-                {tip}
-              </li>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {tips.map((tip, index) => (
+              <div
+                key={index}
+                className="rounded-lg border bg-card p-4 text-left shadow-sm transition-colors hover:bg-accent"
+              >
+                <p className="text-sm text-foreground">{tip}</p>
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
       )}
     </div>

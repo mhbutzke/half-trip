@@ -53,7 +53,7 @@ export default async function ItineraryPage({ params }: ItineraryPageProps) {
   const { id } = await params;
 
   return (
-    <PageContainer>
+    <PageContainer bottomNav>
       <Suspense fallback={<ItinerarySkeleton />}>
         <ItineraryContent tripId={id} />
       </Suspense>

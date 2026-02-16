@@ -3,7 +3,7 @@ import { ItinerarySkeleton } from './itinerary-skeleton';
 
 export default function ItineraryLoading() {
   return (
-    <PageContainer>
+    <PageContainer bottomNav>
       <ItinerarySkeleton />
     </PageContainer>
   );

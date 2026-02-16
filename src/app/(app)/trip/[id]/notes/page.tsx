@@ -45,7 +45,7 @@ export default async function NotesPage({ params }: NotesPageProps) {
   const { id } = await params;
 
   return (
-    <PageContainer>
+    <PageContainer bottomNav>
       <Suspense fallback={<NotesSkeleton />}>
         <NotesContent tripId={id} />
       </Suspense>

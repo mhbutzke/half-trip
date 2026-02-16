@@ -18,7 +18,7 @@ export default async function BalancePage({ params }: BalancePageProps) {
   const { id } = await params;
 
   return (
-    <PageContainer className="pt-2 md:pt-6">
+    <PageContainer bottomNav className="pt-2 md:pt-6">
       <Suspense fallback={<BalanceSkeleton />}>
         <BalancePageContent tripId={id} />
       </Suspense>

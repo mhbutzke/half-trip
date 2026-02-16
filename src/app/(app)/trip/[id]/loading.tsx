@@ -4,7 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function TripLoading() {
   return (
-    <PageContainer>
+    <PageContainer bottomNav>
       <div className="space-y-6">
         {/* Back link and status */}
         <div className="flex items-center justify-between">

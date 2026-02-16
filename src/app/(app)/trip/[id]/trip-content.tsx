@@ -130,7 +130,7 @@ export function TripContent({
 
   if (!trip) {
     return (
-      <PageContainer>
+      <PageContainer bottomNav>
         <div className="flex min-h-[400px] items-center justify-center">
           <div className="text-center">
             <p className="text-muted-foreground">
@@ -143,7 +143,7 @@ export function TripContent({
   }
 
   return (
-    <PageContainer>
+    <PageContainer bottomNav>
       <div className="space-y-6 animate-in fade-in duration-200">
         <TripHeader
           trip={trip}

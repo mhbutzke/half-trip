@@ -70,7 +70,7 @@ export default async function ChecklistsPage({ params }: ChecklistsPageProps) {
   const { id } = await params;
 
   return (
-    <PageContainer>
+    <PageContainer bottomNav>
       <Suspense fallback={<ChecklistsLoading />}>
         <ChecklistsPageContent tripId={id} />
       </Suspense>

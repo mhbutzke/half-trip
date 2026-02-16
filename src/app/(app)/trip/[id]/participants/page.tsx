@@ -79,7 +79,7 @@ export default async function ParticipantsPage({ params }: ParticipantsPageProps
   const { id } = await params;
 
   return (
-    <PageContainer>
+    <PageContainer bottomNav>
       <Suspense fallback={<ParticipantsSkeleton />}>
         <ParticipantsContent tripId={id} />
       </Suspense>

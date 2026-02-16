@@ -3,7 +3,7 @@ import { ExpensesSkeleton } from './expenses-skeleton';
 
 export default function Loading() {
   return (
-    <PageContainer>
+    <PageContainer bottomNav>
       <ExpensesSkeleton />
     </PageContainer>
   );

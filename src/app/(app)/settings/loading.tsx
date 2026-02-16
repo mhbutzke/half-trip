@@ -4,7 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function SettingsLoading() {
   return (
-    <PageContainer maxWidth="2xl">
+    <PageContainer bottomNav maxWidth="2xl">
       <div className="space-y-6">
         <Skeleton className="h-8 w-48" />
 

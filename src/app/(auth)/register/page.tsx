@@ -272,15 +272,15 @@ function RegisterForm() {
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                        className="absolute right-0 top-0 h-full min-w-[44px] px-3 hover:bg-transparent"
                         onClick={() => setShowPassword(!showPassword)}
                         aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
                         tabIndex={-1}
                       >
                         {showPassword ? (
-                          <EyeOff className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                          <EyeOff className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
                         ) : (
-                          <Eye className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                          <Eye className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
                         )}
                       </Button>
                     </div>
@@ -309,15 +309,19 @@ function RegisterForm() {
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                        className="absolute right-0 top-0 h-full min-w-[44px] px-3 hover:bg-transparent"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        aria-label={showConfirmPassword ? 'Ocultar confirmação de senha' : 'Mostrar confirmação de senha'}
+                        aria-label={
+                          showConfirmPassword
+                            ? 'Ocultar confirmação de senha'
+                            : 'Mostrar confirmação de senha'
+                        }
                         tabIndex={-1}
                       >
                         {showConfirmPassword ? (
-                          <EyeOff className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                          <EyeOff className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
                         ) : (
-                          <Eye className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                          <Eye className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
                         )}
                       </Button>
                     </div>
@@ -336,7 +340,10 @@ function RegisterForm() {
       <CardFooter className="justify-center">
         <p className="text-sm text-muted-foreground">
           Já tem uma conta?{' '}
-          <Link href={loginHref} className="font-medium text-primary hover:underline">
+          <Link
+            href={loginHref}
+            className="font-medium text-primary underline underline-offset-4 hover:text-primary/80"
+          >
             Entrar
           </Link>
         </p>

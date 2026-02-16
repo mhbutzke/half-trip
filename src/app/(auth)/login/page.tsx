@@ -159,15 +159,15 @@ function LoginForm() {
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                        className="absolute right-0 top-0 h-full min-w-[44px] px-3 hover:bg-transparent"
                         onClick={() => setShowPassword(!showPassword)}
                         aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
                         tabIndex={-1}
                       >
                         {showPassword ? (
-                          <EyeOff className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                          <EyeOff className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
                         ) : (
-                          <Eye className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                          <Eye className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
                         )}
                       </Button>
                     </div>
@@ -186,7 +186,10 @@ function LoginForm() {
       <CardFooter className="justify-center">
         <p className="text-sm text-muted-foreground">
           Ainda não tem conta?{' '}
-          <Link href={registerHref} className="font-semibold text-primary hover:underline">
+          <Link
+            href={registerHref}
+            className="font-semibold text-primary underline underline-offset-4 hover:text-primary/80"
+          >
             Criar conta
           </Link>
         </p>

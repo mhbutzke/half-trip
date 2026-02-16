@@ -203,8 +203,14 @@ export function TripOverview({
     }
   };
 
+  const primarySurfaceClass =
+    'border-border/70 bg-gradient-to-b from-card to-card/95 shadow-sm shadow-primary/5';
+  const secondarySurfaceClass =
+    'border-border/60 bg-gradient-to-b from-background to-background/95 shadow-sm';
+  const tertiarySurfaceClass = 'border-border/50 bg-background';
+
   const readinessCard = readiness ? (
-    <Card className="border-border/70 bg-gradient-to-b from-card to-card/95 shadow-sm shadow-primary/5">
+    <Card className={primarySurfaceClass}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -367,7 +373,7 @@ export function TripOverview({
         {isPreTrip ? readinessCard : null}
 
         {/* Progresso da viagem (timezone do usuário) */}
-        <Card className="border-border/70 bg-gradient-to-b from-card to-card/95 shadow-sm shadow-primary/5">
+        <Card className={secondarySurfaceClass}>
           <CardContent className="p-4">
             <div className="space-y-3">
               {/* Trip Days Progress */}
@@ -399,7 +405,7 @@ export function TripOverview({
         </Card>
 
         {/* Mais (colapsável) */}
-        <Card className="border-border/70 bg-gradient-to-b from-card to-card/95 shadow-sm shadow-primary/5">
+        <Card className={tertiarySurfaceClass}>
           <button
             type="button"
             className="w-full text-left"
@@ -445,7 +451,7 @@ export function TripOverview({
                     ))}
                   </div>
                 ) : (
-                  <div className="rounded-lg border border-dashed border-border/70 bg-muted/15 p-4 text-sm text-muted-foreground">
+                  <div className="rounded-lg border border-dashed border-border/70 bg-muted/15 p-4 text-sm text-foreground/65">
                     Nenhuma votação ainda.
                   </div>
                 )}
@@ -495,7 +501,7 @@ export function TripOverview({
         </Card>
 
         {/* Finanças (colapsável) */}
-        <Card className="border-border/70 bg-gradient-to-b from-card to-card/95 shadow-sm shadow-primary/5">
+        <Card className={secondarySurfaceClass}>
           <button
             type="button"
             className="w-full text-left"
@@ -524,7 +530,7 @@ export function TripOverview({
 
               {/* Pendências */}
               {dashboard && dashboard.pendingSettlements.count > 0 ? (
-                <div className="rounded-lg border bg-muted/20 p-3">
+                <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
                   <div className="flex items-center gap-3">
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-destructive/10">
                       <DollarSign className="h-4 w-4 text-destructive" aria-hidden="true" />
@@ -559,7 +565,7 @@ export function TripOverview({
 
               {/* Orçamento */}
               {budgetPercentage != null && dashboard?.budgetTotal ? (
-                <div className="rounded-lg border bg-muted/20 p-3">
+                <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
                   <div className="mb-1.5 flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Orçamento</span>
                     <span className="font-medium">{budgetPercentage}% utilizado</span>

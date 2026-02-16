@@ -31,7 +31,7 @@ export function PageContainer({
         'mx-auto w-full overflow-x-hidden',
         maxWidthClasses[maxWidth],
         padding && 'px-4 py-6 sm:px-6 lg:px-8',
-        bottomNav && 'pb-24 md:pb-6',
+        bottomNav && 'md:pb-6',
         className
       )}
     >

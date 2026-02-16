@@ -14,6 +14,7 @@ export interface EmptyStateProps {
   illustration?: ReactNode;
   tips?: string[];
   tipTitle?: string;
+  mobileBottomNavSafe?: boolean;
   className?: string;
 }
 
@@ -25,11 +26,16 @@ export function EmptyState({
   illustration,
   tips,
   tipTitle = 'Dicas úteis',
+  mobileBottomNavSafe = false,
   className,
 }: EmptyStateProps) {
   return (
     <div
-      className={cn('flex flex-col items-center justify-center py-16 px-4 text-center', className)}
+      className={cn(
+        'flex flex-col items-center justify-center px-4 py-10 text-center sm:py-14 md:py-16',
+        mobileBottomNavSafe && 'pb-[calc(7rem+env(safe-area-inset-bottom))] sm:pb-14 md:pb-16',
+        className
+      )}
     >
       {illustration ? (
         <div className="mb-6 flex size-32 items-center justify-center">{illustration}</div>
@@ -40,9 +46,7 @@ export function EmptyState({
       )}
       <h2 className="mb-3 text-2xl font-bold tracking-tight">{title}</h2>
       {description && (
-        <p className="mb-8 max-w-md text-base text-muted-foreground leading-relaxed">
-          {description}
-        </p>
+        <p className="mb-8 max-w-md text-base leading-relaxed text-foreground/70">{description}</p>
       )}
       {action && (
         <Button onClick={action.onClick} size="lg" className="mb-8">

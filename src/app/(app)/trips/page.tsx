@@ -78,6 +78,7 @@ function TripsEmptyState() {
         icon={Plane}
         title="Nenhuma viagem ainda"
         description="Crie sua primeira viagem para começar a planejar com seu grupo e dividir despesas de forma justa"
+        mobileBottomNavSafe
         illustration={<EmptyTripsIllustration className="size-20" />}
         action={{
           label: 'Criar primeira viagem',
@@ -99,8 +100,10 @@ export default function TripsPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between rounded-xl border border-border/70 bg-gradient-to-r from-primary/5 via-background to-background p-4 shadow-sm shadow-primary/5">
           <div className="space-y-1">
-            <h1 className="text-2xl font-bold tracking-tight">Minhas Viagens</h1>
-            <p className="text-sm text-muted-foreground">
+            <h1 className="sr-only text-2xl font-bold tracking-tight md:not-sr-only">
+              Minhas Viagens
+            </h1>
+            <p className="text-sm text-foreground/70">
               Organize seu grupo e acompanhe cada etapa da viagem.
             </p>
           </div>

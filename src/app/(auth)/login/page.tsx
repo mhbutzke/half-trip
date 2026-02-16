@@ -94,7 +94,7 @@ function LoginForm() {
         <h1 className="text-2xl font-semibold leading-none" data-slot="card-title">
           Entrar
         </h1>
-        <CardDescription className="mx-auto max-w-[28ch] text-sm leading-relaxed">
+        <CardDescription className="mx-auto max-w-[28ch] text-sm leading-relaxed text-foreground/70">
           Entre com sua conta para acessar suas viagens
         </CardDescription>
       </CardHeader>
@@ -185,7 +185,7 @@ function LoginForm() {
         </Form>
       </CardContent>
       <CardFooter className="justify-center border-t border-border/60 pt-5">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-foreground/70">
           Ainda não tem conta?{' '}
           <Link
             href={registerHref}

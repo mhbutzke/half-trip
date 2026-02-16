@@ -8,8 +8,9 @@ export default function manifest(): MetadataRoute.Manifest {
       'Planeje viagens em grupo, compartilhe roteiros e divida despesas de forma justa. Tudo em um só lugar.',
     start_url: '/',
     display: 'standalone',
-    background_color: '#0f172a',
-    theme_color: '#14b8a6',
+    // Brand colors (see brand manual)
+    background_color: '#F8FAFC', // Ice White
+    theme_color: '#1E293B', // Deep Blue
     orientation: 'portrait-primary',
     categories: ['travel', 'finance', 'productivity'],
     icons: [

@@ -39,9 +39,7 @@ export default function Home() {
           <section className="flex flex-1 flex-col items-center justify-center py-12 text-center md:py-24">
             <h1 className="max-w-3xl text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl">
               Planeje junto.{' '}
-              <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                Divida justo.
-              </span>
+              <span className="text-[color:var(--brand-sunset-coral)]">Divida justo.</span>
             </h1>
             <p className="mt-6 max-w-xl text-lg text-muted-foreground md:text-xl">
               Viajar em grupo é incrível — organizar, nem tanto. O Half Trip resolve isso reunindo

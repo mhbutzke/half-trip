@@ -52,7 +52,7 @@ export function TripSummaryCard({ data, onShare, onExport, className }: TripSumm
 
   return (
     <Card className={cn('overflow-hidden', className)}>
-      <CardHeader className="bg-gradient-to-br from-primary/10 via-primary/5 to-background">
+      <CardHeader className="bg-accent">
         <div className="flex items-start justify-between">
           <div>
             <CardTitle className="text-2xl">{trip.name}</CardTitle>

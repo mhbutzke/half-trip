@@ -24,7 +24,8 @@ async function generateIcons() {
     await sharp(inputFile)
       .resize(size, size, {
         fit: 'contain',
-        background: { r: 20, g: 184, b: 166, alpha: 1 }, // #14b8a6
+        // Brand: Deep Blue background (#1E293B)
+        background: { r: 30, g: 41, b: 59, alpha: 1 },
       })
       .png()
       .toFile(outputFile);
@@ -37,7 +38,7 @@ async function generateIcons() {
   await sharp(inputFile)
     .resize(180, 180, {
       fit: 'contain',
-      background: { r: 20, g: 184, b: 166, alpha: 1 },
+      background: { r: 30, g: 41, b: 59, alpha: 1 },
     })
     .png()
     .toFile(appleTouchIcon);
@@ -49,7 +50,7 @@ async function generateIcons() {
   await sharp(inputFile)
     .resize(32, 32, {
       fit: 'contain',
-      background: { r: 20, g: 184, b: 166, alpha: 1 },
+      background: { r: 30, g: 41, b: 59, alpha: 1 },
     })
     .png()
     .toFile(favicon);

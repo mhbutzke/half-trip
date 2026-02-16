@@ -123,7 +123,7 @@ export const TripCard = memo(function TripCard({
       {trip.cover_url && (
         <div className="relative h-32 w-full">
           <Image src={trip.cover_url} alt="" fill className="object-cover" unoptimized />
-          <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
+          <div className="absolute inset-0 bg-background/55" />
         </div>
       )}
 

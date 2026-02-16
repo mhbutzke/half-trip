@@ -75,10 +75,10 @@ export function TripRecapCard({ recap }: TripRecapCardProps) {
         ref={cardRef}
         className="overflow-hidden rounded-2xl"
         style={{
-          background: 'linear-gradient(135deg, #0d9488 0%, #065f46 50%, #1e3a5f 100%)',
+          background: '#1E293B',
           padding: '32px',
           color: '#ffffff',
-          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
           width: '360px',
         }}
       >

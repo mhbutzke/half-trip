@@ -64,13 +64,13 @@ export function getMapBounds(
 }
 
 const DAY_COLORS = [
-  '#0d9488', // teal-600
+  '#00C2CB', // Brand: Ocean Cyan
+  '#FF8A65', // Brand: Sunset Coral
+  '#1E293B', // Brand: Deep Blue
+  '#64748B', // Brand: Concrete Gray
   '#4f46e5', // indigo-600
-  '#d97706', // amber-600
-  '#e11d48', // rose-600
   '#059669', // emerald-600
   '#7c3aed', // violet-600
-  '#ea580c', // orange-600
   '#0284c7', // sky-600
 ];
 

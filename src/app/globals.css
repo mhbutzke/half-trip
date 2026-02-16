@@ -6,16 +6,19 @@
 /*
  * Half Trip Theme
  * Brand values: Simple, Fair, Collaborative, Travel-focused
- * Primary: Teal/cyan - evokes travel, trust, and clarity
- * Secondary: Warm amber - collaborative, friendly, inviting
- * Success: Green - fairness in expense splitting
+ * Visual system: divided compass (precision, balance, direction)
+ * Colors (brand manual): Deep Blue, Ocean Cyan, Sunset Coral, Concrete Gray, Ice White
  */
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Typography (brand manual) */
+  --font-sans: var(--font-inter);
+  --font-brand: var(--font-plus-jakarta);
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -67,28 +70,37 @@
 
 :root {
   --radius: 0.625rem;
-  /* Base colors - clean, simple whites and grays */
-  --background: oklch(0.995 0 0);
-  --foreground: oklch(0.141 0.005 285.823);
+  /* Brand manual (Premium v2) */
+  --brand-deep-blue: #1e293b;
+  --brand-ocean-cyan: #00c2cb;
+  --brand-sunset-coral: #ff8a65;
+  --brand-concrete-gray: #64748b;
+  --brand-ice-white: #f8fafc;
+
+  /* Base colors */
+  --background: var(--brand-ice-white);
+  --foreground: var(--brand-deep-blue);
   /* Cards - subtle warmth for collaboration feel */
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.141 0.005 285.823);
+  --card: #ffffff;
+  --card-foreground: var(--brand-deep-blue);
   /* Popover */
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.141 0.005 285.823);
-  /* Primary - Teal/Cyan for travel, trust, and exploration */
-  --primary: oklch(0.55 0.15 195);
-  --primary-foreground: oklch(0.99 0 0);
-  /* Secondary - Warm amber for collaboration */
-  --secondary: oklch(0.96 0.02 85);
-  --secondary-foreground: oklch(0.35 0.05 60);
-  /* Muted - Soft gray with slight warmth */
-  --muted: oklch(0.965 0.005 285);
-  /* Improved contrast: changed from 0.5 to 0.45 for WCAG AA compliance (4.5:1) */
-  --muted-foreground: oklch(0.45 0.01 285);
-  /* Accent - Lighter teal for hover states */
-  --accent: oklch(0.94 0.04 195);
-  --accent-foreground: oklch(0.35 0.1 195);
+  --popover: #ffffff;
+  --popover-foreground: var(--brand-deep-blue);
+
+  /*
+   * Theme mapping
+   * - Primary actions: Ocean Cyan
+   * - Structural/typography: Deep Blue / Concrete Gray
+   * - Highlights: Sunset Coral
+   */
+  --primary: var(--brand-ocean-cyan);
+  --primary-foreground: var(--brand-deep-blue);
+  --secondary: color-mix(in oklab, var(--brand-deep-blue) 7%, var(--brand-ice-white));
+  --secondary-foreground: var(--brand-deep-blue);
+  --muted: color-mix(in oklab, var(--brand-deep-blue) 6%, var(--brand-ice-white));
+  --muted-foreground: var(--brand-concrete-gray);
+  --accent: color-mix(in oklab, var(--brand-ocean-cyan) 12%, var(--brand-ice-white));
+  --accent-foreground: var(--brand-deep-blue);
   /* Destructive - Red for errors/delete */
   --destructive: oklch(0.577 0.245 27.325);
   /* Success - Green for fairness, balanced splits */
@@ -101,49 +113,48 @@
   --positive: oklch(0.6 0.15 145);
   --negative: oklch(0.6 0.2 25);
   /* Borders and inputs */
-  --border: oklch(0.9 0.005 285);
-  --input: oklch(0.9 0.005 285);
-  --ring: oklch(0.55 0.15 195);
+  --border: color-mix(in oklab, var(--brand-deep-blue) 12%, var(--brand-ice-white));
+  --input: color-mix(in oklab, var(--brand-deep-blue) 12%, var(--brand-ice-white));
+  --ring: var(--brand-ocean-cyan);
   /* Charts - diverse colors for expense categories */
-  --chart-1: oklch(0.55 0.15 195); /* Teal - primary */
-  --chart-2: oklch(0.65 0.15 145); /* Green - success */
-  --chart-3: oklch(0.7 0.15 75); /* Amber - warm */
-  --chart-4: oklch(0.6 0.18 280); /* Purple - accent */
-  --chart-5: oklch(0.65 0.15 25); /* Coral - warm */
+  --chart-1: var(--brand-ocean-cyan);
+  --chart-2: var(--brand-deep-blue);
+  --chart-3: var(--brand-sunset-coral);
+  --chart-4: var(--brand-concrete-gray);
+  --chart-5: oklch(0.65 0.15 145); /* Green - keep for semantic success */
   /* Sidebar */
-  --sidebar: oklch(0.985 0.005 285);
-  --sidebar-foreground: oklch(0.141 0.005 285.823);
-  --sidebar-primary: oklch(0.55 0.15 195);
-  --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.94 0.04 195);
-  --sidebar-accent-foreground: oklch(0.35 0.1 195);
-  --sidebar-border: oklch(0.9 0.005 285);
-  --sidebar-ring: oklch(0.55 0.15 195);
+  --sidebar: color-mix(in oklab, var(--brand-deep-blue) 2%, var(--brand-ice-white));
+  --sidebar-foreground: var(--brand-deep-blue);
+  --sidebar-primary: var(--brand-ocean-cyan);
+  --sidebar-primary-foreground: var(--brand-deep-blue);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--brand-deep-blue);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--brand-ocean-cyan);
 }
 
 .dark {
   /* Base colors - dark mode */
-  --background: oklch(0.13 0.01 285);
-  --foreground: oklch(0.96 0.005 285);
+  --background: #0b1220;
+  --foreground: var(--brand-ice-white);
   /* Cards */
-  --card: oklch(0.17 0.01 285);
-  --card-foreground: oklch(0.96 0.005 285);
+  --card: color-mix(in oklab, var(--brand-deep-blue) 88%, #000000);
+  --card-foreground: var(--brand-ice-white);
   /* Popover */
-  --popover: oklch(0.17 0.01 285);
-  --popover-foreground: oklch(0.96 0.005 285);
-  /* Primary - Brighter teal in dark mode */
-  --primary: oklch(0.7 0.15 195);
-  --primary-foreground: oklch(0.13 0.01 285);
+  --popover: var(--card);
+  --popover-foreground: var(--brand-ice-white);
+
+  --primary: var(--brand-ocean-cyan);
+  --primary-foreground: var(--brand-deep-blue);
   /* Secondary */
-  --secondary: oklch(0.25 0.02 85);
-  --secondary-foreground: oklch(0.9 0.02 85);
+  --secondary: color-mix(in oklab, var(--brand-ice-white) 10%, var(--background));
+  --secondary-foreground: var(--brand-ice-white);
   /* Muted */
-  --muted: oklch(0.22 0.01 285);
-  /* Improved contrast: changed from 0.65 to 0.68 for better readability in dark mode */
-  --muted-foreground: oklch(0.68 0.01 285);
+  --muted: color-mix(in oklab, var(--brand-ice-white) 8%, var(--background));
+  --muted-foreground: color-mix(in oklab, var(--brand-concrete-gray) 85%, var(--brand-ice-white));
   /* Accent */
-  --accent: oklch(0.25 0.05 195);
-  --accent-foreground: oklch(0.85 0.08 195);
+  --accent: color-mix(in oklab, var(--brand-ocean-cyan) 18%, var(--background));
+  --accent-foreground: var(--brand-ice-white);
   /* Destructive */
   --destructive: oklch(0.704 0.191 22.216);
   /* Success */
@@ -156,24 +167,24 @@
   --positive: oklch(0.7 0.15 145);
   --negative: oklch(0.7 0.2 25);
   /* Borders and inputs */
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.7 0.15 195);
+  --border: color-mix(in oklab, var(--brand-ice-white) 12%, transparent);
+  --input: color-mix(in oklab, var(--brand-ice-white) 16%, transparent);
+  --ring: var(--brand-ocean-cyan);
   /* Charts */
-  --chart-1: oklch(0.65 0.15 195);
-  --chart-2: oklch(0.7 0.15 145);
-  --chart-3: oklch(0.75 0.15 75);
-  --chart-4: oklch(0.65 0.18 280);
-  --chart-5: oklch(0.7 0.15 25);
+  --chart-1: var(--brand-ocean-cyan);
+  --chart-2: var(--brand-ice-white);
+  --chart-3: var(--brand-sunset-coral);
+  --chart-4: var(--brand-concrete-gray);
+  --chart-5: oklch(0.7 0.15 145);
   /* Sidebar */
-  --sidebar: oklch(0.17 0.01 285);
-  --sidebar-foreground: oklch(0.96 0.005 285);
-  --sidebar-primary: oklch(0.7 0.15 195);
-  --sidebar-primary-foreground: oklch(0.13 0.01 285);
-  --sidebar-accent: oklch(0.25 0.05 195);
-  --sidebar-accent-foreground: oklch(0.85 0.08 195);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.7 0.15 195);
+  --sidebar: color-mix(in oklab, var(--brand-deep-blue) 92%, #000000);
+  --sidebar-foreground: var(--brand-ice-white);
+  --sidebar-primary: var(--brand-ocean-cyan);
+  --sidebar-primary-foreground: var(--brand-deep-blue);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--brand-ice-white);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--brand-ocean-cyan);
 }
 
 @layer base {
@@ -182,6 +193,15 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-brand);
+    letter-spacing: -0.01em;
   }
 }
 

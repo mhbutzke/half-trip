@@ -22,6 +22,8 @@ export function GoogleMapsProvider({ children }: { children: React.ReactNode }) 
     googleMapsApiKey: apiKey || '',
     libraries: LIBRARIES,
     preventGoogleFontsLoading: true,
+    language: 'pt-BR',
+    region: 'BR',
   });
 
   return (

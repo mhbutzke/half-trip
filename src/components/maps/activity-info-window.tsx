@@ -45,7 +45,7 @@ export function ActivityInfoWindow({
         <button
           type="button"
           onClick={onViewDetails}
-          className="mt-2 w-full rounded-md bg-teal-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-teal-700"
+          className="mt-2 w-full rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
         >
           Ver detalhes
         </button>

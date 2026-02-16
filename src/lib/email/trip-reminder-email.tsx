@@ -150,7 +150,7 @@ function formatBrl(value: number, currency: string): string {
 }
 
 const main = {
-  backgroundColor: '#f6f9fc',
+  backgroundColor: '#F8FAFC',
   fontFamily:
     '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Ubuntu, sans-serif',
 };
@@ -166,7 +166,7 @@ const container = {
 const logoSection = { padding: '24px 40px' };
 
 const logoText = {
-  color: '#0d9488',
+  color: '#1E293B',
   fontSize: '28px',
   fontWeight: '700',
   margin: '0',
@@ -206,15 +206,15 @@ const listItem = {
 };
 
 const tripCard = {
-  backgroundColor: '#f0fdfa',
+  backgroundColor: '#ffffff',
   borderRadius: '8px',
-  border: '1px solid #99f6e4',
+  border: '1px solid #e2e8f0',
   padding: '20px',
   margin: '24px 0',
 };
 
 const tripNameStyle = {
-  color: '#0f766e',
+  color: '#1E293B',
   fontSize: '20px',
   fontWeight: '600',
   margin: '0 0 12px',
@@ -230,9 +230,9 @@ const tripDetail = {
 const buttonSection = { textAlign: 'center' as const, margin: '32px 0' };
 
 const button = {
-  backgroundColor: '#0d9488',
+  backgroundColor: '#00C2CB',
   borderRadius: '6px',
-  color: '#ffffff',
+  color: '#1E293B',
   fontSize: '16px',
   fontWeight: '600',
   textDecoration: 'none',
@@ -260,4 +260,4 @@ const footerText = {
   textAlign: 'center' as const,
 };
 
-const link = { color: '#0d9488', textDecoration: 'underline' };
+const link = { color: '#00C2CB', textDecoration: 'underline' };

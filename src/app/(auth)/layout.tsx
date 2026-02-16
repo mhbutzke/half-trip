@@ -1,14 +1,24 @@
 import Link from 'next/link';
-import { Plane } from 'lucide-react';
+import Image from 'next/image';
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-svh flex flex-col">
       {/* Header */}
       <header className="flex h-14 items-center justify-between border-b px-4">
-        <Link href="/" className="flex items-center gap-2 font-semibold">
-          <Plane className="h-5 w-5 text-primary" />
-          <span>Half Trip</span>
+        <Link href="/" className="flex items-center gap-2">
+          <Image
+            src="/brand/icon.svg"
+            width={24}
+            height={24}
+            alt=""
+            aria-hidden="true"
+            className="h-6 w-6 shrink-0"
+            priority
+          />
+          <span className="font-semibold" style={{ fontFamily: 'var(--font-brand)' }}>
+            Half Trip
+          </span>
         </Link>
         <Link
           href="/login"

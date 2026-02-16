@@ -5,7 +5,8 @@ function Skeleton({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot="skeleton"
       className={cn(
-        'rounded-md bg-gradient-to-r from-accent via-accent/40 to-accent bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_infinite]',
+        // Brand manual: no gradients. Use pulse instead of shimmer gradient.
+        'rounded-md bg-accent/60 animate-pulse',
         className
       )}
       {...props}

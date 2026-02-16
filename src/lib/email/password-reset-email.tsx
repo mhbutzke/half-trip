@@ -67,7 +67,7 @@ export function PasswordResetEmail({ resetUrl }: PasswordResetEmailProps) {
 }
 
 const main = {
-  backgroundColor: '#f6f9fc',
+  backgroundColor: '#F8FAFC',
   fontFamily:
     '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Ubuntu, sans-serif',
 };
@@ -85,7 +85,7 @@ const logoSection = {
 };
 
 const logoText = {
-  color: '#0d9488',
+  color: '#1E293B',
   fontSize: '28px',
   fontWeight: '700',
   margin: '0',
@@ -117,9 +117,9 @@ const buttonSection = {
 };
 
 const button = {
-  backgroundColor: '#0d9488',
+  backgroundColor: '#00C2CB',
   borderRadius: '6px',
-  color: '#ffffff',
+  color: '#1E293B',
   fontSize: '16px',
   fontWeight: '600',
   textDecoration: 'none',
@@ -153,6 +153,6 @@ const footerText = {
 };
 
 const link = {
-  color: '#0d9488',
+  color: '#00C2CB',
   textDecoration: 'underline',
 };

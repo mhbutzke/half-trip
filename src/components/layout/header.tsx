@@ -2,6 +2,7 @@
 
 import { Link } from 'next-view-transitions';
 import { usePathname } from 'next/navigation';
+import Image from 'next/image';
 import { LogOut, Menu, Moon, Plane, Settings, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
@@ -56,7 +57,21 @@ export function Header({ user, onSignOut }: HeaderProps) {
           href={user ? routes.trips() : routes.home()}
           className="flex min-h-[44px] items-center gap-2"
         >
-          <span className="text-xl font-bold text-primary">Half Trip</span>
+          <Image
+            src="/brand/icon.svg"
+            width={28}
+            height={28}
+            alt=""
+            aria-hidden="true"
+            className="h-7 w-7 shrink-0"
+            priority
+          />
+          <span
+            className="text-xl font-bold text-foreground"
+            style={{ fontFamily: 'var(--font-brand)' }}
+          >
+            Half Trip
+          </span>
         </Link>
 
         {/* Desktop Navigation */}
@@ -100,8 +115,14 @@ export function Header({ user, onSignOut }: HeaderProps) {
                 : 'Alternar tema'
             }
           >
-            <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-            <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            <Sun
+              className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
+              aria-hidden="true"
+            />
+            <Moon
+              className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
+              aria-hidden="true"
+            />
           </Button>
 
           {user ? (

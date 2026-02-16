@@ -46,6 +46,7 @@ export function MobileHeader({ user, onSignOut }: MobileHeaderProps) {
 
   const tripMatch = pathname.match(/^\/trip\/([^/]+)/);
   const isTripPage = !!tripMatch;
+  const isTripSubpage = isTripPage && pathname.split('/').length > 3;
   const isSettingsPage = pathname.startsWith('/settings');
 
   const getTitle = () => {
@@ -91,7 +92,14 @@ export function MobileHeader({ user, onSignOut }: MobileHeaderProps) {
                 <ChevronLeft className="h-5 w-5" />
               </Link>
             ) : null}
-            <span className="truncate text-base font-semibold">{title}</span>
+            <div className="min-w-0 flex-1">
+              {isTripSubpage && storeTripName && (
+                <span className="block truncate text-[10px] leading-tight text-muted-foreground">
+                  {storeTripName}
+                </span>
+              )}
+              <span className="truncate text-base font-semibold">{title}</span>
+            </div>
           </div>
 
           {/* Right: Actions */}

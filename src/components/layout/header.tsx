@@ -61,7 +61,8 @@ export function Header({ user, onSignOut }: HeaderProps) {
             src="/brand/icon.svg"
             width={28}
             height={28}
-            alt="Half Trip"
+            alt=""
+            aria-hidden="true"
             className="h-7 w-7 shrink-0"
             priority
           />

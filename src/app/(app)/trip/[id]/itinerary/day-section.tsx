@@ -92,28 +92,35 @@ export function DaySection({
       >
         <SortableContext items={activityIds} strategy={verticalListSortingStrategy}>
           {hasActivities ? (
-            <div className="space-y-0">
-              {activities.map((activity, index) =>
-                draggable ? (
-                  <DraggableTimelineItem
-                    key={activity.id}
-                    activity={activity}
-                    isFirst={index === 0}
-                    isLast={index === activities.length - 1}
-                    onClick={onActivityClick}
-                    timingStatus={activityTimingMap?.get(activity.id) ?? null}
-                  />
-                ) : (
-                  <TimelineActivityItem
-                    key={activity.id}
-                    activity={activity}
-                    isFirst={index === 0}
-                    isLast={index === activities.length - 1}
-                    onClick={onActivityClick}
-                    timingStatus={activityTimingMap?.get(activity.id) ?? null}
-                  />
-                )
-              )}
+            <div className="relative pl-3">
+              {/* Vertical timeline wire */}
+              <div
+                aria-hidden="true"
+                className="absolute left-0 top-4 bottom-4 w-px bg-border/60"
+              />
+              <div className="space-y-1">
+                {activities.map((activity, index) =>
+                  draggable ? (
+                    <DraggableTimelineItem
+                      key={activity.id}
+                      activity={activity}
+                      isFirst={index === 0}
+                      isLast={index === activities.length - 1}
+                      onClick={onActivityClick}
+                      timingStatus={activityTimingMap?.get(activity.id) ?? null}
+                    />
+                  ) : (
+                    <TimelineActivityItem
+                      key={activity.id}
+                      activity={activity}
+                      isFirst={index === 0}
+                      isLast={index === activities.length - 1}
+                      onClick={onActivityClick}
+                      timingStatus={activityTimingMap?.get(activity.id) ?? null}
+                    />
+                  )
+                )}
+              </div>
             </div>
           ) : (
             <EmptyDayState dayNumber={dayNumber} onAddActivity={() => onAddActivity(date)} />

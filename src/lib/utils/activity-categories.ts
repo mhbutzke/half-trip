@@ -16,6 +16,8 @@ export type ActivityCategoryInfo = {
   icon: LucideIcon;
   color: string;
   bgColor: string;
+  borderColor: string;
+  dotColor: string;
 };
 
 export const activityCategoryMap: Record<ActivityCategory, ActivityCategoryInfo> = {
@@ -25,6 +27,8 @@ export const activityCategoryMap: Record<ActivityCategory, ActivityCategoryInfo>
     icon: Plane,
     color: 'text-blue-600 dark:text-blue-400',
     bgColor: 'bg-blue-100 dark:bg-blue-900/30',
+    borderColor: 'border-l-blue-500 dark:border-l-blue-400',
+    dotColor: 'bg-blue-500 dark:bg-blue-400',
   },
   accommodation: {
     value: 'accommodation',
@@ -32,6 +36,8 @@ export const activityCategoryMap: Record<ActivityCategory, ActivityCategoryInfo>
     icon: Home,
     color: 'text-purple-600 dark:text-purple-400',
     bgColor: 'bg-purple-100 dark:bg-purple-900/30',
+    borderColor: 'border-l-purple-500 dark:border-l-purple-400',
+    dotColor: 'bg-purple-500 dark:bg-purple-400',
   },
   tour: {
     value: 'tour',
@@ -39,6 +45,8 @@ export const activityCategoryMap: Record<ActivityCategory, ActivityCategoryInfo>
     icon: MapPin,
     color: 'text-emerald-600 dark:text-emerald-400',
     bgColor: 'bg-emerald-100 dark:bg-emerald-900/30',
+    borderColor: 'border-l-emerald-500 dark:border-l-emerald-400',
+    dotColor: 'bg-emerald-500 dark:bg-emerald-400',
   },
   meal: {
     value: 'meal',
@@ -46,6 +54,8 @@ export const activityCategoryMap: Record<ActivityCategory, ActivityCategoryInfo>
     icon: Utensils,
     color: 'text-orange-600 dark:text-orange-400',
     bgColor: 'bg-orange-100 dark:bg-orange-900/30',
+    borderColor: 'border-l-orange-500 dark:border-l-orange-400',
+    dotColor: 'bg-orange-500 dark:bg-orange-400',
   },
   event: {
     value: 'event',
@@ -53,6 +63,8 @@ export const activityCategoryMap: Record<ActivityCategory, ActivityCategoryInfo>
     icon: Calendar,
     color: 'text-pink-600 dark:text-pink-400',
     bgColor: 'bg-pink-100 dark:bg-pink-900/30',
+    borderColor: 'border-l-pink-500 dark:border-l-pink-400',
+    dotColor: 'bg-pink-500 dark:bg-pink-400',
   },
   other: {
     value: 'other',
@@ -60,6 +72,8 @@ export const activityCategoryMap: Record<ActivityCategory, ActivityCategoryInfo>
     icon: MoreHorizontal,
     color: 'text-gray-600 dark:text-gray-400',
     bgColor: 'bg-gray-100 dark:bg-gray-900/30',
+    borderColor: 'border-l-gray-400 dark:border-l-gray-500',
+    dotColor: 'bg-gray-400 dark:bg-gray-500',
   },
 };
 

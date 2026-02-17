@@ -4,7 +4,7 @@ import { memo, useMemo } from 'react';
 import { MapPin, DollarSign } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { getCategoryInfo } from '@/lib/utils/activity-categories';
+import { getCategoryInfo, formatDuration } from '@/lib/utils/activity-categories';
 import { transportTypeMap } from '@/lib/utils/transport-types';
 import { formatTime } from '@/lib/utils/activity-categories';
 import { cn } from '@/lib/utils';
@@ -39,102 +39,109 @@ export const TimelineActivityItem = memo(function TimelineActivityItem({
   }, [activity.category, meta?.transport_type, categoryInfo.icon]);
 
   const timeDisplay = formatTime(activity.start_time);
+  const durationDisplay = formatDuration(activity.duration_minutes);
 
   return (
-    <div
-      className="group/item relative flex cursor-pointer items-start gap-3 py-2.5 transition-colors hover:bg-accent/50 rounded-lg px-2 -mx-2"
-      onClick={() => onClick(activity)}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onClick(activity);
-        }
-      }}
-      aria-label={`${activity.title}${activity.location ? ` em ${activity.location}` : ''}`}
-    >
-      {/* Time column */}
-      <div className="w-16 flex-shrink-0 pt-0.5 text-center">
+    <div className="group/item relative pb-3 last:pb-0">
+      {/* Timeline dot */}
+      <div
+        aria-hidden="true"
+        className={cn(
+          'absolute left-0 top-[22px] z-10 h-2 w-2 -translate-x-[3.5px] rounded-full ring-2 ring-background',
+          categoryInfo.dotColor,
+          timingStatus === 'now' &&
+            'h-2.5 w-2.5 -translate-x-[4.25px] ring-primary animate-pulse shadow-[0_0_8px_hsl(var(--primary)/0.5)]',
+          timingStatus === 'next' && 'ring-primary/50'
+        )}
+      />
+
+      {/* Time label + badges */}
+      <div className="mb-1 flex items-center gap-2 pl-4">
         {timeDisplay ? (
-          <span className="text-sm font-medium tabular-nums text-muted-foreground">
+          <span
+            className={cn(
+              'text-xs font-medium tabular-nums',
+              timingStatus === 'now' ? 'text-primary font-semibold' : 'text-muted-foreground'
+            )}
+          >
             {timeDisplay}
           </span>
         ) : (
-          <span className="text-xs text-muted-foreground/50">--:--</span>
+          <span className="text-xs text-muted-foreground/40">--:--</span>
+        )}
+        {timingStatus === 'now' && (
+          <Badge variant="default" className="h-4 px-1.5 text-[10px] animate-pulse">
+            Agora
+          </Badge>
+        )}
+        {timingStatus === 'next' && (
+          <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">
+            Próxima
+          </Badge>
         )}
       </div>
 
-      {/* Timeline node + line */}
-      <div className="relative flex flex-col items-center">
-        {/* Top line segment */}
-        <div
-          className={`w-px flex-1 min-h-2 ${isFirst ? 'bg-transparent' : 'border-l-2 border-dashed border-muted-foreground/20'}`}
-        />
+      {/* Card */}
+      <div
+        className={cn(
+          'ml-4 overflow-hidden rounded-lg border bg-card shadow-sm transition-shadow hover:shadow-md active:scale-[0.99]',
+          'border-l-4',
+          categoryInfo.borderColor,
+          timingStatus === 'now' && 'shadow-[0_0_0_1px_hsl(var(--primary)/0.3)]'
+        )}
+        role="button"
+        tabIndex={0}
+        onClick={() => onClick(activity)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClick(activity);
+          }
+        }}
+        aria-label={`${activity.title}${activity.location ? ` em ${activity.location}` : ''}`}
+      >
+        <div className="p-3">
+          <div className="flex items-start gap-2">
+            {/* Inline category icon */}
+            <CategoryIcon
+              className={cn('mt-0.5 h-4 w-4 flex-shrink-0', categoryInfo.color)}
+              aria-hidden="true"
+            />
 
-        {/* Node (category icon) */}
-        <div
-          className={cn(
-            'relative z-10 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full ring-2 ring-background transition-all group-hover/item:scale-110 group-hover/item:ring-4',
-            categoryInfo.bgColor,
-            timingStatus === 'now' &&
-              'ring-primary ring-4 shadow-[0_0_12px_hsl(var(--primary)/0.5)] animate-pulse',
-            timingStatus === 'next' && 'ring-primary/50 ring-4'
-          )}
-        >
-          <CategoryIcon className={`h-5 w-5 ${categoryInfo.color}`} aria-hidden="true" />
-        </div>
+            {/* Content */}
+            <div className="min-w-0 flex-1">
+              <h3 className="text-sm font-semibold leading-snug">{activity.title}</h3>
 
-        {/* Bottom line segment */}
-        <div
-          className={`w-px flex-1 min-h-2 ${isLast ? 'bg-transparent' : 'border-l-2 border-dashed border-muted-foreground/20'}`}
-        />
-      </div>
-
-      {/* Content */}
-      <div className="relative min-w-0 flex-1">
-        <div className="flex items-start justify-between gap-2 w-full">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <h3 className="text-sm font-medium leading-tight line-clamp-1">{activity.title}</h3>
-              {timingStatus === 'now' && (
-                <Badge
-                  variant="default"
-                  className="text-[10px] px-1.5 py-0 h-4 animate-pulse flex-shrink-0"
-                >
-                  Agora
-                </Badge>
-              )}
-              {timingStatus === 'next' && (
-                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 flex-shrink-0">
-                  Próxima
-                </Badge>
-              )}
+              {/* Metadata row */}
+              <div className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-0.5">
+                {activity.location && (
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <MapPin className="h-3 w-3 flex-shrink-0" aria-hidden="true" />
+                    <span className="truncate max-w-[180px]">{activity.location}</span>
+                  </span>
+                )}
+                {durationDisplay && (
+                  <span className="text-xs text-muted-foreground">{durationDisplay}</span>
+                )}
+                {(activity.expense_count ?? 0) > 0 && (
+                  <span className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
+                    <DollarSign className="h-3 w-3 flex-shrink-0" aria-hidden="true" />
+                    {activity.expense_count} despesa{activity.expense_count! > 1 ? 's' : ''}
+                  </span>
+                )}
+              </div>
             </div>
-            {activity.location && (
-              <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                <MapPin className="h-3 w-3 flex-shrink-0" aria-hidden="true" />
-                <span className="truncate">{activity.location}</span>
-              </div>
-            )}
-            {(activity.expense_count ?? 0) > 0 && (
-              <div className="mt-1 flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-500">
-                <DollarSign className="h-3 w-3 flex-shrink-0" aria-hidden="true" />
-                <span>
-                  {activity.expense_count} despesa{activity.expense_count! > 1 ? 's' : ''}
-                </span>
-              </div>
-            )}
+
+            {/* Creator avatar */}
+            <Avatar className="size-5 flex-shrink-0 mt-0.5">
+              {activity.users.avatar_url ? (
+                <AvatarImage src={activity.users.avatar_url} alt={activity.users.name} />
+              ) : null}
+              <AvatarFallback className="text-[9px] bg-muted">
+                {activity.users.name.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
           </div>
-          {/* Creator avatar */}
-          <Avatar className="size-6 flex-shrink-0">
-            {activity.users.avatar_url ? (
-              <AvatarImage src={activity.users.avatar_url} alt={activity.users.name} />
-            ) : null}
-            <AvatarFallback className="text-[10px] bg-muted">
-              {activity.users.name.charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
         </div>
       </div>
     </div>

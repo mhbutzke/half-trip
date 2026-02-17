@@ -651,7 +651,7 @@ export function ItineraryList({
               {/* Drag Overlay */}
               <DragOverlay>
                 {!isFilteredView && activeActivity ? (
-                  <div className="w-full max-w-sm rounded-lg border bg-background p-2 shadow-lg">
+                  <div className="w-full max-w-sm rotate-1 opacity-95 pl-3 shadow-2xl">
                     <DraggableTimelineItem
                       activity={activeActivity}
                       isFirst

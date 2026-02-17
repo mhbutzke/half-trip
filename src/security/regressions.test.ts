@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { describe, expect, test } from 'vitest';
 
 function readRepoFile(...segments: string[]) {
   return fs.readFileSync(path.join(process.cwd(), ...segments), 'utf8');

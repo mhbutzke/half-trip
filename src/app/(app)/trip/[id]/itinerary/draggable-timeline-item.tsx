@@ -64,12 +64,14 @@ export function DraggableTimelineItem({
     <div
       ref={isDragOverlay ? undefined : setNodeRef}
       style={style}
-      className="group/item relative flex items-start gap-3 py-2 touch-manipulation"
+      className="group/item relative flex items-start gap-3 py-2.5 touch-manipulation"
     >
       {/* Time column */}
-      <div className="w-14 flex-shrink-0 pt-1.5 text-right">
+      <div className="w-16 flex-shrink-0 pt-0.5 text-center">
         {timeDisplay ? (
-          <span className="text-sm font-medium text-muted-foreground">{timeDisplay}</span>
+          <span className="text-sm font-medium tabular-nums text-muted-foreground">
+            {timeDisplay}
+          </span>
         ) : (
           <span className="text-xs text-muted-foreground/50">--:--</span>
         )}
@@ -82,14 +84,14 @@ export function DraggableTimelineItem({
         />
         <div
           className={cn(
-            'relative z-10 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full ring-2 ring-background',
+            'relative z-10 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full ring-2 ring-background transition-all',
             categoryInfo.bgColor,
             timingStatus === 'now' &&
-              'ring-primary shadow-[0_0_8px_hsl(var(--primary)/0.4)] animate-pulse',
-            timingStatus === 'next' && 'ring-primary/50'
+              'ring-primary ring-4 shadow-[0_0_12px_hsl(var(--primary)/0.5)] animate-pulse',
+            timingStatus === 'next' && 'ring-primary/50 ring-4'
           )}
         >
-          <CategoryIcon className={`h-4 w-4 ${categoryInfo.color}`} aria-hidden="true" />
+          <CategoryIcon className={`h-5 w-5 ${categoryInfo.color}`} aria-hidden="true" />
         </div>
         <div
           className={`w-px flex-1 min-h-2 ${isLast ? 'bg-transparent' : 'border-l-2 border-dashed border-muted-foreground/20'}`}
@@ -98,7 +100,7 @@ export function DraggableTimelineItem({
 
       {/* Content - clickable area */}
       <div
-        className="min-w-0 flex-1 pt-1 cursor-pointer rounded-md px-1.5 py-0.5 transition-colors hover:bg-accent/50"
+        className="min-w-0 flex-1 cursor-pointer rounded-md px-2 py-1 transition-colors hover:bg-accent/50"
         onClick={() => onClick(activity)}
         role="button"
         tabIndex={0}
@@ -110,9 +112,9 @@ export function DraggableTimelineItem({
         }}
         aria-label={`${activity.title}${activity.location ? ` em ${activity.location}` : ''}`}
       >
-        <div className="flex items-start justify-between gap-1">
+        <div className="flex items-start justify-between gap-2 w-full">
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <h3 className="text-sm font-medium leading-tight line-clamp-1">{activity.title}</h3>
               {timingStatus === 'now' && (
                 <Badge
@@ -129,13 +131,13 @@ export function DraggableTimelineItem({
               )}
             </div>
             {activity.location && (
-              <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+              <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
                 <MapPin className="h-3 w-3 flex-shrink-0" aria-hidden="true" />
                 <span className="truncate">{activity.location}</span>
               </div>
             )}
             {(activity.expense_count ?? 0) > 0 && (
-              <div className="mt-0.5 flex items-center gap-1 text-xs text-emerald-500">
+              <div className="mt-1 flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-500">
                 <DollarSign className="h-3 w-3 flex-shrink-0" aria-hidden="true" />
                 <span>
                   {activity.expense_count} despesa{activity.expense_count! > 1 ? 's' : ''}
@@ -144,11 +146,11 @@ export function DraggableTimelineItem({
             )}
           </div>
           {/* Creator avatar */}
-          <Avatar className="size-5 flex-shrink-0 mt-0.5">
+          <Avatar className="size-6 flex-shrink-0">
             {activity.users.avatar_url ? (
               <AvatarImage src={activity.users.avatar_url} alt={activity.users.name} />
             ) : null}
-            <AvatarFallback className="text-[9px] bg-muted">
+            <AvatarFallback className="text-[10px] bg-muted">
               {activity.users.name.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
@@ -159,7 +161,7 @@ export function DraggableTimelineItem({
       <button
         {...attributes}
         {...listeners}
-        className="mt-1 flex h-11 w-11 flex-shrink-0 cursor-grab items-center justify-center rounded opacity-100 transition-opacity hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:mt-2 sm:h-8 sm:w-8 sm:opacity-0 sm:group-hover/item:opacity-100 active:cursor-grabbing"
+        className="flex h-11 w-11 flex-shrink-0 cursor-grab items-center justify-center rounded opacity-100 transition-opacity hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:h-8 sm:w-8 sm:opacity-0 sm:group-hover/item:opacity-100 active:cursor-grabbing"
         aria-label="Arrastar atividade"
       >
         <GripVertical className="h-4 w-4 text-muted-foreground" />

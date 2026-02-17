@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getCategoryIcon, formatDuration } from '@/lib/utils/activity-categories';
+import { getCategoryIcon, formatDuration, formatTime } from '@/lib/utils/activity-categories';
 import type { Activity, ActivityMetadata } from '@/types/database';
 
 interface DayTimelineProps {
@@ -111,7 +111,7 @@ export function DayTimeline({
                     </div>
                     {activity.start_time && (
                       <span className="text-xs font-medium tabular-nums text-muted-foreground">
-                        {activity.start_time.slice(0, 5)}
+                        {formatTime(activity.start_time)}
                       </span>
                     )}
                   </div>

@@ -42,7 +42,7 @@ export const TimelineActivityItem = memo(function TimelineActivityItem({
 
   return (
     <div
-      className="group/item relative flex cursor-pointer items-start gap-3 py-2 transition-colors hover:bg-accent/50 rounded-lg px-1 -mx-1"
+      className="group/item relative flex cursor-pointer items-start gap-3 py-2.5 transition-colors hover:bg-accent/50 rounded-lg px-2 -mx-2"
       onClick={() => onClick(activity)}
       role="button"
       tabIndex={0}
@@ -55,9 +55,11 @@ export const TimelineActivityItem = memo(function TimelineActivityItem({
       aria-label={`${activity.title}${activity.location ? ` em ${activity.location}` : ''}`}
     >
       {/* Time column */}
-      <div className="w-14 flex-shrink-0 pt-1.5 text-right">
+      <div className="w-16 flex-shrink-0 pt-0.5 text-center">
         {timeDisplay ? (
-          <span className="text-sm font-medium text-muted-foreground">{timeDisplay}</span>
+          <span className="text-sm font-medium tabular-nums text-muted-foreground">
+            {timeDisplay}
+          </span>
         ) : (
           <span className="text-xs text-muted-foreground/50">--:--</span>
         )}
@@ -73,14 +75,14 @@ export const TimelineActivityItem = memo(function TimelineActivityItem({
         {/* Node (category icon) */}
         <div
           className={cn(
-            'relative z-10 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full ring-2 ring-background transition-transform group-hover/item:scale-110',
+            'relative z-10 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full ring-2 ring-background transition-all group-hover/item:scale-110 group-hover/item:ring-4',
             categoryInfo.bgColor,
             timingStatus === 'now' &&
-              'ring-primary shadow-[0_0_8px_hsl(var(--primary)/0.4)] animate-pulse',
-            timingStatus === 'next' && 'ring-primary/50'
+              'ring-primary ring-4 shadow-[0_0_12px_hsl(var(--primary)/0.5)] animate-pulse',
+            timingStatus === 'next' && 'ring-primary/50 ring-4'
           )}
         >
-          <CategoryIcon className={`h-4 w-4 ${categoryInfo.color}`} aria-hidden="true" />
+          <CategoryIcon className={`h-5 w-5 ${categoryInfo.color}`} aria-hidden="true" />
         </div>
 
         {/* Bottom line segment */}
@@ -90,10 +92,10 @@ export const TimelineActivityItem = memo(function TimelineActivityItem({
       </div>
 
       {/* Content */}
-      <div className="relative min-w-0 flex-1 pt-1">
-        <div className="flex items-start justify-between gap-1">
+      <div className="relative min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-2 w-full">
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <h3 className="text-sm font-medium leading-tight line-clamp-1">{activity.title}</h3>
               {timingStatus === 'now' && (
                 <Badge
@@ -110,13 +112,13 @@ export const TimelineActivityItem = memo(function TimelineActivityItem({
               )}
             </div>
             {activity.location && (
-              <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+              <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
                 <MapPin className="h-3 w-3 flex-shrink-0" aria-hidden="true" />
                 <span className="truncate">{activity.location}</span>
               </div>
             )}
             {(activity.expense_count ?? 0) > 0 && (
-              <div className="mt-0.5 flex items-center gap-1 text-xs text-emerald-500">
+              <div className="mt-1 flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-500">
                 <DollarSign className="h-3 w-3 flex-shrink-0" aria-hidden="true" />
                 <span>
                   {activity.expense_count} despesa{activity.expense_count! > 1 ? 's' : ''}
@@ -125,11 +127,11 @@ export const TimelineActivityItem = memo(function TimelineActivityItem({
             )}
           </div>
           {/* Creator avatar */}
-          <Avatar className="size-5 flex-shrink-0 mt-0.5">
+          <Avatar className="size-6 flex-shrink-0">
             {activity.users.avatar_url ? (
               <AvatarImage src={activity.users.avatar_url} alt={activity.users.name} />
             ) : null}
-            <AvatarFallback className="text-[9px] bg-muted">
+            <AvatarFallback className="text-[10px] bg-muted">
               {activity.users.name.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>

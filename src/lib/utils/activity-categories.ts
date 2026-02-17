@@ -104,11 +104,13 @@ export function formatDuration(minutes: number | null | undefined): string | nul
 }
 
 /**
- * Formats a time string (HH:MM) for display
+ * Formats a time string for display
+ * Handles both HH:MM:SS and HH:MM formats, returning clean HH:MM
  */
 export function formatTime(time: string | null | undefined): string | null {
   if (!time) return null;
-  return time;
+  // Strip seconds if present (HH:MM:SS -> HH:MM)
+  return time.slice(0, 5);
 }
 
 /**

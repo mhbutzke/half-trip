@@ -1,7 +1,7 @@
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { Activity } from '@/types/database';
-import { getCategoryLabel, formatDuration } from './activity-categories';
+import { getCategoryLabel, formatDuration, formatTime } from './activity-categories';
 
 /**
  * Share Helpers
@@ -34,7 +34,7 @@ export function formatDayItinerary(
   } else {
     sortedActivities.forEach((activity, index) => {
       const categoryLabel = getCategoryLabel(activity.category);
-      const timeStr = activity.start_time ? `${activity.start_time.slice(0, 5)} - ` : '';
+      const timeStr = activity.start_time ? `${formatTime(activity.start_time)} - ` : '';
       const durationStr = activity.duration_minutes
         ? ` (${formatDuration(activity.duration_minutes)})`
         : '';

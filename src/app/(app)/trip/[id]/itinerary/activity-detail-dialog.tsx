@@ -11,38 +11,32 @@ import {
   ExternalLink,
   Paperclip,
   Globe,
+  X,
 } from 'lucide-react';
 import { PlaceDetailsCard } from '@/components/activities/place-details-card';
 import { ActivityQuickInfo } from '@/components/itinerary/activity-quick-info';
 import { ActivityExpensesSection } from '@/components/itinerary/activity-expenses-section';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from '@/components/ui/sheet';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogClose,
 } from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { getCategoryInfo, formatDuration, formatTime } from '@/lib/utils/activity-categories';
 import { transportTypeMap } from '@/lib/utils/transport-types';
-import { useMediaQuery } from '@/hooks/use-media-query';
 import { useSyncStatus } from '@/hooks/use-sync-status';
 import { PendingIndicator } from '@/components/sync';
 import { toast } from 'sonner';
 import type { ActivityWithCreator } from '@/lib/supabase/activities';
 import type { ActivityLink, ActivityMetadata } from '@/types/database';
 
-interface ActivityDetailSheetProps {
+interface ActivityDetailDialogProps {
   activity: ActivityWithCreator | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -53,7 +47,7 @@ interface ActivityDetailSheetProps {
   onAddExpense?: (activity: ActivityWithCreator) => void;
 }
 
-export function ActivityDetailSheet({
+export function ActivityDetailDialog({
   activity,
   open,
   onOpenChange,
@@ -62,50 +56,27 @@ export function ActivityDetailSheet({
   onSync,
   isSyncing = false,
   onAddExpense,
-}: ActivityDetailSheetProps) {
-  const isDesktop = useMediaQuery('(min-width: 768px)');
-
+}: ActivityDetailDialogProps) {
   if (!activity) return null;
 
-  // Use Dialog for desktop/tablet (centered), Sheet for mobile (bottom)
-  if (isDesktop) {
-    return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-2xl max-h-[90vh] p-0">
-          <ScrollArea className="max-h-[90vh]">
-            <div className="p-6">
-              <ActivityDetailContent
-                activity={activity}
-                onEdit={onEdit}
-                onDelete={onDelete}
-                onSync={onSync}
-                isSyncing={isSyncing}
-                onClose={() => onOpenChange(false)}
-                onAddExpense={onAddExpense}
-                isDialog={true}
-              />
-            </div>
-          </ScrollArea>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl">
-        <ActivityDetailContent
-          activity={activity}
-          onEdit={onEdit}
-          onDelete={onDelete}
-          onSync={onSync}
-          isSyncing={isSyncing}
-          onClose={() => onOpenChange(false)}
-          onAddExpense={onAddExpense}
-          isDialog={false}
-        />
-      </SheetContent>
-    </Sheet>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] p-0">
+        <ScrollArea className="max-h-[90vh]">
+          <div className="p-6">
+            <ActivityDetailContent
+              activity={activity}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onSync={onSync}
+              isSyncing={isSyncing}
+              onClose={() => onOpenChange(false)}
+              onAddExpense={onAddExpense}
+            />
+          </div>
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -117,7 +88,6 @@ function ActivityDetailContent({
   isSyncing,
   onClose,
   onAddExpense,
-  isDialog = false,
 }: {
   activity: ActivityWithCreator;
   onEdit: (activity: ActivityWithCreator) => void;
@@ -126,7 +96,6 @@ function ActivityDetailContent({
   isSyncing: boolean;
   onClose: () => void;
   onAddExpense?: (activity: ActivityWithCreator) => void;
-  isDialog?: boolean;
 }) {
   const meta = activity.metadata as ActivityMetadata | null;
   const categoryInfo = getCategoryInfo(activity.category);
@@ -153,44 +122,30 @@ function ActivityDetailContent({
   const placeReviewCount =
     typeof meta?.user_ratings_total === 'number' ? meta.user_ratings_total : undefined;
 
-  const HeaderComponent = isDialog ? DialogHeader : SheetHeader;
-  const TitleComponent = isDialog ? DialogTitle : SheetTitle;
-  const DescriptionComponent = isDialog ? DialogDescription : SheetDescription;
-
   return (
     <>
-      {/* Mobile drag handle indicator - only for Sheet */}
-      {!isDialog && <div className="mx-auto mb-2 h-1.5 w-12 rounded-full bg-muted-foreground/20" />}
-
-      <HeaderComponent className="px-0">
+      <DialogHeader className="px-0">
         <div className="flex items-start gap-3">
           <div
-            className={`flex ${isDialog ? 'h-12 w-12' : 'h-10 w-10'} flex-shrink-0 items-center justify-center rounded-lg ${categoryInfo.bgColor}`}
+            className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg ${categoryInfo.bgColor}`}
           >
-            <CategoryIcon
-              className={`${isDialog ? 'h-6 w-6' : 'h-5 w-5'} ${categoryInfo.color}`}
-              aria-hidden="true"
-            />
+            <CategoryIcon className={`h-6 w-6 ${categoryInfo.color}`} aria-hidden="true" />
           </div>
           <div className="min-w-0 flex-1">
-            <TitleComponent
-              className={isDialog ? 'text-lg leading-tight' : 'text-base leading-tight'}
-            >
-              {activity.title}
-            </TitleComponent>
-            <DescriptionComponent className={isDialog ? 'mt-1 text-sm' : 'mt-0.5 text-xs'}>
+            <DialogTitle className="text-lg leading-tight">{activity.title}</DialogTitle>
+            <DialogDescription className="mt-1 text-sm">
               {categoryInfo.label}
               {isPending && (
                 <span className="ml-2">
                   <PendingIndicator isPending={isPending} size="sm" showLabel />
                 </span>
               )}
-            </DescriptionComponent>
+            </DialogDescription>
           </div>
         </div>
-      </HeaderComponent>
+      </DialogHeader>
 
-      <div className={isDialog ? 'space-y-4 pt-4' : 'space-y-3 pt-2'}>
+      <div className="space-y-4 pt-4">
         {/* Quick Info Card */}
         <ActivityQuickInfo
           startTime={activity.start_time ? formatTime(activity.start_time) : undefined}
@@ -202,8 +157,8 @@ function ActivityDetailContent({
         />
 
         {attachmentsCount > 0 && (
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Paperclip className="h-3.5 w-3.5" aria-hidden="true" />
+          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <Paperclip className="h-4 w-4" aria-hidden="true" />
             <span>
               {attachmentsCount} anexo{attachmentsCount > 1 ? 's' : ''}
             </span>
@@ -213,7 +168,7 @@ function ActivityDetailContent({
         {/* Location with Maps button */}
         {activity.location && (
           <div className="space-y-2">
-            <div className="flex items-start gap-1.5 text-sm">
+            <div className="flex items-start gap-2 text-sm">
               <MapPin
                 className="h-4 w-4 flex-shrink-0 text-muted-foreground mt-0.5"
                 aria-hidden="true"
@@ -221,7 +176,7 @@ function ActivityDetailContent({
               <span className="text-muted-foreground flex-1">{activity.location}</span>
             </div>
             {locationMapsUrl && (
-              <Button variant="outline" size="sm" className="w-full h-9" asChild>
+              <Button variant="outline" size="sm" className="w-full" asChild>
                 <a href={locationMapsUrl} target="_blank" rel="noopener noreferrer">
                   <Navigation className="mr-2 h-4 w-4" aria-hidden="true" />
                   Abrir no Maps
@@ -270,7 +225,7 @@ function ActivityDetailContent({
 
         {/* Description */}
         {activity.description && (
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Descrição
             </span>
@@ -292,7 +247,7 @@ function ActivityDetailContent({
                   key={index}
                   variant="outline"
                   size="sm"
-                  className="w-full h-9 justify-start"
+                  className="w-full justify-start"
                   asChild
                 >
                   <a href={link.url} target="_blank" rel="noopener noreferrer">

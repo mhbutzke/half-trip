@@ -357,6 +357,7 @@ export type Database = {
           created_by: string;
           receipt_url: string | null;
           notes: string | null;
+          activity_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -374,6 +375,7 @@ export type Database = {
           created_by: string;
           receipt_url?: string | null;
           notes?: string | null;
+          activity_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -391,10 +393,18 @@ export type Database = {
           created_by?: string;
           receipt_url?: string | null;
           notes?: string | null;
+          activity_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: 'expenses_activity_id_fkey';
+            columns: ['activity_id'];
+            isOneToOne: false;
+            referencedRelation: 'activities';
+            referencedColumns: ['id'];
+          },
           {
             foreignKeyName: 'expenses_trip_id_fkey';
             columns: ['trip_id'];

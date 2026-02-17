@@ -80,6 +80,10 @@ interface AddExpenseDialogProps {
   onOpenChange?: (open: boolean) => void;
   /** When provided, dialog operates in edit mode */
   expense?: ExpenseWithDetails | null;
+  /** Pre-fill description when creating from an activity */
+  defaultDescription?: string;
+  /** Link expense to an activity */
+  defaultActivityId?: string | null;
 }
 
 type TriggerElementProps = {
@@ -97,10 +101,13 @@ export function AddExpenseDialog({
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
   expense,
+  defaultDescription,
+  defaultActivityId,
 }: AddExpenseDialogProps) {
   const isEditing = !!expense;
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [step, setStep] = useState<DialogStep>(isEditing ? 'details' : 'capture');
+  const hasDefaults = !!defaultDescription;
+  const [step, setStep] = useState<DialogStep>(isEditing || hasDefaults ? 'details' : 'capture');
 
   // Receipt state
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
@@ -111,7 +118,7 @@ export function AddExpenseDialog({
 
   const defaultValues: ExpenseFormValues = useMemo(
     () => ({
-      description: expense?.description || '',
+      description: expense?.description || defaultDescription || '',
       amount: expense ? formatAmountInput(expense.amount) : '',
       currency:
         (expense?.currency as SupportedCurrency) || (baseCurrency as SupportedCurrency) || 'BRL',
@@ -130,7 +137,7 @@ export function AddExpenseDialog({
       custom_amounts: {},
       custom_percentages: {},
     }),
-    [expense, baseCurrency, currentParticipantId, participants]
+    [expense, baseCurrency, currentParticipantId, participants, defaultDescription]
   );
 
   const { open, setOpen } = useDialogState({
@@ -254,7 +261,11 @@ export function AddExpenseDialog({
 
       const result = isEditing
         ? await updateExpense(expense!.id, payload)
-        : await createExpense({ ...payload, trip_id: tripId });
+        : await createExpense({
+            ...payload,
+            trip_id: tripId,
+            activity_id: defaultActivityId || null,
+          });
 
       if (result.error) {
         toast.error(result.error);

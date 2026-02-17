@@ -18,6 +18,7 @@ export type ActivityWithCreator = Activity & {
     avatar_url: string | null;
   };
   attachments_count?: number;
+  expense_count?: number;
 };
 
 export type CreateActivityInput = {
@@ -300,9 +301,25 @@ export async function getTripActivities(tripId: string): Promise<ActivityWithCre
     attachmentsByActivity.set(row.activity_id, count + 1);
   }
 
+  // Count expenses linked to each activity
+  const { data: expenseRows } = await supabase
+    .from('expenses')
+    .select('activity_id')
+    .in('activity_id', activityIds)
+    .not('activity_id', 'is', null);
+
+  const expensesByActivity = new Map<string, number>();
+  for (const row of expenseRows || []) {
+    if (row.activity_id) {
+      const count = expensesByActivity.get(row.activity_id) || 0;
+      expensesByActivity.set(row.activity_id, count + 1);
+    }
+  }
+
   return parsedActivities.map((activity) => ({
     ...activity,
     attachments_count: attachmentsByActivity.get(activity.id) || 0,
+    expense_count: expensesByActivity.get(activity.id) || 0,
   }));
 }
 

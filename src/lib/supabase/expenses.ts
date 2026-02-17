@@ -105,6 +105,7 @@ export async function createExpense(input: CreateExpenseInput): Promise<ExpenseR
       paid_by_participant_id: input.paid_by_participant_id,
       created_by: authUser.id,
       notes: input.notes || null,
+      activity_id: input.activity_id || null,
     })
     .select('id')
     .single();
@@ -585,4 +586,30 @@ export async function getTripExpensesTotal(tripId: string): Promise<number> {
   }
 
   return expenses.reduce((sum, expense) => sum + expense.amount, 0);
+}
+
+/**
+ * Gets expenses linked to a specific activity
+ */
+export async function getExpensesByActivityId(
+  activityId: string
+): Promise<{ id: string; description: string; amount: number; currency: string }[]> {
+  const supabase = await createClient();
+
+  const {
+    data: { user: authUser },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !authUser) {
+    return [];
+  }
+
+  const { data } = await supabase
+    .from('expenses')
+    .select('id, description, amount, currency')
+    .eq('activity_id', activityId)
+    .order('created_at', { ascending: false });
+
+  return data || [];
 }

@@ -50,6 +50,7 @@ export const createExpenseSchema = z.object({
     })
     .refine((val) => val !== undefined, { message: 'Categoria é obrigatória' }),
   paid_by_participant_id: z.string().uuid('Quem pagou é obrigatório'),
+  activity_id: z.string().uuid().optional().nullable(),
   notes: z
     .string()
     .max(500, 'Observações devem ter no máximo 500 caracteres')

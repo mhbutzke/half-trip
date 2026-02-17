@@ -10,6 +10,7 @@ import { DraggableTimelineItem } from './draggable-timeline-item';
 import { TimelineActivityItem } from './timeline-activity-item';
 import { EmptyDayState } from './empty-day-state';
 import type { ActivityWithCreator } from '@/lib/supabase/activities';
+import type { ActivityTimingStatus } from '@/lib/utils/activity-timing';
 
 interface DaySectionProps {
   date: string;
@@ -18,6 +19,7 @@ interface DaySectionProps {
   onAddActivity: (date: string) => void;
   onActivityClick: (activity: ActivityWithCreator) => void;
   draggable?: boolean;
+  activityTimingMap?: Map<string, ActivityTimingStatus>;
 }
 
 function getRelativeDayLabel(date: Date): string | null {
@@ -34,6 +36,7 @@ export function DaySection({
   onAddActivity,
   onActivityClick,
   draggable = true,
+  activityTimingMap,
 }: DaySectionProps) {
   const dateObj = new Date(date + 'T00:00:00');
   const relativeLabel = getRelativeDayLabel(dateObj);
@@ -98,6 +101,7 @@ export function DaySection({
                     isFirst={index === 0}
                     isLast={index === activities.length - 1}
                     onClick={onActivityClick}
+                    timingStatus={activityTimingMap?.get(activity.id) ?? null}
                   />
                 ) : (
                   <TimelineActivityItem
@@ -106,6 +110,7 @@ export function DaySection({
                     isFirst={index === 0}
                     isLast={index === activities.length - 1}
                     onClick={onActivityClick}
+                    timingStatus={activityTimingMap?.get(activity.id) ?? null}
                   />
                 )
               )}

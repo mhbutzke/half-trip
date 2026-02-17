@@ -3,18 +3,18 @@
 import { useMemo } from 'react';
 import {
   Clock,
+  DollarSign,
   MapPin,
   Navigation,
   Pencil,
   Share2,
-  Trash2,
-  CalendarSync,
   ExternalLink,
   Paperclip,
   Globe,
 } from 'lucide-react';
 import { PlaceDetailsCard } from '@/components/activities/place-details-card';
 import { ActivityQuickInfo } from '@/components/itinerary/activity-quick-info';
+import { ActivityExpensesSection } from '@/components/itinerary/activity-expenses-section';
 import {
   Sheet,
   SheetContent,
@@ -42,6 +42,7 @@ interface ActivityDetailSheetProps {
   onDelete: (activity: ActivityWithCreator) => void;
   onSync: (activity: ActivityWithCreator) => void;
   isSyncing?: boolean;
+  onAddExpense?: (activity: ActivityWithCreator) => void;
 }
 
 export function ActivityDetailSheet({
@@ -52,6 +53,7 @@ export function ActivityDetailSheet({
   onDelete,
   onSync,
   isSyncing = false,
+  onAddExpense,
 }: ActivityDetailSheetProps) {
   const isDesktop = useMediaQuery('(min-width: 640px)');
 
@@ -72,6 +74,7 @@ export function ActivityDetailSheet({
           onSync={onSync}
           isSyncing={isSyncing}
           onClose={() => onOpenChange(false)}
+          onAddExpense={onAddExpense}
         />
       </SheetContent>
     </Sheet>
@@ -85,6 +88,7 @@ function ActivityDetailContent({
   onSync,
   isSyncing,
   onClose,
+  onAddExpense,
 }: {
   activity: ActivityWithCreator;
   onEdit: (activity: ActivityWithCreator) => void;
@@ -92,6 +96,7 @@ function ActivityDetailContent({
   onSync: (activity: ActivityWithCreator) => void;
   isSyncing: boolean;
   onClose: () => void;
+  onAddExpense?: (activity: ActivityWithCreator) => void;
 }) {
   const meta = activity.metadata as ActivityMetadata | null;
   const categoryInfo = getCategoryInfo(activity.category);
@@ -259,6 +264,9 @@ function ActivityDetailContent({
           </div>
         )}
 
+        {/* Linked Expenses */}
+        <ActivityExpensesSection activityId={activity.id} />
+
         {/* Actions */}
         <Separator className="my-4" />
         <div className="space-y-2">
@@ -287,19 +295,7 @@ function ActivityDetailContent({
               Compartilhar
             </Button>
             <Button
-              variant="outline"
-              size="sm"
-              className="flex-1"
-              onClick={() => onSync(activity)}
-              disabled={isSyncing}
-            >
-              <CalendarSync className="mr-1.5 h-4 w-4" aria-hidden="true" />
-              {isSyncing ? 'Sincronizando...' : 'Agenda'}
-            </Button>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
+              variant="default"
               size="sm"
               className="flex-1"
               onClick={() => {
@@ -310,19 +306,32 @@ function ActivityDetailContent({
               <Pencil className="mr-1.5 h-4 w-4" aria-hidden="true" />
               Editar
             </Button>
+          </div>
+          {onAddExpense && (
             <Button
               variant="outline"
               size="sm"
-              className="flex-1 text-destructive hover:text-destructive"
+              className="w-full"
               onClick={() => {
                 onClose();
-                onDelete(activity);
+                onAddExpense(activity);
               }}
             >
-              <Trash2 className="mr-1.5 h-4 w-4" aria-hidden="true" />
-              Excluir
+              <DollarSign className="mr-1.5 h-4 w-4" aria-hidden="true" />
+              Adicionar Despesa
             </Button>
-          </div>
+          )}
+          <Separator className="my-2" />
+          <button
+            type="button"
+            className="mx-auto block text-xs text-destructive hover:text-destructive/80 hover:underline transition-colors py-2"
+            onClick={() => {
+              onClose();
+              onDelete(activity);
+            }}
+          >
+            Excluir atividade
+          </button>
         </div>
       </div>
     </>

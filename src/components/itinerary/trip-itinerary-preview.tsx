@@ -4,12 +4,15 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { eachDayOfInterval, format, parseISO } from 'date-fns';
-import { Calendar, Plus } from 'lucide-react';
+import { Calendar, Clock, MapPin, Navigation, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getTripActivitiesByDate, getTripActivitiesIndex } from '@/lib/supabase/activities';
+import { Badge } from '@/components/ui/badge';
 import { routes } from '@/lib/routes';
+import { computeActivityTimingMap } from '@/lib/utils/activity-timing';
+import { formatTime, formatDuration, getCategoryInfo } from '@/lib/utils/activity-categories';
 import type { Activity } from '@/types/database';
 import type { ActivityWithCreator } from '@/lib/supabase/activities';
 
@@ -166,6 +169,36 @@ export function TripItineraryPreview({
     if (next) loadDate(next);
   }, [activeDate, activeIndex, tripDays, loadDate]);
 
+  // Timing: refresh every 60s to update "Agora/Próxima" badges
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const todayStr = format(now, 'yyyy-MM-dd');
+  const isTripInProgress = todayStr >= startDate && todayStr <= endDate;
+
+  // Compute timing map for today's activities
+  const timingMap = useMemo(() => {
+    if (!isTripInProgress) return new Map();
+    const todayActivities = activitiesByDate[todayStr] || [];
+    if (todayActivities.length === 0) return new Map();
+    return computeActivityTimingMap(todayActivities, now);
+  }, [isTripInProgress, todayStr, activitiesByDate, now]);
+
+  // Find the highlighted activity (now > next)
+  const highlightedActivity = useMemo(() => {
+    if (!isTripInProgress) return null;
+    const todayActivities = activitiesByDate[todayStr] || [];
+    // Prefer "now", fallback to "next"
+    const nowActivity = todayActivities.find((a) => timingMap.get(a.id) === 'now');
+    if (nowActivity) return { activity: nowActivity, status: 'now' as const };
+    const nextActivity = todayActivities.find((a) => timingMap.get(a.id) === 'next');
+    if (nextActivity) return { activity: nextActivity, status: 'next' as const };
+    return null;
+  }, [isTripInProgress, todayStr, activitiesByDate, timingMap]);
+
   const dayCountsForCarousel = useMemo(() => {
     const out: Record<string, { length: number }> = {};
     for (const d of tripDays) {
@@ -319,6 +352,7 @@ export function TripItineraryPreview({
             activity={activity}
             isFirst={idx === 0}
             isLast={idx === list.length - 1}
+            timingStatus={timingMap.get(activity.id) ?? null}
             onClick={(a) => {
               setViewingActivity(a);
               setIsDetailOpen(true);
@@ -358,6 +392,17 @@ export function TripItineraryPreview({
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
+          {/* Highlighted "Now" or "Next" activity card */}
+          {highlightedActivity && (
+            <HighlightedActivityCard
+              activity={highlightedActivity.activity}
+              status={highlightedActivity.status}
+              onClick={(a) => {
+                setViewingActivity(a);
+                setIsDetailOpen(true);
+              }}
+            />
+          )}
           <DayCarousel
             dates={tripDays}
             tripDays={tripDays}
@@ -414,5 +459,86 @@ export function TripItineraryPreview({
         onSuccess={handleDeleteSuccess}
       />
     </>
+  );
+}
+
+function HighlightedActivityCard({
+  activity,
+  status,
+  onClick,
+}: {
+  activity: ActivityWithCreator;
+  status: 'now' | 'next';
+  onClick: (activity: ActivityWithCreator) => void;
+}) {
+  const categoryInfo = getCategoryInfo(activity.category);
+  const CategoryIcon = categoryInfo.icon;
+  const locationMapsUrl = activity.location
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(activity.location)}`
+    : null;
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      className="rounded-lg border border-primary/30 bg-gradient-to-r from-primary/5 to-transparent p-3 cursor-pointer transition-colors hover:bg-primary/10"
+      onClick={() => onClick(activity)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick(activity);
+        }
+      }}
+    >
+      <div className="flex items-center gap-2 mb-2">
+        <Badge variant={status === 'now' ? 'default' : 'secondary'} className="text-[10px] h-5">
+          {status === 'now' ? 'Acontecendo agora' : 'Próxima atividade'}
+        </Badge>
+      </div>
+      <div className="flex items-start gap-3">
+        <div
+          className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg ${categoryInfo.bgColor}`}
+        >
+          <CategoryIcon className={`h-4 w-4 ${categoryInfo.color}`} aria-hidden="true" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium truncate">{activity.title}</p>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+            {activity.start_time && (
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Clock className="h-3 w-3" aria-hidden="true" />
+                {formatTime(activity.start_time)}
+                {activity.duration_minutes && (
+                  <span className="text-muted-foreground/60">
+                    {' '}
+                    · {formatDuration(activity.duration_minutes)}
+                  </span>
+                )}
+              </span>
+            )}
+            {activity.location && (
+              <span className="flex items-center gap-1 text-xs text-muted-foreground truncate">
+                <MapPin className="h-3 w-3 flex-shrink-0" aria-hidden="true" />
+                <span className="truncate">{activity.location}</span>
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+      {locationMapsUrl && (
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full mt-2 h-8 text-xs"
+          asChild
+          onClick={(e) => e.stopPropagation()}
+        >
+          <a href={locationMapsUrl} target="_blank" rel="noopener noreferrer">
+            <Navigation className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+            Como chegar
+          </a>
+        </Button>
+      )}
+    </div>
   );
 }

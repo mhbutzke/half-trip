@@ -30,8 +30,10 @@ import { ActivityDetailSheet } from './activity-detail-sheet';
 import { reorderActivities } from '@/lib/supabase/activities';
 import { useTripRealtime } from '@/hooks/use-trip-realtime';
 import { activityCategoryList } from '@/lib/utils/activity-categories';
+import { computeActivityTimingMap } from '@/lib/utils/activity-timing';
 import type { ActivityWithCreator } from '@/lib/supabase/activities';
 import type { Activity, ActivityCategory } from '@/types/database';
+import type { TripParticipantResolved } from '@/lib/supabase/participants';
 
 const DeleteActivityDialog = dynamic(
   () => import('./delete-activity-dialog').then((mod) => ({ default: mod.DeleteActivityDialog })),
@@ -58,6 +60,13 @@ const FlightSearchDialog = dynamic(
     })),
   { ssr: false }
 );
+const AddExpenseDialog = dynamic(
+  () =>
+    import('@/components/expenses/add-expense-dialog').then((mod) => ({
+      default: mod.AddExpenseDialog,
+    })),
+  { ssr: false }
+);
 const TripActivityMap = dynamic(
   () =>
     import('@/components/maps/trip-activity-map').then((mod) => ({
@@ -75,6 +84,9 @@ interface ItineraryListProps {
   googleCalendarConnected: boolean;
   currentUserId?: string;
   transportType?: string;
+  participants?: TripParticipantResolved[];
+  currentParticipantId?: string;
+  baseCurrency?: string;
 }
 
 export function ItineraryList({
@@ -83,7 +95,11 @@ export function ItineraryList({
   endDate,
   initialActivities,
   googleCalendarConnected,
+  currentUserId,
   transportType = 'plane',
+  participants = [],
+  currentParticipantId,
+  baseCurrency = 'BRL',
 }: ItineraryListProps) {
   const router = useRouter();
   const [activities, setActivities] = useState<ActivityWithCreator[]>(initialActivities);
@@ -103,8 +119,23 @@ export function ItineraryList({
   const [viewingActivity, setViewingActivity] = useState<ActivityWithCreator | null>(null);
   const [isDetailSheetOpen, setIsDetailSheetOpen] = useState(false);
 
+  // Expense dialog state (linked to activity)
+  const [expenseActivity, setExpenseActivity] = useState<ActivityWithCreator | null>(null);
+  const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false);
+
   // Carousel state
   const [activeDayIndex, setActiveDayIndex] = useState(0);
+
+  // Activity timing (Agora/Próxima indicators)
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(interval);
+  }, []);
+  const activityTimingMap = useMemo(
+    () => computeActivityTimingMap(activities, now),
+    [activities, now]
+  );
 
   useTripRealtime({ tripId });
 
@@ -537,7 +568,7 @@ export function ItineraryList({
             tripId={tripId}
             defaultDate={defaultActivityDate}
             trigger={
-              <Button size="sm" className="h-11 sm:h-9">
+              <Button size="sm" className="hidden md:flex h-11 sm:h-9">
                 <Plus className="mr-2 h-4 w-4" />
                 Nova atividade
               </Button>
@@ -611,6 +642,7 @@ export function ItineraryList({
                       onAddActivity={handleAddActivity}
                       onActivityClick={handleActivityClick}
                       draggable={!isFilteredView}
+                      activityTimingMap={activityTimingMap}
                     />
                   );
                 })}
@@ -650,6 +682,14 @@ export function ItineraryList({
         }}
         onSync={handleSyncActivity}
         isSyncing={syncingActivityId === viewingActivity?.id}
+        onAddExpense={
+          participants.length > 0
+            ? (activity) => {
+                setExpenseActivity(activity);
+                setIsExpenseDialogOpen(true);
+              }
+            : undefined
+        }
       />
 
       {/* Add Activity Dialog */}
@@ -676,6 +716,29 @@ export function ItineraryList({
         onOpenChange={setIsDeleteDialogOpen}
         onSuccess={handleDeleteSuccess}
       />
+
+      {/* Add Expense Dialog (linked to activity) */}
+      {currentUserId && currentParticipantId && expenseActivity && (
+        <AddExpenseDialog
+          tripId={tripId}
+          participants={participants}
+          currentUserId={currentUserId}
+          currentParticipantId={currentParticipantId}
+          baseCurrency={baseCurrency}
+          open={isExpenseDialogOpen}
+          onOpenChange={(open) => {
+            setIsExpenseDialogOpen(open);
+            if (!open) setExpenseActivity(null);
+          }}
+          defaultDescription={expenseActivity.title}
+          defaultActivityId={expenseActivity.id}
+          onSuccess={() => {
+            setIsExpenseDialogOpen(false);
+            setExpenseActivity(null);
+            router.refresh();
+          }}
+        />
+      )}
 
       {/* Mobile FAB */}
       <FAB

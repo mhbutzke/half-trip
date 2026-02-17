@@ -36,6 +36,7 @@ export type CreateExpenseInput = {
   category: ExpenseCategory;
   paid_by_participant_id: string;
   notes?: string | null;
+  activity_id?: string | null;
   splits: {
     participant_id: string;
     amount: number;

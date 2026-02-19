@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
-import { GoogleMap, MarkerF, PolylineF } from '@react-google-maps/api';
+import { GoogleMap, MarkerF, MarkerClustererF, PolylineF } from '@react-google-maps/api';
 import { format, parseISO } from 'date-fns';
 import { useGoogleMaps } from './google-maps-provider';
 import { ActivityInfoWindow } from './activity-info-window';
@@ -226,21 +226,33 @@ export function TripActivityMap({
           styles: isDark ? darkModeMapStyles : undefined,
         }}
       >
-        {filteredActivities.map((activity) => (
-          <MarkerF
-            key={activity.id}
-            position={activity.coords}
-            onClick={() => setSelectedId(activity.id)}
-            icon={{
-              path: google.maps.SymbolPath.CIRCLE,
-              fillColor: getMarkerColor(activity.category),
-              fillOpacity: 1,
-              strokeColor: '#ffffff',
-              strokeWeight: 2,
-              scale: 10,
-            }}
-          />
-        ))}
+        <MarkerClustererF
+          options={{
+            maxZoom: 14,
+            minimumClusterSize: 5,
+          }}
+        >
+          {(clusterer) => (
+            <>
+              {filteredActivities.map((activity) => (
+                <MarkerF
+                  key={activity.id}
+                  position={activity.coords}
+                  clusterer={clusterer}
+                  onClick={() => setSelectedId(activity.id)}
+                  icon={{
+                    path: google.maps.SymbolPath.CIRCLE,
+                    fillColor: getMarkerColor(activity.category),
+                    fillOpacity: 1,
+                    strokeColor: '#ffffff',
+                    strokeWeight: 2,
+                    scale: 10,
+                  }}
+                />
+              ))}
+            </>
+          )}
+        </MarkerClustererF>
 
         {visibleDays.map((date) => {
           const dayActivities = activitiesByDay.get(date);

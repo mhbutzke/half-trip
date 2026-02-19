@@ -1,6 +1,6 @@
 'use server';
 
-import { createClient } from './server';
+import { requireAuth, requireTripMember } from './auth-helpers';
 import { revalidate } from '@/lib/utils/revalidation';
 import { logActivity } from './activity-log';
 import { canOnOwn } from '@/lib/permissions/trip-permissions';
@@ -33,28 +33,11 @@ export type UpdateNoteInput = {
  * Creates a new note for a trip
  */
 export async function createNote(input: CreateNoteInput): Promise<NoteResult> {
-  const supabase = await createClient();
-
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
-    return { error: 'Não autorizado' };
+  const auth = await requireTripMember(input.trip_id);
+  if (!auth.ok) {
+    return { error: auth.error };
   }
-
-  // Check if user is a member of the trip
-  const { data: member } = await supabase
-    .from('trip_members')
-    .select('id')
-    .eq('trip_id', input.trip_id)
-    .eq('user_id', authUser.id)
-    .single();
-
-  if (!member) {
-    return { error: 'Você não é membro desta viagem' };
-  }
+  const { supabase, user: authUser } = auth;
 
   const { data: note, error } = await supabase
     .from('trip_notes')
@@ -87,16 +70,11 @@ export async function createNote(input: CreateNoteInput): Promise<NoteResult> {
  * Updates an existing note
  */
 export async function updateNote(noteId: string, input: UpdateNoteInput): Promise<NoteResult> {
-  const supabase = await createClient();
-
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
-    return { error: 'Não autorizado' };
+  const auth = await requireAuth();
+  if (!auth.ok) {
+    return { error: auth.error };
   }
+  const { supabase, user: authUser } = auth;
 
   // Get the note to check trip membership and ownership
   const { data: note } = await supabase
@@ -154,16 +132,11 @@ export async function updateNote(noteId: string, input: UpdateNoteInput): Promis
  * Deletes a note
  */
 export async function deleteNote(noteId: string): Promise<NoteResult> {
-  const supabase = await createClient();
-
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
-    return { error: 'Não autorizado' };
+  const auth = await requireAuth();
+  if (!auth.ok) {
+    return { error: auth.error };
   }
+  const { supabase, user: authUser } = auth;
 
   // Get the note to check trip membership and ownership
   const { data: note } = await supabase
@@ -215,28 +188,11 @@ export async function deleteNote(noteId: string): Promise<NoteResult> {
  * Gets all notes for a trip, ordered by creation date (newest first)
  */
 export async function getTripNotes(tripId: string): Promise<NoteWithCreator[]> {
-  const supabase = await createClient();
-
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
+  const auth = await requireTripMember(tripId);
+  if (!auth.ok) {
     return [];
   }
-
-  // Check if user is a member of the trip
-  const { data: member } = await supabase
-    .from('trip_members')
-    .select('id')
-    .eq('trip_id', tripId)
-    .eq('user_id', authUser.id)
-    .single();
-
-  if (!member) {
-    return [];
-  }
+  const { supabase } = auth;
 
   const { data: notes } = await supabase
     .from('trip_notes')
@@ -260,16 +216,11 @@ export async function getTripNotes(tripId: string): Promise<NoteWithCreator[]> {
  * Gets a single note by ID
  */
 export async function getNoteById(noteId: string): Promise<NoteWithCreator | null> {
-  const supabase = await createClient();
-
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
+  const auth = await requireAuth();
+  if (!auth.ok) {
     return null;
   }
+  const { supabase, user: authUser } = auth;
 
   // Get note with creator info
   const { data: note } = await supabase
@@ -310,28 +261,11 @@ export async function getNoteById(noteId: string): Promise<NoteWithCreator | nul
  * Gets notes count for a trip
  */
 export async function getNotesCount(tripId: string): Promise<number> {
-  const supabase = await createClient();
-
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
+  const auth = await requireTripMember(tripId);
+  if (!auth.ok) {
     return 0;
   }
-
-  // Check if user is a member of the trip
-  const { data: member } = await supabase
-    .from('trip_members')
-    .select('id')
-    .eq('trip_id', tripId)
-    .eq('user_id', authUser.id)
-    .single();
-
-  if (!member) {
-    return 0;
-  }
+  const { supabase } = auth;
 
   const { count } = await supabase
     .from('trip_notes')

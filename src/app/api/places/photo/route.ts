@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { rateLimit } from '@/lib/utils/rate-limit';
+
+// 60 requests per minute per user (photos are cheaper, often loaded in batches)
+const RATE_LIMIT = { limit: 60, windowSeconds: 60 } as const;
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
@@ -9,6 +13,17 @@ export async function GET(request: NextRequest) {
 
   if (!user) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  }
+
+  const rl = rateLimit(`places-photo:${user.id}`, RATE_LIMIT);
+  if (!rl.success) {
+    return NextResponse.json(
+      { error: 'Muitas requisições. Tente novamente em breve.' },
+      {
+        status: 429,
+        headers: { 'Retry-After': String(Math.ceil((rl.resetAt - Date.now()) / 1000)) },
+      }
+    );
   }
 
   const reference = request.nextUrl.searchParams.get('reference');

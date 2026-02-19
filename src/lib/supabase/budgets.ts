@@ -1,6 +1,6 @@
 'use server';
 
-import { createClient } from './server';
+import { requireAuth, requireTripMember, requireTripOrganizer } from './auth-helpers';
 import { revalidate } from '@/lib/utils/revalidation';
 import type { TripBudget, BudgetWithSpending, BudgetSummary } from '@/types/budget';
 import type { ExpenseCategory } from '@/types/database';
@@ -13,16 +13,10 @@ export type BudgetResult = {
 };
 
 export async function getTripBudgets(tripId: string): Promise<TripBudget[]> {
-  const supabase = await createClient();
+  const auth = await requireTripMember(tripId);
+  if (!auth.ok) return [];
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) return [];
-
-  const { data } = await supabase
+  const { data } = await auth.supabase
     .from('trip_budgets')
     .select('*')
     .eq('trip_id', tripId)
@@ -32,27 +26,12 @@ export async function getTripBudgets(tripId: string): Promise<TripBudget[]> {
 }
 
 export async function getBudgetSummary(tripId: string): Promise<BudgetSummary | null> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) return null;
-
-  const { data: member } = await supabase
-    .from('trip_members')
-    .select('id')
-    .eq('trip_id', tripId)
-    .eq('user_id', user.id)
-    .single();
-
-  if (!member) return null;
+  const auth = await requireTripMember(tripId);
+  if (!auth.ok) return null;
 
   const [budgetsResult, expensesResult] = await Promise.all([
-    supabase.from('trip_budgets').select('*').eq('trip_id', tripId),
-    supabase.from('expenses').select('amount, category, exchange_rate').eq('trip_id', tripId),
+    auth.supabase.from('trip_budgets').select('*').eq('trip_id', tripId),
+    auth.supabase.from('expenses').select('amount, category, exchange_rate').eq('trip_id', tripId),
   ]);
 
   const budgets = (budgetsResult.data as TripBudget[]) || [];
@@ -101,27 +80,12 @@ export async function createBudget(input: {
   amount: number;
   currency?: string;
 }): Promise<BudgetResult> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    return { error: 'Não autorizado' };
+  const auth = await requireTripOrganizer(input.trip_id);
+  if (!auth.ok) {
+    return { error: auth.error };
   }
 
-  const { data: member } = await supabase
-    .from('trip_members')
-    .select('role')
-    .eq('trip_id', input.trip_id)
-    .eq('user_id', user.id)
-    .single();
-
-  if (!member || member.role !== 'organizer') {
-    return { error: 'Apenas organizadores podem definir orçamentos' };
-  }
+  const { supabase, user } = auth;
 
   // Check if budget already exists for this category
   const { data: existing } = await supabase
@@ -165,16 +129,12 @@ export async function createBudget(input: {
 }
 
 export async function updateBudget(budgetId: string, amount: number): Promise<BudgetResult> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    return { error: 'Não autorizado' };
+  const auth = await requireAuth();
+  if (!auth.ok) {
+    return { error: auth.error };
   }
+
+  const { supabase } = auth;
 
   const { data: budget } = await supabase
     .from('trip_budgets')
@@ -206,16 +166,12 @@ export async function updateBudget(budgetId: string, amount: number): Promise<Bu
 }
 
 export async function deleteBudget(budgetId: string): Promise<BudgetResult> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    return { error: 'Não autorizado' };
+  const auth = await requireAuth();
+  if (!auth.ok) {
+    return { error: auth.error };
   }
+
+  const { supabase } = auth;
 
   const { data: budget } = await supabase
     .from('trip_budgets')
@@ -248,12 +204,7 @@ export async function deleteBudget(budgetId: string): Promise<BudgetResult> {
 export async function getExpensesByCategory(
   tripId: string
 ): Promise<Record<ExpenseCategory, number>> {
-  const supabase = await createClient();
-
-  const { data: expenses } = await supabase
-    .from('expenses')
-    .select('amount, category, exchange_rate')
-    .eq('trip_id', tripId);
+  const auth = await requireTripMember(tripId);
 
   const result: Record<string, number> = {
     accommodation: 0,
@@ -263,6 +214,13 @@ export async function getExpensesByCategory(
     shopping: 0,
     other: 0,
   };
+
+  if (!auth.ok) return result as Record<ExpenseCategory, number>;
+
+  const { data: expenses } = await auth.supabase
+    .from('expenses')
+    .select('amount, category, exchange_rate')
+    .eq('trip_id', tripId);
 
   if (expenses) {
     for (const expense of expenses) {

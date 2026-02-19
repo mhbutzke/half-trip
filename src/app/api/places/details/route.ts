@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { rateLimit } from '@/lib/utils/rate-limit';
+
+// 30 requests per minute per user
+const RATE_LIMIT = { limit: 30, windowSeconds: 60 } as const;
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
@@ -10,6 +14,17 @@ export async function GET(request: NextRequest) {
 
   if (!user) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  }
+
+  const rl = rateLimit(`places-details:${user.id}`, RATE_LIMIT);
+  if (!rl.success) {
+    return NextResponse.json(
+      { error: 'Muitas requisições. Tente novamente em breve.' },
+      {
+        status: 429,
+        headers: { 'Retry-After': String(Math.ceil((rl.resetAt - Date.now()) / 1000)) },
+      }
+    );
   }
 
   const placeId = request.nextUrl.searchParams.get('place_id');

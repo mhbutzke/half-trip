@@ -1,6 +1,6 @@
 'use server';
 
-import { createClient } from './server';
+import { requireAuth, requireTripMember } from './auth-helpers';
 import { revalidate } from '@/lib/utils/revalidation';
 import { logActivity } from './activity-log';
 import { canOnOwn } from '@/lib/permissions/trip-permissions';
@@ -13,53 +13,41 @@ import type {
 import { SUPPORTED_CURRENCIES, type SupportedCurrency } from '@/types/currency';
 
 /**
- * Creates a new expense for a trip with splits
+ * Creates a new expense for a trip with splits.
+ * Uses atomic RPC function to prevent orphaned expenses if splits insertion fails.
  */
 export async function createExpense(input: CreateExpenseInput): Promise<ExpenseResult> {
-  const supabase = await createClient();
-
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
-    return { error: 'Não autorizado' };
+  const auth = await requireTripMember(input.trip_id);
+  if (!auth.ok) {
+    return { error: auth.error };
   }
 
-  // Check if user is a member of the trip
-  const { data: member } = await supabase
-    .from('trip_members')
-    .select('id')
-    .eq('trip_id', input.trip_id)
-    .eq('user_id', authUser.id)
-    .single();
+  const { supabase } = auth;
 
-  if (!member) {
-    return { error: 'Você não é membro desta viagem' };
-  }
+  // Load trip participants (IDs only for validation) and base_currency in parallel
+  const [participantsResult, tripResult] = await Promise.all([
+    supabase.from('trip_participants').select('id').eq('trip_id', input.trip_id),
+    supabase.from('trips').select('base_currency').eq('id', input.trip_id).single(),
+  ]);
 
-  // Load all trip participants (with id, user_id, type)
-  const { data: tripParticipants } = await supabase
-    .from('trip_participants')
-    .select('id, user_id, type')
-    .eq('trip_id', input.trip_id);
+  const tripParticipants = participantsResult.data;
+  const trip = tripResult.data;
 
   if (!tripParticipants || tripParticipants.length === 0) {
     return { error: 'Nenhum participante encontrado para esta viagem' };
   }
 
-  // Build maps: participantById (id → participant) and participantByUserId (user_id → id)
-  const participantById = new Map(tripParticipants.map((p) => [p.id, p]));
-
-  // Validate paid_by_participant_id exists in trip_participants
-  const paidByParticipant = participantById.get(input.paid_by_participant_id);
-  if (!paidByParticipant) {
-    return { error: 'O participante que pagou não pertence a esta viagem' };
+  if (!trip) {
+    return { error: 'Viagem não encontrada' };
   }
 
-  // Derive paid_by (user_id) from participant — null for guests
-  const paidByUserId = paidByParticipant.type === 'guest' ? null : paidByParticipant.user_id;
+  // Build set for fast lookup
+  const participantIds = new Set(tripParticipants.map((p) => p.id));
+
+  // Validate paid_by_participant_id exists in trip_participants
+  if (!participantIds.has(input.paid_by_participant_id)) {
+    return { error: 'O participante que pagou não pertence a esta viagem' };
+  }
 
   // Validate splits sum equals amount (with small tolerance for floating point)
   const splitsTotal = input.splits.reduce((sum, split) => sum + split.amount, 0);
@@ -73,68 +61,42 @@ export async function createExpense(input: CreateExpenseInput): Promise<ExpenseR
     return { error: 'Moeda inválida' };
   }
 
-  // Get trip base_currency to determine exchange_rate
-  const { data: trip } = await supabase
-    .from('trips')
-    .select('base_currency')
-    .eq('id', input.trip_id)
-    .single();
-
-  if (!trip) {
-    return { error: 'Viagem não encontrada' };
-  }
-
   // Force exchange_rate = 1 when currency matches base, otherwise require > 0
   const exchangeRate = currency === trip.base_currency ? 1 : (input.exchange_rate ?? 1);
   if (exchangeRate <= 0) {
     return { error: 'Taxa de câmbio deve ser maior que zero' };
   }
 
-  // Create the expense
-  const { data: expense, error: expenseError } = await supabase
-    .from('expenses')
-    .insert({
-      trip_id: input.trip_id,
-      description: input.description,
-      amount: input.amount,
-      currency,
-      exchange_rate: exchangeRate,
-      date: input.date,
-      category: input.category,
-      paid_by: paidByUserId,
-      paid_by_participant_id: input.paid_by_participant_id,
-      created_by: authUser.id,
-      notes: input.notes || null,
-      activity_id: input.activity_id || null,
-    })
-    .select('id')
-    .single();
+  // Build splits JSONB for RPC — legacy user_id is auto-populated by DB trigger
+  const splitsJsonb = input.splits.map((split) => ({
+    user_id: null, // auto-populated by trg_expense_splits_sync_legacy_user
+    participant_id: split.participant_id,
+    amount: split.amount,
+    percentage: split.percentage || null,
+  }));
 
-  if (expenseError) {
-    return { error: expenseError.message };
-  }
-
-  // Create expense splits — derive user_id from participant (null for guests)
-  const splits = input.splits.map((split) => {
-    const splitParticipant = participantById.get(split.participant_id);
-    const splitUserId =
-      splitParticipant && splitParticipant.type !== 'guest' ? splitParticipant.user_id : null;
-    return {
-      expense_id: expense.id,
-      user_id: splitUserId,
-      participant_id: split.participant_id,
-      amount: split.amount,
-      percentage: split.percentage || null,
-    };
+  // Atomic RPC: creates expense + splits in a single transaction
+  // Legacy paid_by is auto-populated by trg_expenses_sync_legacy_user trigger
+  const { data: expenseId, error: rpcError } = await supabase.rpc('create_expense_with_splits', {
+    p_trip_id: input.trip_id,
+    p_description: input.description,
+    p_amount: input.amount,
+    p_currency: currency,
+    p_exchange_rate: exchangeRate,
+    p_date: input.date,
+    p_category: input.category,
+    p_paid_by: null, // auto-populated by DB trigger
+    p_paid_by_participant_id: input.paid_by_participant_id,
+    p_notes: input.notes || null,
+    p_activity_id: input.activity_id || null,
+    p_splits: splitsJsonb,
   });
 
-  const { error: splitsError } = await supabase.from('expense_splits').insert(splits);
-
-  if (splitsError) {
-    // Rollback: delete the expense if splits creation fails
-    await supabase.from('expenses').delete().eq('id', expense.id);
-    return { error: splitsError.message };
+  if (rpcError || !expenseId) {
+    return { error: rpcError?.message ?? 'Erro ao criar despesa' };
   }
+
+  const resultId = String(expenseId);
 
   revalidate.tripExpenses(input.trip_id);
 
@@ -142,11 +104,11 @@ export async function createExpense(input: CreateExpenseInput): Promise<ExpenseR
     tripId: input.trip_id,
     action: 'created',
     entityType: 'expense',
-    entityId: expense.id,
+    entityId: resultId,
     metadata: { description: input.description, amount: input.amount, currency },
   });
 
-  return { success: true, expenseId: expense.id };
+  return { success: true, expenseId: resultId };
 }
 
 /**
@@ -156,16 +118,11 @@ export async function updateExpense(
   expenseId: string,
   input: UpdateExpenseInput
 ): Promise<ExpenseResult> {
-  const supabase = await createClient();
-
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
-    return { error: 'Não autorizado' };
+  const auth = await requireAuth();
+  if (!auth.ok) {
+    return { error: auth.error };
   }
+  const { supabase, user: authUser } = auth;
 
   // Get the expense to check trip membership and ownership
   const { data: expense } = await supabase
@@ -178,7 +135,7 @@ export async function updateExpense(
     return { error: 'Despesa não encontrada' };
   }
 
-  // Check if user is a member of the trip
+  // Check membership and role
   const { data: member } = await supabase
     .from('trip_members')
     .select('role')
@@ -190,30 +147,25 @@ export async function updateExpense(
     return { error: 'Você não é membro desta viagem' };
   }
 
-  // Only the creator or organizers can edit an expense
   if (!canOnOwn('EDIT', member.role, expense.created_by === authUser.id)) {
     return { error: 'Você não tem permissão para editar esta despesa' };
   }
 
-  // Load all trip participants (with id, user_id, type)
+  // Load trip participants (IDs only for validation)
   const { data: tripParticipants } = await supabase
     .from('trip_participants')
-    .select('id, user_id, type')
+    .select('id')
     .eq('trip_id', expense.trip_id);
 
   if (!tripParticipants || tripParticipants.length === 0) {
     return { error: 'Nenhum participante encontrado para esta viagem' };
   }
 
-  // Build map: participantById (id → participant)
-  const participantById = new Map(tripParticipants.map((p) => [p.id, p]));
+  const participantIds = new Set(tripParticipants.map((p) => p.id));
 
-  // If paid_by_participant_id is being updated, validate the participant exists
-  if (input.paid_by_participant_id) {
-    const paidByParticipant = participantById.get(input.paid_by_participant_id);
-    if (!paidByParticipant) {
-      return { error: 'O participante que pagou não pertence a esta viagem' };
-    }
+  // If paid_by_participant_id is being updated, validate it exists
+  if (input.paid_by_participant_id && !participantIds.has(input.paid_by_participant_id)) {
+    return { error: 'O participante que pagou não pertence a esta viagem' };
   }
 
   // Validate splits if provided
@@ -231,27 +183,22 @@ export async function updateExpense(
       return { error: 'Moeda inválida' };
     }
 
-    // Get trip base_currency
     const { data: trip } = await supabase
       .from('trips')
       .select('base_currency')
       .eq('id', expense.trip_id)
       .single();
 
-    if (trip) {
-      // Force exchange_rate = 1 when currency matches base
-      if (currency === trip.base_currency) {
-        input.exchange_rate = 1;
-      }
+    if (trip && currency === trip.base_currency) {
+      input.exchange_rate = 1;
     }
   }
 
-  // Validate exchange_rate if provided
   if (input.exchange_rate !== undefined && input.exchange_rate <= 0) {
     return { error: 'Taxa de câmbio deve ser maior que zero' };
   }
 
-  // Update the expense
+  // Build update data — legacy paid_by auto-populated by DB trigger
   const updateData: Record<string, unknown> = {
     ...(input.description !== undefined && { description: input.description }),
     ...(input.amount !== undefined && { amount: input.amount }),
@@ -262,12 +209,9 @@ export async function updateExpense(
     ...(input.notes !== undefined && { notes: input.notes }),
   };
 
-  // Update paid_by_participant_id and derive paid_by (user_id)
   if (input.paid_by_participant_id !== undefined) {
-    const paidByParticipant = participantById.get(input.paid_by_participant_id);
     updateData.paid_by_participant_id = input.paid_by_participant_id;
-    updateData.paid_by =
-      paidByParticipant && paidByParticipant.type !== 'guest' ? paidByParticipant.user_id : null;
+    updateData.paid_by = null; // auto-populated by trg_expenses_sync_legacy_user
   }
 
   const { error: updateError } = await supabase
@@ -279,34 +223,18 @@ export async function updateExpense(
     return { error: updateError.message };
   }
 
-  // Update splits if provided
+  // Replace splits if provided — legacy user_id auto-populated by DB trigger
   if (input.splits) {
-    // Delete existing splits
-    const { error: deleteError } = await supabase
-      .from('expense_splits')
-      .delete()
-      .eq('expense_id', expenseId);
+    await supabase.from('expense_splits').delete().eq('expense_id', expenseId);
 
-    if (deleteError) {
-      return { error: deleteError.message };
-    }
-
-    // Create new splits — derive user_id from participant (null for guests)
-    const splits = input.splits.map((split) => {
-      const splitParticipant = participantById.get(split.participant_id);
-      const splitUserId =
-        splitParticipant && splitParticipant.type !== 'guest' ? splitParticipant.user_id : null;
-      return {
-        expense_id: expenseId,
-        user_id: splitUserId,
-        participant_id: split.participant_id,
-        amount: split.amount,
-        percentage: split.percentage || null,
-      };
-    });
+    const splits = input.splits.map((split) => ({
+      expense_id: expenseId,
+      participant_id: split.participant_id,
+      amount: split.amount,
+      percentage: split.percentage || null,
+    }));
 
     const { error: splitsError } = await supabase.from('expense_splits').insert(splits);
-
     if (splitsError) {
       return { error: splitsError.message };
     }
@@ -329,21 +257,16 @@ export async function updateExpense(
  * Deletes an expense
  */
 export async function deleteExpense(expenseId: string): Promise<ExpenseResult> {
-  const supabase = await createClient();
-
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
-    return { error: 'Não autorizado' };
+  const auth = await requireAuth();
+  if (!auth.ok) {
+    return { error: auth.error };
   }
+  const { supabase, user: authUser } = auth;
 
-  // Get the expense to check trip membership and ownership
+  // Get expense with description for activity log
   const { data: expense } = await supabase
     .from('expenses')
-    .select('trip_id, created_by')
+    .select('trip_id, created_by, description')
     .eq('id', expenseId)
     .single();
 
@@ -351,7 +274,7 @@ export async function deleteExpense(expenseId: string): Promise<ExpenseResult> {
     return { error: 'Despesa não encontrada' };
   }
 
-  // Check if user is a member of the trip
+  // Check membership and role
   const { data: member } = await supabase
     .from('trip_members')
     .select('role')
@@ -363,19 +286,11 @@ export async function deleteExpense(expenseId: string): Promise<ExpenseResult> {
     return { error: 'Você não é membro desta viagem' };
   }
 
-  // Only the creator or organizers can delete an expense
   if (!canOnOwn('DELETE', member.role, expense.created_by === authUser.id)) {
     return { error: 'Você não tem permissão para excluir esta despesa' };
   }
 
-  // Get description before deleting for the activity log
-  const { data: expenseFull } = await supabase
-    .from('expenses')
-    .select('description')
-    .eq('id', expenseId)
-    .single();
-
-  // Delete expense (splits will be cascade deleted by FK)
+  // Delete expense (splits cascade deleted by FK)
   const { error } = await supabase.from('expenses').delete().eq('id', expenseId);
 
   if (error) {
@@ -389,7 +304,7 @@ export async function deleteExpense(expenseId: string): Promise<ExpenseResult> {
     action: 'deleted',
     entityType: 'expense',
     entityId: expenseId,
-    metadata: { description: expenseFull?.description },
+    metadata: { description: expense.description },
   });
 
   return { success: true };
@@ -399,30 +314,10 @@ export async function deleteExpense(expenseId: string): Promise<ExpenseResult> {
  * Gets all expenses for a trip, ordered by date (newest first)
  */
 export async function getTripExpenses(tripId: string): Promise<ExpenseWithDetails[]> {
-  const supabase = await createClient();
+  const auth = await requireTripMember(tripId);
+  if (!auth.ok) return [];
 
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
-    return [];
-  }
-
-  // Check if user is a member of the trip
-  const { data: member } = await supabase
-    .from('trip_members')
-    .select('id')
-    .eq('trip_id', tripId)
-    .eq('user_id', authUser.id)
-    .single();
-
-  if (!member) {
-    return [];
-  }
-
-  const { data: expenses } = await supabase
+  const { data: expenses } = await auth.supabase
     .from('expenses')
     .select(
       `
@@ -458,18 +353,10 @@ export async function getTripExpenses(tripId: string): Promise<ExpenseWithDetail
  * Gets a single expense by ID
  */
 export async function getExpenseById(expenseId: string): Promise<ExpenseWithDetails | null> {
-  const supabase = await createClient();
+  const auth = await requireAuth();
+  if (!auth.ok) return null;
+  const { supabase, user: authUser } = auth;
 
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
-    return null;
-  }
-
-  // Get expense with details
   const { data: expense } = await supabase
     .from('expenses')
     .select(
@@ -498,11 +385,9 @@ export async function getExpenseById(expenseId: string): Promise<ExpenseWithDeta
     .eq('id', expenseId)
     .single();
 
-  if (!expense) {
-    return null;
-  }
+  if (!expense) return null;
 
-  // Check if user is a member of the trip
+  // Verify membership
   const { data: member } = await supabase
     .from('trip_members')
     .select('id')
@@ -510,9 +395,7 @@ export async function getExpenseById(expenseId: string): Promise<ExpenseWithDeta
     .eq('user_id', authUser.id)
     .single();
 
-  if (!member) {
-    return null;
-  }
+  if (!member) return null;
 
   return expense as ExpenseWithDetails;
 }
@@ -521,30 +404,10 @@ export async function getExpenseById(expenseId: string): Promise<ExpenseWithDeta
  * Gets expenses count for a trip
  */
 export async function getExpensesCount(tripId: string): Promise<number> {
-  const supabase = await createClient();
+  const auth = await requireTripMember(tripId);
+  if (!auth.ok) return 0;
 
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
-    return 0;
-  }
-
-  // Check if user is a member of the trip
-  const { data: member } = await supabase
-    .from('trip_members')
-    .select('id')
-    .eq('trip_id', tripId)
-    .eq('user_id', authUser.id)
-    .single();
-
-  if (!member) {
-    return 0;
-  }
-
-  const { count } = await supabase
+  const { count } = await auth.supabase
     .from('expenses')
     .select('id', { count: 'exact', head: true })
     .eq('trip_id', tripId);
@@ -553,39 +416,24 @@ export async function getExpensesCount(tripId: string): Promise<number> {
 }
 
 /**
- * Gets total expenses amount for a trip
+ * Gets total expenses amount for a trip (converted to base currency).
+ * Uses server-side SUM via RPC instead of fetching all rows.
  */
 export async function getTripExpensesTotal(tripId: string): Promise<number> {
-  const supabase = await createClient();
-
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
+  const auth = await requireTripMember(tripId);
+  if (!auth.ok) {
     return 0;
   }
 
-  // Check if user is a member of the trip
-  const { data: member } = await supabase
-    .from('trip_members')
-    .select('id')
-    .eq('trip_id', tripId)
-    .eq('user_id', authUser.id)
-    .single();
+  const { data, error } = await auth.supabase.rpc('get_trip_expenses_total', {
+    p_trip_id: tripId,
+  });
 
-  if (!member) {
+  if (error || data === null) {
     return 0;
   }
 
-  const { data: expenses } = await supabase.from('expenses').select('amount').eq('trip_id', tripId);
-
-  if (!expenses) {
-    return 0;
-  }
-
-  return expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  return Number(data);
 }
 
 /**
@@ -594,18 +442,10 @@ export async function getTripExpensesTotal(tripId: string): Promise<number> {
 export async function getExpensesByActivityId(
   activityId: string
 ): Promise<{ id: string; description: string; amount: number; currency: string }[]> {
-  const supabase = await createClient();
+  const auth = await requireAuth();
+  if (!auth.ok) return [];
 
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
-    return [];
-  }
-
-  const { data } = await supabase
+  const { data } = await auth.supabase
     .from('expenses')
     .select('id, description, amount, currency')
     .eq('activity_id', activityId)

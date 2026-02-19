@@ -1287,6 +1287,37 @@ export type Database = {
         };
         Returns: string | null;
       };
+      create_expense_with_splits: {
+        Args: {
+          p_trip_id: string;
+          p_description: string;
+          p_amount: number;
+          p_currency?: string;
+          p_exchange_rate?: number;
+          p_date?: string;
+          p_category?: string;
+          p_paid_by?: string | null;
+          p_paid_by_participant_id?: string | null;
+          p_notes?: string | null;
+          p_activity_id?: string | null;
+          p_splits?: Json;
+        };
+        Returns: string;
+      };
+      create_group_with_members: {
+        Args: {
+          p_trip_id: string;
+          p_name: string;
+          p_participant_ids: string[];
+        };
+        Returns: string;
+      };
+      get_trip_expenses_total: {
+        Args: {
+          p_trip_id: string;
+        };
+        Returns: number;
+      };
     };
     Enums: {
       [_ in never]: never;

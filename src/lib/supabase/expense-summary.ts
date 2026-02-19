@@ -1,4 +1,3 @@
-import { createClient } from './server';
 import {
   calculateBalancesWithSettlements,
   calculateGroupBalances,
@@ -18,34 +17,15 @@ import { getTripById } from './trips';
 import { getTripParticipants } from './participants';
 import { getTripGroups } from './groups';
 import { getSettledSettlements } from './settlements';
+import { requireTripMember } from './auth-helpers';
 
 /**
  * Gets comprehensive expense summary for a trip with balance calculations and settlements.
  * Uses trip_participants (supports both registered users and guests).
  */
 export async function getTripExpenseSummary(tripId: string) {
-  const supabase = await createClient();
-
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
-    return null;
-  }
-
-  // Check if user is a member of the trip
-  const { data: member } = await supabase
-    .from('trip_members')
-    .select('id')
-    .eq('trip_id', tripId)
-    .eq('user_id', authUser.id)
-    .single();
-
-  if (!member) {
-    return null;
-  }
+  const auth = await requireTripMember(tripId);
+  if (!auth.ok) return null;
 
   // Get all required data in parallel
   const [trip, expenses, participantsResult, settledSettlements, groupsResult] = await Promise.all([

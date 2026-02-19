@@ -1,11 +1,11 @@
 'use server';
 
-import { createClient } from './server';
 import { revalidate } from '@/lib/utils/revalidation';
 import { isValidReceiptType, MAX_RECEIPT_SIZE } from '@/lib/utils/receipt-helpers';
 import { canOnOwn } from '@/lib/permissions/trip-permissions';
 import { logActivity } from '@/lib/supabase/activity-log';
 import { logError } from '@/lib/errors/logger';
+import { requireTripMember } from './auth-helpers';
 
 export type ReceiptResult = {
   error?: string;
@@ -32,16 +32,10 @@ export async function uploadReceipt(
   expenseId: string,
   file: File
 ): Promise<ReceiptResult> {
-  const supabase = await createClient();
+  const auth = await requireTripMember(tripId);
+  if (!auth.ok) return { error: auth.error };
 
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
-    return { error: 'Não autorizado' };
-  }
+  const { supabase } = auth;
 
   // Validate file type
   if (!isValidReceiptType(file.type)) {
@@ -51,18 +45,6 @@ export async function uploadReceipt(
   // Validate file size
   if (file.size > MAX_RECEIPT_SIZE) {
     return { error: 'Arquivo muito grande. O tamanho máximo é 10MB.' };
-  }
-
-  // Check if user is a member of the trip
-  const { data: member } = await supabase
-    .from('trip_members')
-    .select('id')
-    .eq('trip_id', tripId)
-    .eq('user_id', authUser.id)
-    .single();
-
-  if (!member) {
-    return { error: 'Você não é membro desta viagem' };
   }
 
   // Verify expense exists and belongs to this trip
@@ -124,28 +106,10 @@ export async function uploadReceipt(
  * Deletes a receipt from an expense
  */
 export async function deleteReceipt(tripId: string, expenseId: string): Promise<ReceiptResult> {
-  const supabase = await createClient();
+  const auth = await requireTripMember(tripId);
+  if (!auth.ok) return { error: auth.error };
 
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
-    return { error: 'Não autorizado' };
-  }
-
-  // Check if user is a member of the trip
-  const { data: member } = await supabase
-    .from('trip_members')
-    .select('role')
-    .eq('trip_id', tripId)
-    .eq('user_id', authUser.id)
-    .single();
-
-  if (!member) {
-    return { error: 'Você não é membro desta viagem' };
-  }
+  const { supabase, user, role } = auth;
 
   // Get expense to verify ownership/permission and get receipt URL
   const { data: expense } = await supabase
@@ -164,7 +128,7 @@ export async function deleteReceipt(tripId: string, expenseId: string): Promise<
   }
 
   // Only creator or organizers can delete receipt
-  if (!canOnOwn('DELETE', member.role, expense.created_by === authUser.id)) {
+  if (!canOnOwn('DELETE', role, expense.created_by === user.id)) {
     return { error: 'Você não tem permissão para excluir este comprovante' };
   }
 
@@ -205,28 +169,10 @@ export async function deleteReceipt(tripId: string, expenseId: string): Promise<
  * Gets a signed URL for viewing a receipt
  */
 export async function getReceiptUrl(tripId: string, receiptPath: string): Promise<ReceiptResult> {
-  const supabase = await createClient();
+  const auth = await requireTripMember(tripId);
+  if (!auth.ok) return { error: auth.error };
 
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
-    return { error: 'Não autorizado' };
-  }
-
-  // Check if user is a member of the trip
-  const { data: member } = await supabase
-    .from('trip_members')
-    .select('id')
-    .eq('trip_id', tripId)
-    .eq('user_id', authUser.id)
-    .single();
-
-  if (!member) {
-    return { error: 'Você não é membro desta viagem' };
-  }
+  const { supabase } = auth;
 
   // Generate signed URL (1 hour expiry)
   const { data: signedUrl, error: urlError } = await supabase.storage

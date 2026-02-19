@@ -1,23 +1,17 @@
 'use server';
 
-import { createClient } from './server';
 import { getTripExpenses } from './expenses';
 import { getTripParticipants } from './participants';
 import { getTripExpenseSummary } from './expense-summary';
+import { requireTripMember } from './auth-helpers';
 import type { ExpenseExportRow } from '@/lib/export/csv-expenses';
 import type { PdfReportData } from '@/lib/export/pdf-expense-report';
 
 export async function getTripExportData(tripId: string): Promise<PdfReportData | null> {
-  const supabase = await createClient();
+  const auth = await requireTripMember(tripId);
+  if (!auth.ok) return null;
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) return null;
-
-  const { data: trip } = await supabase
+  const { data: trip } = await auth.supabase
     .from('trips')
     .select('name, destination, start_date, end_date, base_currency')
     .eq('id', tripId)

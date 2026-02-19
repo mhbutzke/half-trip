@@ -6,6 +6,7 @@ import type { ActivityAttachment } from '@/types/database';
 import { MAX_ATTACHMENT_SIZE, isValidAttachmentType } from '@/lib/utils/attachment-helpers';
 import { logActivity } from '@/lib/supabase/activity-log';
 import { logError } from '@/lib/errors/logger';
+import { requireAuth } from './auth-helpers';
 
 export type AttachmentResult = {
   error?: string;
@@ -35,16 +36,10 @@ function generateFilePath(tripId: string, activityId: string, fileName: string):
  * Uploads an attachment for an activity
  */
 export async function uploadAttachment(activityId: string, file: File): Promise<AttachmentResult> {
-  const supabase = await createClient();
+  const auth = await requireAuth();
+  if (!auth.ok) return { error: auth.error };
 
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
-    return { error: 'Não autorizado' };
-  }
+  const { supabase, user } = auth;
 
   // Validate file type
   if (!isValidAttachmentType(file.type)) {
@@ -72,7 +67,7 @@ export async function uploadAttachment(activityId: string, file: File): Promise<
     .from('trip_members')
     .select('id')
     .eq('trip_id', activity.trip_id)
-    .eq('user_id', authUser.id)
+    .eq('user_id', user.id)
     .single();
 
   if (!member) {
@@ -129,16 +124,10 @@ export async function uploadAttachment(activityId: string, file: File): Promise<
  * Deletes an attachment
  */
 export async function deleteAttachment(attachmentId: string): Promise<AttachmentResult> {
-  const supabase = await createClient();
+  const auth = await requireAuth();
+  if (!auth.ok) return { error: auth.error };
 
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
-    return { error: 'Não autorizado' };
-  }
+  const { supabase, user } = auth;
 
   // Get the attachment with activity info
   const { data: attachment } = await supabase
@@ -166,7 +155,7 @@ export async function deleteAttachment(attachmentId: string): Promise<Attachment
     .from('trip_members')
     .select('id')
     .eq('trip_id', tripId)
-    .eq('user_id', authUser.id)
+    .eq('user_id', user.id)
     .single();
 
   if (!member) {
@@ -210,16 +199,10 @@ export async function deleteAttachment(attachmentId: string): Promise<Attachment
  * Gets all attachments for an activity with signed URLs
  */
 export async function getActivityAttachments(activityId: string): Promise<AttachmentWithUrl[]> {
-  const supabase = await createClient();
+  const auth = await requireAuth();
+  if (!auth.ok) return [];
 
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
-    return [];
-  }
+  const { supabase, user } = auth;
 
   // Get attachments
   const { data: attachments } = await supabase
@@ -246,7 +229,7 @@ export async function getActivityAttachments(activityId: string): Promise<Attach
     .from('trip_members')
     .select('id')
     .eq('trip_id', tripId)
-    .eq('user_id', authUser.id)
+    .eq('user_id', user.id)
     .single();
 
   if (!member) {
@@ -278,16 +261,10 @@ export async function getActivityAttachments(activityId: string): Promise<Attach
  * Gets a single signed URL for an attachment
  */
 export async function getAttachmentUrl(attachmentId: string): Promise<AttachmentResult> {
-  const supabase = await createClient();
+  const auth = await requireAuth();
+  if (!auth.ok) return { error: auth.error };
 
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
-    return { error: 'Não autorizado' };
-  }
+  const { supabase, user } = auth;
 
   // Get the attachment
   const { data: attachment } = await supabase
@@ -314,7 +291,7 @@ export async function getAttachmentUrl(attachmentId: string): Promise<Attachment
     .from('trip_members')
     .select('id')
     .eq('trip_id', tripId)
-    .eq('user_id', authUser.id)
+    .eq('user_id', user.id)
     .single();
 
   if (!member) {

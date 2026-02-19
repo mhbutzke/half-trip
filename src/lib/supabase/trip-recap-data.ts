@@ -1,23 +1,13 @@
 'use server';
 
-import { createClient } from './server';
 import { computeTripRecap, type TripRecapInput, type TripRecapData } from '@/lib/utils/trip-recap';
+import { requireTripMember } from './auth-helpers';
 
 export async function getTripRecapData(tripId: string): Promise<TripRecapData | null> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-  if (authError || !user) return null;
+  const auth = await requireTripMember(tripId);
+  if (!auth.ok) return null;
 
-  const { data: member } = await supabase
-    .from('trip_members')
-    .select('id')
-    .eq('trip_id', tripId)
-    .eq('user_id', user.id)
-    .single();
-  if (!member) return null;
+  const supabase = auth.supabase;
 
   // Fetch all needed data in parallel
   const [

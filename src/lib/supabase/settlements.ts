@@ -1,6 +1,6 @@
 'use server';
 
-import { createClient } from './server';
+import { requireTripMember, requireAuth } from './auth-helpers';
 import { revalidate } from '@/lib/utils/revalidation';
 import { logActivity } from './activity-log';
 import { splitEntitySettlement } from '@/lib/balance/settlement-helpers';
@@ -37,59 +37,32 @@ export type CreateSettlementInput = {
  * Creates a new settlement record
  */
 export async function createSettlement(input: CreateSettlementInput): Promise<SettlementResult> {
-  const supabase = await createClient();
-
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
-    return { error: 'Não autorizado' };
+  const auth = await requireTripMember(input.trip_id);
+  if (!auth.ok) {
+    return { error: auth.error };
   }
-
-  // Check if user is a member of the trip
-  const { data: member } = await supabase
-    .from('trip_members')
-    .select('id')
-    .eq('trip_id', input.trip_id)
-    .eq('user_id', authUser.id)
-    .single();
-
-  if (!member) {
-    return { error: 'Você não é membro desta viagem' };
-  }
+  const { supabase } = auth;
 
   if (input.amount <= 0) {
     return { error: 'O valor deve ser maior que zero' };
   }
 
-  // Load trip participants and build a lookup map
-  const { data: tripParticipants } = await supabase
+  // Validate participants exist in this trip
+  const { count } = await supabase
     .from('trip_participants')
-    .select('id, user_id, type')
-    .eq('trip_id', input.trip_id);
+    .select('id', { count: 'exact', head: true })
+    .eq('trip_id', input.trip_id)
+    .in('id', [input.from_participant_id, input.to_participant_id]);
 
-  const participantById = new Map((tripParticipants || []).map((p) => [p.id, p]));
-
-  const fromParticipant = participantById.get(input.from_participant_id);
-  const toParticipant = participantById.get(input.to_participant_id);
-
-  if (!fromParticipant || !toParticipant) {
+  if ((count ?? 0) < 2) {
     return { error: 'Os participantes devem fazer parte desta viagem' };
   }
 
-  // Derive user_id from participants (null for guests)
-  const fromUser = fromParticipant.user_id || null;
-  const toUser = toParticipant.user_id || null;
-
-  // Create the settlement
+  // Create the settlement — legacy from_user/to_user auto-populated by DB trigger
   const { data: settlement, error: settlementError } = await supabase
     .from('settlements')
     .insert({
       trip_id: input.trip_id,
-      from_user: fromUser,
-      to_user: toUser,
       from_participant_id: input.from_participant_id,
       to_participant_id: input.to_participant_id,
       amount: input.amount,
@@ -122,54 +95,22 @@ export async function createEntitySettlement(input: {
   trip_id: string;
   entitySettlement: EntitySettlement;
 }): Promise<SettlementResult> {
-  const supabase = await createClient();
-
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
-    return { error: 'Não autorizado' };
+  const auth = await requireTripMember(input.trip_id);
+  if (!auth.ok) {
+    return { error: auth.error };
   }
-
-  // Check if user is a member of the trip
-  const { data: member } = await supabase
-    .from('trip_members')
-    .select('id')
-    .eq('trip_id', input.trip_id)
-    .eq('user_id', authUser.id)
-    .single();
-
-  if (!member) {
-    return { error: 'Você não é membro desta viagem' };
-  }
+  const { supabase } = auth;
 
   // Split entity settlement into individual settlements
   const individualSettlements = splitEntitySettlement(input.entitySettlement);
 
-  // Load trip participants to derive user_ids
-  const { data: tripParticipants } = await supabase
-    .from('trip_participants')
-    .select('id, user_id, type')
-    .eq('trip_id', input.trip_id);
-
-  const participantById = new Map((tripParticipants || []).map((p) => [p.id, p]));
-
-  // Create all individual settlements
-  const rows = individualSettlements.map((s) => {
-    const fromP = participantById.get(s.fromParticipantId);
-    const toP = participantById.get(s.toParticipantId);
-
-    return {
-      trip_id: input.trip_id,
-      from_user: fromP?.user_id || null,
-      to_user: toP?.user_id || null,
-      from_participant_id: s.fromParticipantId,
-      to_participant_id: s.toParticipantId,
-      amount: s.amount,
-    };
-  });
+  // Create all individual settlements — legacy from_user/to_user auto-populated by DB trigger
+  const rows = individualSettlements.map((s) => ({
+    trip_id: input.trip_id,
+    from_participant_id: s.fromParticipantId,
+    to_participant_id: s.toParticipantId,
+    amount: s.amount,
+  }));
 
   const { data: settlements, error: insertError } = await supabase
     .from('settlements')
@@ -201,16 +142,11 @@ export async function createEntitySettlement(input: {
  * Marks a settlement as paid
  */
 export async function markSettlementAsPaid(settlementId: string): Promise<SettlementResult> {
-  const supabase = await createClient();
-
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
-    return { error: 'Não autorizado' };
+  const auth = await requireAuth();
+  if (!auth.ok) {
+    return { error: auth.error };
   }
+  const { supabase, user: authUser } = auth;
 
   // Get the settlement to check trip membership
   const { data: settlement } = await supabase
@@ -273,16 +209,11 @@ export async function markSettlementAsPaid(settlementId: string): Promise<Settle
  * Marks a settlement as unpaid (removes settled_at)
  */
 export async function markSettlementAsUnpaid(settlementId: string): Promise<SettlementResult> {
-  const supabase = await createClient();
-
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
-    return { error: 'Não autorizado' };
+  const auth = await requireAuth();
+  if (!auth.ok) {
+    return { error: auth.error };
   }
+  const { supabase, user: authUser } = auth;
 
   // Get the settlement to check trip membership
   const { data: settlement } = await supabase
@@ -347,16 +278,11 @@ export async function markSettlementAsUnpaid(settlementId: string): Promise<Sett
  * Deletes a settlement
  */
 export async function deleteSettlement(settlementId: string): Promise<SettlementResult> {
-  const supabase = await createClient();
-
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
-    return { error: 'Não autorizado' };
+  const auth = await requireAuth();
+  if (!auth.ok) {
+    return { error: auth.error };
   }
+  const { supabase, user: authUser } = auth;
 
   // Get the settlement to check trip membership
   const { data: settlement } = await supabase
@@ -397,28 +323,11 @@ export async function deleteSettlement(settlementId: string): Promise<Settlement
  * Gets all settlements for a trip, ordered by creation date (newest first)
  */
 export async function getTripSettlements(tripId: string): Promise<SettlementWithUsers[]> {
-  const supabase = await createClient();
-
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
+  const auth = await requireTripMember(tripId);
+  if (!auth.ok) {
     return [];
   }
-
-  // Check if user is a member of the trip
-  const { data: member } = await supabase
-    .from('trip_members')
-    .select('id')
-    .eq('trip_id', tripId)
-    .eq('user_id', authUser.id)
-    .single();
-
-  if (!member) {
-    return [];
-  }
+  const { supabase } = auth;
 
   const { data: settlements } = await supabase
     .from('settlements')
@@ -447,28 +356,11 @@ export async function getTripSettlements(tripId: string): Promise<SettlementWith
  * Gets pending (unpaid) settlements for a trip
  */
 export async function getPendingSettlements(tripId: string): Promise<SettlementWithUsers[]> {
-  const supabase = await createClient();
-
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
+  const auth = await requireTripMember(tripId);
+  if (!auth.ok) {
     return [];
   }
-
-  // Check if user is a member of the trip
-  const { data: member } = await supabase
-    .from('trip_members')
-    .select('id')
-    .eq('trip_id', tripId)
-    .eq('user_id', authUser.id)
-    .single();
-
-  if (!member) {
-    return [];
-  }
+  const { supabase } = auth;
 
   const { data: settlements } = await supabase
     .from('settlements')
@@ -498,28 +390,11 @@ export async function getPendingSettlements(tripId: string): Promise<SettlementW
  * Gets settled settlements for a trip (settlement history)
  */
 export async function getSettledSettlements(tripId: string): Promise<SettlementWithUsers[]> {
-  const supabase = await createClient();
-
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
+  const auth = await requireTripMember(tripId);
+  if (!auth.ok) {
     return [];
   }
-
-  // Check if user is a member of the trip
-  const { data: member } = await supabase
-    .from('trip_members')
-    .select('id')
-    .eq('trip_id', tripId)
-    .eq('user_id', authUser.id)
-    .single();
-
-  if (!member) {
-    return [];
-  }
+  const { supabase } = auth;
 
   const { data: settlements } = await supabase
     .from('settlements')
@@ -549,28 +424,11 @@ export async function getSettledSettlements(tripId: string): Promise<SettlementW
  * Gets settlements count for a trip
  */
 export async function getSettlementsCount(tripId: string): Promise<number> {
-  const supabase = await createClient();
-
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
+  const auth = await requireTripMember(tripId);
+  if (!auth.ok) {
     return 0;
   }
-
-  // Check if user is a member of the trip
-  const { data: member } = await supabase
-    .from('trip_members')
-    .select('id')
-    .eq('trip_id', tripId)
-    .eq('user_id', authUser.id)
-    .single();
-
-  if (!member) {
-    return 0;
-  }
+  const { supabase } = auth;
 
   const { count } = await supabase
     .from('settlements')

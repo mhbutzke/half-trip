@@ -123,16 +123,10 @@ export function useTripRealtime({ tripId, onPollChange }: UseTripRealtimeOptions
           invalidate([['polls', tripId]]);
           onPollChangeRef.current?.();
         }
-      )
-      // poll_votes (no trip_id filter — votes reference poll_id, not trip_id)
-      .on(
-        'postgres_changes' as 'system',
-        { event: '*', schema: 'public', table: 'poll_votes' },
-        () => {
-          invalidate([['polls', tripId]]);
-          onPollChangeRef.current?.();
-        }
       );
+    // poll_votes: No longer needed as a separate listener.
+    // A DB trigger (trg_poll_votes_touch_poll) updates trip_polls.updated_at
+    // on vote insert/delete, so the trip_polls listener above captures vote changes.
 
     channel.subscribe((status, err) => {
       if (status === 'SUBSCRIBED') {

@@ -1,8 +1,8 @@
 'use server';
 
-import { createClient } from './server';
 import { revalidate } from '@/lib/utils/revalidation';
 import { logActivity } from './activity-log';
+import { requireAuth, requireTripMember } from './auth-helpers';
 import type { TripChecklist, ChecklistItem, ChecklistWithItems } from '@/types/checklist';
 
 export type ChecklistResult = {
@@ -18,16 +18,10 @@ export type ChecklistItemResult = {
 };
 
 export async function getTripChecklists(tripId: string): Promise<ChecklistWithItems[]> {
-  const supabase = await createClient();
+  const auth = await requireTripMember(tripId);
+  if (!auth.ok) return [];
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) return [];
-
-  const { data: checklists } = await supabase
+  const { data: checklists } = await auth.supabase
     .from('trip_checklists')
     .select('*')
     .eq('trip_id', tripId)
@@ -38,7 +32,7 @@ export async function getTripChecklists(tripId: string): Promise<ChecklistWithIt
 
   const checklistIds = checklists.map((c) => c.id);
 
-  const { data: items } = await supabase
+  const { data: items } = await auth.supabase
     .from('checklist_items')
     .select('*')
     .in('checklist_id', checklistIds)
@@ -64,27 +58,10 @@ export async function createChecklist(input: {
   description?: string | null;
   category: 'packing' | 'todo' | 'shopping' | 'documents' | 'other';
 }): Promise<ChecklistResult> {
-  const supabase = await createClient();
+  const auth = await requireTripMember(input.trip_id);
+  if (!auth.ok) return { error: auth.error };
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    return { error: 'Não autorizado' };
-  }
-
-  const { data: member } = await supabase
-    .from('trip_members')
-    .select('id')
-    .eq('trip_id', input.trip_id)
-    .eq('user_id', user.id)
-    .single();
-
-  if (!member) {
-    return { error: 'Você não é membro desta viagem' };
-  }
+  const { supabase, user } = auth;
 
   // Get max sort_order
   const { data: existing } = await supabase
@@ -127,16 +104,10 @@ export async function createChecklist(input: {
 }
 
 export async function deleteChecklist(checklistId: string): Promise<ChecklistResult> {
-  const supabase = await createClient();
+  const auth = await requireAuth();
+  if (!auth.ok) return { error: auth.error };
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    return { error: 'Não autorizado' };
-  }
+  const { supabase } = auth;
 
   const { data: checklist } = await supabase
     .from('trip_checklists')
@@ -164,16 +135,10 @@ export async function addChecklistItem(input: {
   assigned_to?: string | null;
   quantity?: number;
 }): Promise<ChecklistItemResult> {
-  const supabase = await createClient();
+  const auth = await requireAuth();
+  if (!auth.ok) return { error: auth.error };
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    return { error: 'Não autorizado' };
-  }
+  const { supabase, user } = auth;
 
   // Get checklist to find trip_id for revalidation
   const { data: checklist } = await supabase
@@ -218,16 +183,10 @@ export async function addChecklistItem(input: {
 }
 
 export async function toggleChecklistItem(itemId: string): Promise<ChecklistItemResult> {
-  const supabase = await createClient();
+  const auth = await requireAuth();
+  if (!auth.ok) return { error: auth.error };
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    return { error: 'Não autorizado' };
-  }
+  const { supabase, user } = auth;
 
   // Get current item state
   const { data: item } = await supabase
@@ -280,16 +239,10 @@ export async function toggleChecklistItem(itemId: string): Promise<ChecklistItem
 }
 
 export async function deleteChecklistItem(itemId: string): Promise<ChecklistItemResult> {
-  const supabase = await createClient();
+  const auth = await requireAuth();
+  if (!auth.ok) return { error: auth.error };
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    return { error: 'Não autorizado' };
-  }
+  const { supabase } = auth;
 
   // Get item with checklist for trip_id
   const { data: item } = await supabase

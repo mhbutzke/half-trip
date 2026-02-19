@@ -1,6 +1,6 @@
 'use server';
 
-import { createClient } from './server';
+import { requireAuth, requireTripMember } from './auth-helpers';
 import { revalidate } from '@/lib/utils/revalidation';
 import { logActivity } from './activity-log';
 import type { Activity, ActivityCategory, ActivityLink, Json } from '@/types/database';
@@ -40,28 +40,13 @@ export type UpdateActivityInput = Partial<Omit<CreateActivityInput, 'trip_id'>>;
  * Creates a new activity for a trip
  */
 export async function createActivity(input: CreateActivityInput): Promise<ActivityResult> {
-  const supabase = await createClient();
+  const member = await requireTripMember(input.trip_id);
 
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
-    return { error: 'Não autorizado' };
+  if (!member.ok) {
+    return { error: member.error };
   }
 
-  // Check if user is a member of the trip
-  const { data: member } = await supabase
-    .from('trip_members')
-    .select('id')
-    .eq('trip_id', input.trip_id)
-    .eq('user_id', authUser.id)
-    .single();
-
-  if (!member) {
-    return { error: 'Você não é membro desta viagem' };
-  }
+  const { supabase, user } = member;
 
   // Get the max sort_order for activities on this date
   const { data: maxOrderResult } = await supabase
@@ -89,7 +74,7 @@ export async function createActivity(input: CreateActivityInput): Promise<Activi
       links: input.links || [],
       metadata: input.metadata || {},
       sort_order: nextSortOrder,
-      created_by: authUser.id,
+      created_by: user.id,
     })
     .select('id')
     .single();
@@ -118,16 +103,13 @@ export async function updateActivity(
   activityId: string,
   input: UpdateActivityInput
 ): Promise<ActivityResult> {
-  const supabase = await createClient();
+  const auth = await requireAuth();
 
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
-    return { error: 'Não autorizado' };
+  if (!auth.ok) {
+    return { error: auth.error };
   }
+
+  const { supabase, user } = auth;
 
   // Get the activity to check trip membership
   const { data: activity } = await supabase
@@ -145,7 +127,7 @@ export async function updateActivity(
     .from('trip_members')
     .select('id')
     .eq('trip_id', activity.trip_id)
-    .eq('user_id', authUser.id)
+    .eq('user_id', user.id)
     .single();
 
   if (!member) {
@@ -188,16 +170,13 @@ export async function updateActivity(
  * Deletes an activity
  */
 export async function deleteActivity(activityId: string): Promise<ActivityResult> {
-  const supabase = await createClient();
+  const auth = await requireAuth();
 
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
-    return { error: 'Não autorizado' };
+  if (!auth.ok) {
+    return { error: auth.error };
   }
+
+  const { supabase, user } = auth;
 
   // Get the activity to check trip membership
   const { data: activity } = await supabase
@@ -215,7 +194,7 @@ export async function deleteActivity(activityId: string): Promise<ActivityResult
     .from('trip_members')
     .select('id')
     .eq('trip_id', activity.trip_id)
-    .eq('user_id', authUser.id)
+    .eq('user_id', user.id)
     .single();
 
   if (!member) {
@@ -245,28 +224,13 @@ export async function deleteActivity(activityId: string): Promise<ActivityResult
  * Gets all activities for a trip, ordered by date and sort_order
  */
 export async function getTripActivities(tripId: string): Promise<ActivityWithCreator[]> {
-  const supabase = await createClient();
+  const member = await requireTripMember(tripId);
 
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
+  if (!member.ok) {
     return [];
   }
 
-  // Check if user is a member of the trip
-  const { data: member } = await supabase
-    .from('trip_members')
-    .select('id')
-    .eq('trip_id', tripId)
-    .eq('user_id', authUser.id)
-    .single();
-
-  if (!member) {
-    return [];
-  }
+  const { supabase } = member;
 
   const { data: activities } = await supabase
     .from('activities')
@@ -327,16 +291,13 @@ export async function getTripActivities(tripId: string): Promise<ActivityWithCre
  * Gets a single activity by ID
  */
 export async function getActivityById(activityId: string): Promise<ActivityWithCreator | null> {
-  const supabase = await createClient();
+  const auth = await requireAuth();
 
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
+  if (!auth.ok) {
     return null;
   }
+
+  const { supabase, user } = auth;
 
   // Get activity with trip check
   const { data: activity } = await supabase
@@ -363,7 +324,7 @@ export async function getActivityById(activityId: string): Promise<ActivityWithC
     .from('trip_members')
     .select('id')
     .eq('trip_id', activity.trip_id)
-    .eq('user_id', authUser.id)
+    .eq('user_id', user.id)
     .single();
 
   if (!member) {
@@ -380,28 +341,13 @@ export async function reorderActivities(
   tripId: string,
   updates: { activityId: string; date: string; sort_order: number }[]
 ): Promise<ActivityResult> {
-  const supabase = await createClient();
+  const member = await requireTripMember(tripId);
 
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
-    return { error: 'Não autorizado' };
+  if (!member.ok) {
+    return { error: member.error };
   }
 
-  // Check if user is a member of the trip
-  const { data: member } = await supabase
-    .from('trip_members')
-    .select('id')
-    .eq('trip_id', tripId)
-    .eq('user_id', authUser.id)
-    .single();
-
-  if (!member) {
-    return { error: 'Você não é membro desta viagem' };
-  }
+  const { supabase } = member;
 
   // Update all activities in a single transaction-like manner
   for (const update of updates) {
@@ -428,28 +374,13 @@ export async function reorderActivities(
  * Gets activities count for a trip
  */
 export async function getActivitiesCount(tripId: string): Promise<number> {
-  const supabase = await createClient();
+  const member = await requireTripMember(tripId);
 
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
+  if (!member.ok) {
     return 0;
   }
 
-  // Check if user is a member of the trip
-  const { data: member } = await supabase
-    .from('trip_members')
-    .select('id')
-    .eq('trip_id', tripId)
-    .eq('user_id', authUser.id)
-    .single();
-
-  if (!member) {
-    return 0;
-  }
+  const { supabase } = member;
 
   const { count } = await supabase
     .from('activities')
@@ -464,28 +395,13 @@ export async function getActivitiesCount(tripId: string): Promise<number> {
  * Used by itinerary preview components to render day pills efficiently.
  */
 export async function getTripActivitiesIndex(tripId: string): Promise<Record<string, number>> {
-  const supabase = await createClient();
+  const member = await requireTripMember(tripId);
 
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
+  if (!member.ok) {
     return {};
   }
 
-  // Check if user is a member of the trip
-  const { data: member } = await supabase
-    .from('trip_members')
-    .select('id')
-    .eq('trip_id', tripId)
-    .eq('user_id', authUser.id)
-    .single();
-
-  if (!member) {
-    return {};
-  }
+  const { supabase } = member;
 
   const { data } = await supabase.from('activities').select('date').eq('trip_id', tripId);
 
@@ -506,28 +422,13 @@ export async function getTripActivitiesByDate(
   tripId: string,
   date: string
 ): Promise<ActivityWithCreator[]> {
-  const supabase = await createClient();
+  const member = await requireTripMember(tripId);
 
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
+  if (!member.ok) {
     return [];
   }
 
-  // Check if user is a member of the trip
-  const { data: member } = await supabase
-    .from('trip_members')
-    .select('id')
-    .eq('trip_id', tripId)
-    .eq('user_id', authUser.id)
-    .single();
-
-  if (!member) {
-    return [];
-  }
+  const { supabase } = member;
 
   const { data: activities } = await supabase
     .from('activities')

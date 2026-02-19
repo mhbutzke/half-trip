@@ -1,8 +1,8 @@
 'use server';
 
-import { createClient } from './server';
 import { revalidate } from '@/lib/utils/revalidation';
 import { logActivity } from './activity-log';
+import { requireAuth, requireTripMember, requireTripOrganizer } from './auth-helpers';
 
 export type TripParticipantResolved = {
   id: string;
@@ -30,28 +30,10 @@ type ParticipantsResult = {
  * Retorna todos os participantes (membros + convidados) com dados resolvidos.
  */
 export async function getTripParticipants(tripId: string): Promise<ParticipantsResult> {
-  const supabase = await createClient();
+  const auth = await requireTripMember(tripId);
+  if (!auth.ok) return { error: auth.error };
 
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
-    return { error: 'Não autorizado' };
-  }
-
-  // Verificar se o usuário é membro da viagem
-  const { data: currentMember } = await supabase
-    .from('trip_members')
-    .select('id')
-    .eq('trip_id', tripId)
-    .eq('user_id', authUser.id)
-    .single();
-
-  if (!currentMember) {
-    return { error: 'Você não é membro desta viagem' };
-  }
+  const { supabase } = auth;
 
   // Buscar participantes com dados do usuário (para membros)
   const { data: participants, error: participantsError } = await supabase
@@ -147,28 +129,10 @@ export async function addGuest(
   name: string,
   email?: string
 ): Promise<ParticipantResult> {
-  const supabase = await createClient();
+  const auth = await requireTripOrganizer(tripId);
+  if (!auth.ok) return { error: auth.error };
 
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
-    return { error: 'Não autorizado' };
-  }
-
-  // Verificar se é organizador
-  const { data: member } = await supabase
-    .from('trip_members')
-    .select('role')
-    .eq('trip_id', tripId)
-    .eq('user_id', authUser.id)
-    .single();
-
-  if (!member || member.role !== 'organizer') {
-    return { error: 'Apenas organizadores podem realizar esta ação' };
-  }
+  const { supabase } = auth;
 
   const trimmedName = name.trim();
   if (!trimmedName) {
@@ -222,28 +186,10 @@ export async function removeGuest(
   tripId: string,
   participantId: string
 ): Promise<{ error?: string; success?: boolean }> {
-  const supabase = await createClient();
+  const auth = await requireTripOrganizer(tripId);
+  if (!auth.ok) return { error: auth.error };
 
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
-    return { error: 'Não autorizado' };
-  }
-
-  // Verificar se é organizador
-  const { data: member } = await supabase
-    .from('trip_members')
-    .select('role')
-    .eq('trip_id', tripId)
-    .eq('user_id', authUser.id)
-    .single();
-
-  if (!member || member.role !== 'organizer') {
-    return { error: 'Apenas organizadores podem realizar esta ação' };
-  }
+  const { supabase } = auth;
 
   // Verificar que o participante é do tipo guest
   const { data: participant } = await supabase
@@ -293,28 +239,10 @@ export async function updateGuest(
   name: string,
   email?: string
 ): Promise<ParticipantResult> {
-  const supabase = await createClient();
+  const auth = await requireTripOrganizer(tripId);
+  if (!auth.ok) return { error: auth.error };
 
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
-    return { error: 'Não autorizado' };
-  }
-
-  // Verificar se é organizador
-  const { data: member } = await supabase
-    .from('trip_members')
-    .select('role')
-    .eq('trip_id', tripId)
-    .eq('user_id', authUser.id)
-    .single();
-
-  if (!member || member.role !== 'organizer') {
-    return { error: 'Apenas organizadores podem realizar esta ação' };
-  }
+  const { supabase } = auth;
 
   // Verificar que o participante é do tipo guest
   const { data: existing } = await supabase
@@ -381,18 +309,10 @@ export async function updateGuest(
  * Retorna o participant_id a partir do user_id para uma viagem.
  */
 export async function getParticipantId(tripId: string, userId: string): Promise<string | null> {
-  const supabase = await createClient();
+  const auth = await requireAuth();
+  if (!auth.ok) return null;
 
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
-    return null;
-  }
-
-  const { data: participant } = await supabase
+  const { data: participant } = await auth.supabase
     .from('trip_participants')
     .select('id')
     .eq('trip_id', tripId)

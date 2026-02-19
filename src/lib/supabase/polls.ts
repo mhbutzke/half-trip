@@ -1,6 +1,6 @@
 'use server';
 
-import { createClient } from './server';
+import { requireAuth, requireTripMember } from './auth-helpers';
 import { revalidate } from '@/lib/utils/revalidation';
 import { logActivity } from './activity-log';
 import type { PollWithVotes, CreatePollInput } from '@/types/poll';
@@ -9,26 +9,14 @@ import type { Json } from '@/types/database';
 type PollResult = { error?: string; success?: boolean; pollId?: string };
 
 export async function createPoll(input: CreatePollInput): Promise<PollResult> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-  if (authError || !user) return { error: 'Não autorizado' };
-
-  const { data: member } = await supabase
-    .from('trip_members')
-    .select('id')
-    .eq('trip_id', input.trip_id)
-    .eq('user_id', user.id)
-    .single();
-  if (!member) return { error: 'Você não é membro desta viagem' };
+  const auth = await requireTripMember(input.trip_id);
+  if (!auth.ok) return { error: auth.error };
 
   if (input.options.length < 2) return { error: 'Adicione pelo menos 2 opções' };
 
   const options = input.options.map((text) => ({ text }));
 
-  const { data: poll, error } = await supabase
+  const { data: poll, error } = await auth.supabase
     .from('trip_polls')
     .insert({
       trip_id: input.trip_id,
@@ -36,7 +24,7 @@ export async function createPoll(input: CreatePollInput): Promise<PollResult> {
       options: options as unknown as Json,
       allow_multiple: input.allow_multiple ?? false,
       closes_at: input.closes_at || null,
-      created_by: user.id,
+      created_by: auth.user.id,
     })
     .select('id')
     .single();
@@ -57,22 +45,10 @@ export async function createPoll(input: CreatePollInput): Promise<PollResult> {
 }
 
 export async function getTripPolls(tripId: string): Promise<PollWithVotes[]> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-  if (authError || !user) return [];
+  const auth = await requireTripMember(tripId);
+  if (!auth.ok) return [];
 
-  const { data: member } = await supabase
-    .from('trip_members')
-    .select('id')
-    .eq('trip_id', tripId)
-    .eq('user_id', user.id)
-    .single();
-  if (!member) return [];
-
-  const { data: polls } = await supabase
+  const { data: polls } = await auth.supabase
     .from('trip_polls')
     .select(
       `
@@ -108,7 +84,7 @@ export async function getTripPolls(tripId: string): Promise<PollWithVotes[]> {
         votes,
         voteCounts,
         totalVotes: new Set(votes.map((v) => v.user_id)).size,
-        userVotes: votes.filter((v) => v.user_id === user.id).map((v) => v.option_index),
+        userVotes: votes.filter((v) => v.user_id === auth.user.id).map((v) => v.option_index),
         isClosed: poll.closes_at ? new Date(poll.closes_at) < now : false,
       } as unknown as PollWithVotes;
     }
@@ -116,12 +92,10 @@ export async function getTripPolls(tripId: string): Promise<PollWithVotes[]> {
 }
 
 export async function votePoll(pollId: string, optionIndex: number): Promise<PollResult> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-  if (authError || !user) return { error: 'Não autorizado' };
+  const auth = await requireAuth();
+  if (!auth.ok) return { error: auth.error };
+
+  const { supabase, user } = auth;
 
   // Verify poll exists and user is trip member
   const { data: poll } = await supabase
@@ -182,14 +156,10 @@ export async function votePoll(pollId: string, optionIndex: number): Promise<Pol
 }
 
 export async function deletePoll(pollId: string): Promise<PollResult> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-  if (authError || !user) return { error: 'Não autorizado' };
+  const auth = await requireAuth();
+  if (!auth.ok) return { error: auth.error };
 
-  const { error } = await supabase.from('trip_polls').delete().eq('id', pollId);
+  const { error } = await auth.supabase.from('trip_polls').delete().eq('id', pollId);
 
   if (error) return { error: error.message };
   return { success: true };

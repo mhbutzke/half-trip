@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from './server';
+import { requireTripOrganizer } from './auth-helpers';
 import { revalidate } from '@/lib/utils/revalidation';
 import { logActivity } from './activity-log';
 
@@ -95,34 +96,19 @@ export async function getTripGroups(tripId: string): Promise<GroupsResult> {
 
 /**
  * Cria um grupo na viagem. Apenas organizadores.
+ * Uses atomic RPC function to prevent orphaned groups if participant update fails.
  */
 export async function createGroup(
   tripId: string,
   name: string,
   participantIds: string[]
 ): Promise<GroupResult> {
-  const supabase = await createClient();
-
-  const {
-    data: { user: authUser },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !authUser) {
-    return { error: 'Não autorizado' };
+  const auth = await requireTripOrganizer(tripId);
+  if (!auth.ok) {
+    return { error: auth.error };
   }
 
-  // Verificar se é organizador
-  const { data: member } = await supabase
-    .from('trip_members')
-    .select('role')
-    .eq('trip_id', tripId)
-    .eq('user_id', authUser.id)
-    .single();
-
-  if (!member || member.role !== 'organizer') {
-    return { error: 'Apenas organizadores podem criar grupos' };
-  }
+  const { supabase } = auth;
 
   const trimmedName = name.trim();
   if (!trimmedName) {
@@ -133,36 +119,28 @@ export async function createGroup(
     return { error: 'Um grupo precisa de pelo menos 2 participantes' };
   }
 
-  // Criar o grupo
-  const { data: group, error: insertError } = await supabase
-    .from('trip_groups')
-    .insert({
-      trip_id: tripId,
-      name: trimmedName,
-      created_by: authUser.id,
-    })
-    .select('id, trip_id, name, created_at')
-    .single();
+  // Atomic RPC: creates group + assigns participants in a single transaction
+  const { data: groupId, error: rpcError } = await supabase.rpc('create_group_with_members', {
+    p_trip_id: tripId,
+    p_name: trimmedName,
+    p_participant_ids: participantIds,
+  });
 
-  if (insertError) {
-    if (insertError.code === '23505') {
+  if (rpcError || !groupId) {
+    if (rpcError?.code === '23505') {
       return { error: 'Já existe um grupo com esse nome nesta viagem' };
     }
-    return { error: insertError.message };
+    return { error: rpcError?.message ?? 'Erro ao criar grupo' };
   }
 
-  // Atualizar participantes com o group_id
-  const { error: updateError } = await supabase
-    .from('trip_participants')
-    .update({ group_id: group.id })
-    .eq('trip_id', tripId)
-    .in('id', participantIds);
+  const resultId = String(groupId);
 
-  if (updateError) {
-    // Rollback: deletar o grupo criado
-    await supabase.from('trip_groups').delete().eq('id', group.id);
-    return { error: updateError.message };
-  }
+  // Fetch created group for response
+  const { data: group } = await supabase
+    .from('trip_groups')
+    .select('id, trip_id, name, created_at')
+    .eq('id', resultId)
+    .single();
 
   revalidate.tripParticipants(tripId);
 
@@ -170,17 +148,17 @@ export async function createGroup(
     tripId,
     action: 'created',
     entityType: 'group',
-    entityId: group.id,
+    entityId: resultId,
     metadata: { name: trimmedName, memberCount: participantIds.length },
   });
 
   return {
     data: {
-      id: group.id,
-      tripId: group.trip_id,
-      name: group.name,
+      id: resultId,
+      tripId,
+      name: trimmedName,
       memberParticipantIds: participantIds,
-      createdAt: group.created_at,
+      createdAt: group?.created_at ?? new Date().toISOString(),
     },
   };
 }

@@ -25,7 +25,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 function LoginFormSkeleton() {
   return (
-    <Card className="border-border/70 bg-card/95 shadow-lg shadow-primary/5 backdrop-blur-sm">
+    <Card className="relative overflow-hidden border-border/70 bg-card/95 shadow-lg shadow-primary/5 backdrop-blur-sm">
+      <div
+        className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-primary via-primary/80 to-[var(--brand-sunset-coral)]"
+        aria-hidden="true"
+      />
       <CardHeader className="space-y-2 text-center">
         <Skeleton className="mx-auto h-8 w-24" />
         <Skeleton className="mx-auto h-4 w-64" />
@@ -89,7 +93,11 @@ function LoginForm() {
   }
 
   return (
-    <Card className="border-border/70 bg-card/95 shadow-lg shadow-primary/5 backdrop-blur-sm">
+    <Card className="relative overflow-hidden border-border/70 bg-card/95 shadow-lg shadow-primary/5 backdrop-blur-sm">
+      <div
+        className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-primary via-primary/80 to-[var(--brand-sunset-coral)]"
+        aria-hidden="true"
+      />
       <CardHeader className="space-y-2 text-center">
         <h1 className="text-2xl font-semibold leading-none" data-slot="card-title">
           Entrar

@@ -235,6 +235,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    letter-spacing: -0.011em;
   }
   h1,
   h2,
@@ -243,7 +244,7 @@
   h5,
   h6 {
     font-family: var(--font-brand);
-    letter-spacing: -0.01em;
+    letter-spacing: -0.02em;
   }
 }
 
@@ -287,9 +288,22 @@
     line-height: 1.4;
   }
 
+  /* Uppercase label utility */
+  .text-label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
   /* Form error shake animation */
   .animate-shake {
     animation: shake 0.3s ease-in-out;
+  }
+
+  /* Fade-up entrance animation */
+  .animate-fade-up {
+    animation: fade-up 0.4s ease-out both;
   }
 
   /* Hide scrollbar but keep functionality */
@@ -321,6 +335,18 @@
   }
   50% {
     transform: translateX(4px);
+  }
+}
+
+/* Fade-up entrance */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 

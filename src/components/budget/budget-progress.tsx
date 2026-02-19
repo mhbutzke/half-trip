@@ -12,9 +12,9 @@ export function BudgetProgress({ percentage, status, className }: BudgetProgress
   const clampedPercentage = Math.min(percentage, 100);
 
   const getFill = () => {
-    if (status === 'safe') return 'bg-emerald-500';
-    if (status === 'warning') return 'bg-amber-400';
-    return 'bg-red-500';
+    if (status === 'safe') return 'bg-budget-safe';
+    if (status === 'warning') return 'bg-budget-warning';
+    return 'bg-budget-exceeded';
   };
 
   return (

@@ -7,6 +7,9 @@ import { createClient } from '@/lib/supabase/client';
 import type { TripProgressData } from '@/components/trips/trip-progress';
 import type { TripChecklist } from '@/types/checklist';
 import type { TripBudget } from '@/types/budget';
+import { calculateBalancesWithSettlements } from '@/lib/balance/calculate-balance';
+import { calculateSettlements } from '@/lib/balance/calculate-settlements';
+import type { ExpenseData, ParticipantData, PersistedSettlement } from '@/lib/balance/types';
 
 interface Expense {
   trip_id: string;
@@ -137,11 +140,12 @@ export type ActionCardStats = {
  * Derive action card stats from progress data + additional queries.
  * - pendingChecklistsCount: computed from progressData (no extra query)
  * - recentExpensesCount: expenses created in last 7 days
- * - pendingSettlements: recorded settlements count
+ * - pendingSettlements: suggested settlements count from balance calculation (upcoming trip only)
  */
 export async function getActionCardStats(
   tripIds: string[],
-  progressData: Map<string, TripProgressData>
+  progressData: Map<string, TripProgressData>,
+  upcomingTripId?: string
 ): Promise<ActionCardStats> {
   if (tripIds.length === 0) {
     return { pendingSettlements: 0, recentExpensesCount: 0, pendingChecklistsCount: 0 };
@@ -158,23 +162,74 @@ export async function getActionCardStats(
   const supabase = createClient();
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-  const [expensesResult, settlementsResult] = await Promise.all([
-    // Recent expenses: created in last 7 days
-    supabase
-      .from('expenses')
-      .select('id', { count: 'exact', head: true })
-      .in('trip_id', tripIds)
-      .gte('created_at', sevenDaysAgo),
-    // Recorded settlements
-    supabase
-      .from('settlements')
-      .select('id', { count: 'exact', head: true })
-      .in('trip_id', tripIds),
-  ]);
+  // Recent expenses count
+  const expensesCountResult = await supabase
+    .from('expenses')
+    .select('id', { count: 'exact', head: true })
+    .in('trip_id', tripIds)
+    .gte('created_at', sevenDaysAgo);
+
+  // Calculate pending settlements from balance data (upcoming trip only)
+  let pendingSettlements = 0;
+  if (upcomingTripId) {
+    const [expensesResult, participantsResult, settlementsResult] = await Promise.all([
+      supabase
+        .from('expenses')
+        .select(
+          'id, amount, paid_by_participant_id, exchange_rate, expense_splits(participant_id, amount)'
+        )
+        .eq('trip_id', upcomingTripId),
+      supabase.from('trip_participants').select('id, type').eq('trip_id', upcomingTripId),
+      supabase
+        .from('settlements')
+        .select('from_participant_id, to_participant_id, amount')
+        .eq('trip_id', upcomingTripId),
+    ]);
+
+    const expenses = expensesResult.data ?? [];
+    const participants = participantsResult.data ?? [];
+    const settlements = settlementsResult.data ?? [];
+
+    if (expenses.length > 0 && participants.length > 0) {
+      const expenseData: ExpenseData[] = expenses.map((e) => ({
+        id: e.id,
+        amount: e.amount,
+        paidByParticipantId: e.paid_by_participant_id || '',
+        exchangeRate: e.exchange_rate ?? 1,
+        splits: (e.expense_splits as Array<{ participant_id: string | null; amount: number }>).map(
+          (s) => ({
+            participantId: s.participant_id || '',
+            amount: s.amount,
+          })
+        ),
+      }));
+
+      const participantData: ParticipantData[] = participants.map((p) => ({
+        participantId: p.id,
+        participantName: '',
+        participantAvatar: null,
+        participantType: p.type as 'member' | 'guest',
+      }));
+
+      const persistedSettlements: PersistedSettlement[] = settlements.map((s) => ({
+        fromParticipantId: s.from_participant_id || '',
+        toParticipantId: s.to_participant_id || '',
+        amount: s.amount,
+      }));
+
+      const balanceResult = calculateBalancesWithSettlements(
+        expenseData,
+        participantData,
+        persistedSettlements
+      );
+      const suggestedSettlements = calculateSettlements(balanceResult.participants);
+      pendingSettlements = suggestedSettlements.length;
+    }
+  }
 
   return {
-    pendingSettlements: settlementsResult.count ?? 0,
-    recentExpensesCount: expensesResult.count ?? 0,
+    pendingSettlements,
+    recentExpensesCount: expensesCountResult.count ?? 0,
     pendingChecklistsCount,
   };
 }

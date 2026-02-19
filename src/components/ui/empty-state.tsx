@@ -52,9 +52,15 @@ export function EmptyState({
       {illustration ? (
         <div className="mb-6 flex size-32 items-center justify-center">{illustration}</div>
       ) : (
-        <div className={cn('mb-6 rounded-full bg-muted', variant === 'inline' ? 'p-4' : 'p-8')}>
+        <div
+          className={cn(
+            'mb-6 rounded-full bg-gradient-to-br from-primary/10 via-accent/10 to-muted',
+            'ring-1 ring-border/50',
+            variant === 'inline' ? 'p-4' : 'p-8'
+          )}
+        >
           <Icon
-            className={cn('text-muted-foreground', variant === 'inline' ? 'size-8' : 'size-12')}
+            className={cn('text-primary/60', variant === 'inline' ? 'size-8' : 'size-12')}
             aria-hidden="true"
           />
         </div>
@@ -94,7 +100,7 @@ export function EmptyState({
             {tips.map((tip, index) => (
               <div
                 key={index}
-                className="rounded-lg border bg-card p-4 text-left shadow-sm transition-colors hover:bg-accent"
+                className="rounded-lg border border-border/70 bg-gradient-to-b from-card to-card/95 p-4 text-left shadow-sm shadow-primary/5 transition-all duration-200 hover:border-primary/20 hover:shadow-md hover:shadow-primary/10"
               >
                 <p className="text-sm text-foreground">{tip}</p>
               </div>

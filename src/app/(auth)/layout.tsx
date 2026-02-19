@@ -25,8 +25,17 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       </header>
 
       {/* Main content */}
-      <main className="flex flex-1 items-center justify-center p-4 sm:p-6">
-        <div className="grid w-full max-w-5xl items-center gap-8 md:grid-cols-2 md:gap-10">
+      <main className="relative flex flex-1 items-center justify-center p-4 sm:p-6">
+        {/* Background dot grid */}
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.02] dark:opacity-[0.04]"
+          style={{
+            backgroundImage: 'radial-gradient(circle, var(--brand-deep-blue) 1px, transparent 1px)',
+            backgroundSize: '20px 20px',
+          }}
+          aria-hidden="true"
+        />
+        <div className="relative grid w-full max-w-5xl items-center gap-8 md:grid-cols-2 md:gap-10">
           <section className="hidden space-y-4 md:block">
             <p className="text-sm font-semibold uppercase tracking-[0.14em] text-primary">
               Half Trip

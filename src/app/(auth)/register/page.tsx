@@ -32,7 +32,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 function RegisterFormSkeleton() {
   return (
-    <Card>
+    <Card className="relative overflow-hidden border-border/70 bg-card/95 shadow-lg shadow-primary/5 backdrop-blur-sm">
+      <div
+        className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-primary via-primary/80 to-[var(--brand-sunset-coral)]"
+        aria-hidden="true"
+      />
       <CardHeader className="text-center">
         <Skeleton className="mx-auto h-8 w-32" />
         <Skeleton className="mx-auto h-4 w-64" />
@@ -139,7 +143,11 @@ function RegisterForm() {
 
   if (success) {
     return (
-      <Card>
+      <Card className="relative overflow-hidden border-border/70 bg-card/95 shadow-lg shadow-primary/5 backdrop-blur-sm">
+        <div
+          className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-primary via-primary/80 to-[var(--brand-sunset-coral)]"
+          aria-hidden="true"
+        />
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 animate-in zoom-in duration-300">
             <CheckCircle className="h-8 w-8 text-primary" />
@@ -186,7 +194,11 @@ function RegisterForm() {
   }
 
   return (
-    <Card>
+    <Card className="relative overflow-hidden border-border/70 bg-card/95 shadow-lg shadow-primary/5 backdrop-blur-sm">
+      <div
+        className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-primary via-primary/80 to-[var(--brand-sunset-coral)]"
+        aria-hidden="true"
+      />
       <CardHeader className="text-center">
         <CardTitle className="text-2xl">Criar conta</CardTitle>
         <CardDescription>Crie sua conta para planejar viagens em grupo</CardDescription>

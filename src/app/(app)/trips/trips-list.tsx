@@ -89,7 +89,11 @@ export function TripsList({ emptyState }: TripsListProps) {
           const tripIds = allTrips.map((t) => t.id);
           const progress = await getTripProgressBatch(tripIds);
           setProgressData(progress);
-          const stats = await getActionCardStats(tripIds, progress);
+          // Find upcoming trip for pending settlements calculation
+          const upcoming = activeTrips.sort(
+            (a, b) => parseDateOnly(a.start_date).getTime() - parseDateOnly(b.start_date).getTime()
+          )[0];
+          const stats = await getActionCardStats(tripIds, progress, upcoming?.id);
           setActionStats(stats);
         }
       } else {

@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getTripById, getUserRoleInTrip } from '@/lib/supabase/trips';
-import { getTripExpenses } from '@/lib/supabase/expenses';
+import { getTripExpensesPaginated } from '@/lib/supabase/expenses';
 import { getTripParticipants } from '@/lib/supabase/participants';
 import { PageContainer } from '@/components/layout/page-container';
 import { FinancesTabBar } from '@/components/layout/finances-tab-bar';
@@ -24,9 +24,9 @@ async function ExpensesContent({ tripId }: { tripId: string }) {
     redirect('/login');
   }
 
-  const [trip, expenses, participantsResult, userRole] = await Promise.all([
+  const [trip, paginatedExpenses, participantsResult, userRole] = await Promise.all([
     getTripById(tripId),
-    getTripExpenses(tripId),
+    getTripExpensesPaginated(tripId, 0),
     getTripParticipants(tripId),
     getUserRoleInTrip(tripId),
   ]);
@@ -41,11 +41,13 @@ async function ExpensesContent({ tripId }: { tripId: string }) {
   return (
     <div className="space-y-6">
       <ExpensesHeader tripId={tripId} tripName={trip.name} />
-      <FinancesTabBar tripId={tripId} expensesCount={expenses.length} />
+      <FinancesTabBar tripId={tripId} expensesCount={paginatedExpenses.total} />
       <ExpensesList
         tripId={tripId}
         baseCurrency={trip.base_currency}
-        initialExpenses={expenses}
+        initialExpenses={paginatedExpenses.items}
+        initialHasMore={paginatedExpenses.hasMore}
+        totalExpenses={paginatedExpenses.total}
         participants={participants}
         userRole={userRole}
         currentUserId={user.id}

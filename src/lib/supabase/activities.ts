@@ -232,6 +232,7 @@ export async function getTripActivities(tripId: string): Promise<ActivityWithCre
 
   const { supabase } = member;
 
+  // Safety limit to prevent unbounded payloads on very long trips
   const { data: activities } = await supabase
     .from('activities')
     .select(
@@ -246,7 +247,8 @@ export async function getTripActivities(tripId: string): Promise<ActivityWithCre
     )
     .eq('trip_id', tripId)
     .order('date', { ascending: true })
-    .order('sort_order', { ascending: true });
+    .order('sort_order', { ascending: true })
+    .limit(500);
 
   const parsedActivities = (activities as ActivityWithCreator[]) || [];
   if (parsedActivities.length === 0) {
@@ -285,6 +287,92 @@ export async function getTripActivities(tripId: string): Promise<ActivityWithCre
     attachments_count: attachmentsByActivity.get(activity.id) || 0,
     expense_count: expensesByActivity.get(activity.id) || 0,
   }));
+}
+
+type PaginatedResult<T> = {
+  items: T[];
+  total: number;
+  hasMore: boolean;
+};
+
+const ACTIVITIES_PAGE_SIZE = 50;
+
+/**
+ * Gets paginated activities for a trip (for list view).
+ * Use getTripActivities() when you need the full set.
+ */
+export async function getTripActivitiesPaginated(
+  tripId: string,
+  page: number = 0,
+  limit: number = ACTIVITIES_PAGE_SIZE
+): Promise<PaginatedResult<ActivityWithCreator>> {
+  const member = await requireTripMember(tripId);
+  if (!member.ok) return { items: [], total: 0, hasMore: false };
+
+  const { supabase } = member;
+  const from = page * limit;
+  const to = from + limit - 1;
+
+  const [countResult, dataResult] = await Promise.all([
+    supabase.from('activities').select('id', { count: 'exact', head: true }).eq('trip_id', tripId),
+    supabase
+      .from('activities')
+      .select(
+        `
+        *,
+        users!activities_created_by_fkey (
+          id,
+          name,
+          avatar_url
+        )
+      `
+      )
+      .eq('trip_id', tripId)
+      .order('date', { ascending: true })
+      .order('sort_order', { ascending: true })
+      .range(from, to),
+  ]);
+
+  const total = countResult.count ?? 0;
+  const parsedActivities = (dataResult.data as ActivityWithCreator[]) || [];
+
+  if (parsedActivities.length === 0) {
+    return { items: [], total, hasMore: false };
+  }
+
+  // Enrich with attachment and expense counts
+  const activityIds = parsedActivities.map((a) => a.id);
+  const [attachmentRows, expenseRows] = await Promise.all([
+    supabase.from('activity_attachments').select('activity_id').in('activity_id', activityIds),
+    supabase
+      .from('expenses')
+      .select('activity_id')
+      .in('activity_id', activityIds)
+      .not('activity_id', 'is', null),
+  ]);
+
+  const attachmentsByActivity = new Map<string, number>();
+  for (const row of attachmentRows.data || []) {
+    attachmentsByActivity.set(
+      row.activity_id,
+      (attachmentsByActivity.get(row.activity_id) || 0) + 1
+    );
+  }
+
+  const expensesByActivity = new Map<string, number>();
+  for (const row of expenseRows.data || []) {
+    if (row.activity_id) {
+      expensesByActivity.set(row.activity_id, (expensesByActivity.get(row.activity_id) || 0) + 1);
+    }
+  }
+
+  const items = parsedActivities.map((activity) => ({
+    ...activity,
+    attachments_count: attachmentsByActivity.get(activity.id) || 0,
+    expense_count: expensesByActivity.get(activity.id) || 0,
+  }));
+
+  return { items, total, hasMore: from + items.length < total };
 }
 
 /**

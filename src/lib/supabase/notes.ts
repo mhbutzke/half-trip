@@ -212,6 +212,57 @@ export async function getTripNotes(tripId: string): Promise<NoteWithCreator[]> {
   return (notes as NoteWithCreator[]) || [];
 }
 
+type PaginatedResult<T> = {
+  items: T[];
+  total: number;
+  hasMore: boolean;
+};
+
+const NOTES_PAGE_SIZE = 30;
+
+/**
+ * Gets paginated notes for a trip (for list view).
+ * Use getTripNotes() when you need the full set.
+ */
+export async function getTripNotesPaginated(
+  tripId: string,
+  page: number = 0,
+  limit: number = NOTES_PAGE_SIZE
+): Promise<PaginatedResult<NoteWithCreator>> {
+  const auth = await requireTripMember(tripId);
+  if (!auth.ok) return { items: [], total: 0, hasMore: false };
+
+  const from = page * limit;
+  const to = from + limit - 1;
+
+  const [countResult, dataResult] = await Promise.all([
+    auth.supabase
+      .from('trip_notes')
+      .select('id', { count: 'exact', head: true })
+      .eq('trip_id', tripId),
+    auth.supabase
+      .from('trip_notes')
+      .select(
+        `
+        *,
+        users!trip_notes_created_by_fkey (
+          id,
+          name,
+          avatar_url
+        )
+      `
+      )
+      .eq('trip_id', tripId)
+      .order('created_at', { ascending: false })
+      .range(from, to),
+  ]);
+
+  const total = countResult.count ?? 0;
+  const items = (dataResult.data as NoteWithCreator[]) || [];
+
+  return { items, total, hasMore: from + items.length < total };
+}
+
 /**
  * Gets a single note by ID
  */

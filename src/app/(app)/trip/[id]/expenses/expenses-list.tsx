@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { Plus, Search, Receipt, Filter, X } from 'lucide-react';
+import { Plus, Search, Receipt, Filter, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,7 +20,7 @@ import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { DeleteExpenseDialog } from '@/components/expenses';
 import { ExpenseDateGroup } from '@/components/expenses/expense-date-group';
 import { expenseCategoryList, getCategoryInfo } from '@/lib/utils/expense-categories';
-import { deleteExpense } from '@/lib/supabase/expenses';
+import { deleteExpense, getTripExpensesPaginated } from '@/lib/supabase/expenses';
 import { formatAmount } from '@/lib/validation/expense-schemas';
 import type { TripParticipantResolved } from '@/lib/supabase/participants';
 import type { ExpenseWithDetails } from '@/types/expense';
@@ -47,6 +47,8 @@ interface ExpensesListProps {
   tripId: string;
   baseCurrency: string;
   initialExpenses: ExpenseWithDetails[];
+  initialHasMore: boolean;
+  totalExpenses: number;
   participants: TripParticipantResolved[];
   userRole: TripMemberRole | null;
   currentUserId: string;
@@ -60,6 +62,8 @@ export function ExpensesList({
   tripId,
   baseCurrency,
   initialExpenses,
+  initialHasMore,
+  totalExpenses,
   participants,
   userRole,
   currentUserId,
@@ -74,7 +78,30 @@ export function ExpensesList({
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
 
+  // Pagination state
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(initialHasMore);
+  const [total, setTotal] = useState(totalExpenses);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const loadMore = async () => {
+    setLoadingMore(true);
+    try {
+      const nextPage = page + 1;
+      const result = await getTripExpensesPaginated(tripId, nextPage);
+      setExpenses((prev) => [...prev, ...result.items]);
+      setHasMore(result.hasMore);
+      setTotal(result.total);
+      setPage(nextPage);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
   const handleExpenseAdded = () => {
+    // Reset pagination so the SSR refresh brings back page 0
+    setPage(0);
+    setHasMore(initialHasMore);
     router.refresh();
   };
 
@@ -92,7 +119,10 @@ export function ExpensesList({
 
   useEffect(() => {
     setExpenses(initialExpenses);
-  }, [initialExpenses]);
+    setPage(0);
+    setHasMore(initialHasMore);
+    setTotal(totalExpenses);
+  }, [initialExpenses, initialHasMore, totalExpenses]);
 
   // Check if user can edit an expense (paid_by is more intuitive than created_by)
   const canEditExpense = (expense: ExpenseWithDetails) => {
@@ -118,6 +148,7 @@ export function ExpensesList({
   // Handle expense deleted
   const handleExpenseDeleted = (expenseId: string) => {
     setExpenses((prev) => prev.filter((expense) => expense.id !== expenseId));
+    setTotal((prev) => Math.max(0, prev - 1));
     setDeletingExpense(null);
   };
 
@@ -128,7 +159,8 @@ export function ExpensesList({
       return;
     }
     toast.success('Despesa excluída');
-    handleExpenseDeleted(expense.id);
+    setExpenses((prev) => prev.filter((e) => e.id !== expense.id));
+    setTotal((prev) => Math.max(0, prev - 1));
   };
 
   // Filter expenses
@@ -334,8 +366,8 @@ export function ExpensesList({
       <div className="flex items-center justify-between text-sm text-muted-foreground">
         <span>
           {filteredExpenses.length === expenses.length
-            ? `${expenses.length} ${expenses.length === 1 ? 'despesa' : 'despesas'}`
-            : `${filteredExpenses.length} de ${expenses.length} ${expenses.length === 1 ? 'despesa' : 'despesas'}`}
+            ? `${expenses.length}${hasMore ? ` de ${total}` : ''} ${total === 1 ? 'despesa' : 'despesas'}`
+            : `${filteredExpenses.length} de ${expenses.length}${hasMore ? ` (${total} total)` : ''} ${total === 1 ? 'despesa' : 'despesas'}`}
         </span>
         {filteredExpenses.length > 0 && filteredExpenses.length !== expenses.length && (
           <span className="font-medium text-foreground">
@@ -395,6 +427,21 @@ export function ExpensesList({
               onDuplicate={handleDuplicateExpense}
             />
           ))}
+
+          {hasMore && (
+            <div className="flex justify-center py-4">
+              <Button variant="outline" onClick={loadMore} disabled={loadingMore}>
+                {loadingMore ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                    Carregando...
+                  </>
+                ) : (
+                  `Carregar mais (${expenses.length} de ${total})`
+                )}
+              </Button>
+            </div>
+          )}
         </div>
       )}
 

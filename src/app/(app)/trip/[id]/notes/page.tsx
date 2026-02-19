@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getTripById, getUserRoleInTrip } from '@/lib/supabase/trips';
-import { getTripNotes } from '@/lib/supabase/notes';
+import { getTripNotesPaginated } from '@/lib/supabase/notes';
 import { PageContainer } from '@/components/layout/page-container';
 import { NotesHeader } from './notes-header';
 import { NotesList } from './notes-list';
@@ -23,9 +23,9 @@ async function NotesContent({ tripId }: { tripId: string }) {
     redirect(routes.login());
   }
 
-  const [trip, notes, userRole] = await Promise.all([
+  const [trip, notesResult, userRole] = await Promise.all([
     getTripById(tripId),
-    getTripNotes(tripId),
+    getTripNotesPaginated(tripId, 0),
     getUserRoleInTrip(tripId),
   ]);
 
@@ -36,7 +36,14 @@ async function NotesContent({ tripId }: { tripId: string }) {
   return (
     <div className="space-y-6">
       <NotesHeader tripId={tripId} tripName={trip.name} />
-      <NotesList tripId={tripId} initialNotes={notes} userRole={userRole} currentUserId={user.id} />
+      <NotesList
+        tripId={tripId}
+        initialNotes={notesResult.items}
+        initialHasMore={notesResult.hasMore}
+        totalNotes={notesResult.total}
+        userRole={userRole}
+        currentUserId={user.id}
+      />
     </div>
   );
 }

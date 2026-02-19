@@ -349,6 +349,71 @@ export async function getTripExpenses(tripId: string): Promise<ExpenseWithDetail
   return (expenses as ExpenseWithDetails[]) || [];
 }
 
+export type PaginatedResult<T> = {
+  items: T[];
+  total: number;
+  hasMore: boolean;
+};
+
+const EXPENSES_PAGE_SIZE = 30;
+
+/**
+ * Gets paginated expenses for a trip (for list view).
+ * Use getTripExpenses() for balance/summary calculations that need all data.
+ */
+export async function getTripExpensesPaginated(
+  tripId: string,
+  page: number = 0,
+  limit: number = EXPENSES_PAGE_SIZE
+): Promise<PaginatedResult<ExpenseWithDetails>> {
+  const auth = await requireTripMember(tripId);
+  if (!auth.ok) return { items: [], total: 0, hasMore: false };
+
+  const from = page * limit;
+  const to = from + limit - 1;
+
+  const [countResult, dataResult] = await Promise.all([
+    auth.supabase
+      .from('expenses')
+      .select('id', { count: 'exact', head: true })
+      .eq('trip_id', tripId),
+    auth.supabase
+      .from('expenses')
+      .select(
+        `
+        *,
+        paid_by_user:users!expenses_paid_by_fkey (
+          id,
+          name,
+          avatar_url
+        ),
+        created_by_user:users!expenses_created_by_fkey (
+          id,
+          name,
+          avatar_url
+        ),
+        expense_splits (
+          *,
+          users!expense_splits_user_id_fkey (
+            id,
+            name,
+            avatar_url
+          )
+        )
+      `
+      )
+      .eq('trip_id', tripId)
+      .order('date', { ascending: false })
+      .order('created_at', { ascending: false })
+      .range(from, to),
+  ]);
+
+  const total = countResult.count ?? 0;
+  const items = (dataResult.data as ExpenseWithDetails[]) || [];
+
+  return { items, total, hasMore: from + items.length < total };
+}
+
 /**
  * Gets a single expense by ID
  */

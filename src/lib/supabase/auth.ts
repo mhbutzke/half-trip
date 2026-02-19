@@ -3,7 +3,7 @@
 import { createClient } from './server';
 import { createAdminClient } from './admin';
 import { redirect } from 'next/navigation';
-import { sendConfirmationEmail } from '@/lib/email/send-confirmation-email';
+import { sendWelcomeEmail } from '@/lib/email/send-welcome-email';
 import { sendPasswordResetEmail } from '@/lib/email/send-password-reset-email';
 import { routes } from '@/lib/routes';
 import { logError } from '@/lib/errors/logger';
@@ -12,7 +12,6 @@ export type AuthResult = {
   error?: string;
   success?: boolean;
   userId?: string;
-  emailError?: boolean;
 };
 
 function getAppUrl(): string | null {
@@ -21,29 +20,15 @@ function getAppUrl(): string | null {
   return raw.endsWith('/') ? raw.slice(0, -1) : raw;
 }
 
-export async function signUp(
-  name: string,
-  email: string,
-  password: string,
-  redirectTo?: string
-): Promise<AuthResult> {
+export async function signUp(name: string, email: string, password: string): Promise<AuthResult> {
   const adminClient = createAdminClient();
-  const appUrl = getAppUrl();
-  if (!appUrl) {
-    return { error: 'Configuração inválida do servidor (NEXT_PUBLIC_APP_URL)' };
-  }
 
-  // Use admin.generateLink to create user WITHOUT triggering Supabase's built-in
-  // email system (which has strict rate limits on the free tier)
-  const { data, error } = await adminClient.auth.admin.generateLink({
-    type: 'signup',
+  // Create user already confirmed (skips email confirmation flow)
+  const { data, error } = await adminClient.auth.admin.createUser({
     email,
     password,
-    options: {
-      data: {
-        name,
-      },
-    },
+    email_confirm: true,
+    user_metadata: { name },
   });
 
   if (error) {
@@ -59,85 +44,31 @@ export async function signUp(
     return { error: error.message };
   }
 
-  if (!data?.properties?.hashed_token || !data?.user) {
+  if (!data?.user) {
     return { error: 'Erro ao criar conta. Tente novamente.' };
   }
 
-  // Build the confirmation URL that points to our auth callback
-  const callbackParams = new URLSearchParams({
-    token_hash: data.properties.hashed_token,
-    type: 'signup',
+  // Auto-login: set session cookies so user is immediately authenticated
+  const supabase = await createClient();
+  const { error: signInError } = await supabase.auth.signInWithPassword({
+    email,
+    password,
   });
-  if (redirectTo) {
-    callbackParams.set('redirect', redirectTo);
-  }
-  const confirmationUrl = `${appUrl}/auth/callback?${callbackParams.toString()}`;
 
-  // Send confirmation email via Resend (bypasses Supabase rate limits)
-  const emailResult = await sendConfirmationEmail({
+  if (signInError) {
+    // Account was created but auto-login failed — user can still login manually
+    logError(signInError, { action: 'auto-login-after-signup', userId: data.user.id });
+    return { success: true, userId: data.user.id };
+  }
+
+  // Fire-and-forget welcome email (may fail on sandbox — that's OK)
+  sendWelcomeEmail({
     userId: data.user.id,
     userName: name,
     userEmail: email,
-    confirmationUrl,
-  });
-
-  if (!emailResult.success) {
-    logError(emailResult.error, { action: 'send-confirmation-email', userId: data.user.id });
-    return {
-      success: true,
-      userId: data.user.id,
-      emailError: true,
-      error: 'Conta criada, mas houve um erro ao enviar o email de confirmação. Tente reenviar.',
-    };
-  }
+  }).catch((err) => logError(err, { action: 'send-welcome-email', userId: data.user.id }));
 
   return { success: true, userId: data.user.id };
-}
-
-export async function resendConfirmationEmail(email: string, name: string): Promise<AuthResult> {
-  const adminClient = createAdminClient();
-  const appUrl = getAppUrl();
-  if (!appUrl) {
-    return { error: 'Configuração inválida do servidor (NEXT_PUBLIC_APP_URL)' };
-  }
-
-  // Use magiclink type to regenerate a verification link for existing unconfirmed users
-  // (signup type requires password and could change the user's existing password)
-  const { data, error } = await adminClient.auth.admin.generateLink({
-    type: 'magiclink',
-    email,
-  });
-
-  if (error) {
-    if (error.message.toLowerCase().includes('rate limit')) {
-      return { error: 'Muitas tentativas. Aguarde alguns minutos e tente novamente.' };
-    }
-    return { error: 'Erro ao reenviar email de confirmação.' };
-  }
-
-  if (!data?.properties?.hashed_token || !data?.user) {
-    return { error: 'Erro ao gerar link de confirmação.' };
-  }
-
-  const callbackParams = new URLSearchParams({
-    token_hash: data.properties.hashed_token,
-    type: 'magiclink',
-  });
-  const confirmationUrl = `${appUrl}/auth/callback?${callbackParams.toString()}`;
-
-  const emailResult = await sendConfirmationEmail({
-    userId: data.user.id,
-    userName: name,
-    userEmail: email,
-    confirmationUrl,
-  });
-
-  if (!emailResult.success) {
-    logError(emailResult.error, { action: 'resend-confirmation-email', userId: data.user.id });
-    return { error: 'Erro ao enviar email de confirmação. Tente novamente.' };
-  }
-
-  return { success: true };
 }
 
 export async function signIn(email: string, password: string): Promise<AuthResult> {

@@ -138,6 +138,16 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
   const resend = getResendClient();
   if (!resend) {
     logError('Resend client not configured', { action: 'send-email' });
+    await logEmailAttempt({
+      emailType,
+      recipientEmail,
+      recipientUserId,
+      subject,
+      fromAddress: FROM_ADDRESSES[emailType],
+      status: 'failed',
+      errorMessage: 'RESEND_API_KEY not configured',
+      metadata,
+    });
     return { success: false, error: 'Email service not configured' };
   }
 

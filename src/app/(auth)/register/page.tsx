@@ -2,13 +2,13 @@
 
 import { Suspense, useState } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CheckCircle, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 
 import { registerSchema, type RegisterInput } from '@/lib/validation/auth-schemas';
-import { signUp, resendConfirmationEmail } from '@/lib/supabase/auth';
+import { signUp } from '@/lib/supabase/auth';
 import { routes } from '@/lib/routes';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -68,17 +68,12 @@ function RegisterFormSkeleton() {
 }
 
 function RegisterForm() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirect');
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-  const [emailError, setEmailError] = useState(false);
-  const [resending, setResending] = useState(false);
-  const [resendSuccess, setResendSuccess] = useState(false);
-  const [registeredEmail, setRegisteredEmail] = useState('');
-  const [registeredName, setRegisteredName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -96,22 +91,17 @@ function RegisterForm() {
     setIsLoading(true);
     setError(null);
 
-    const result = await signUp(data.name, data.email, data.password, redirectTo || undefined);
+    const result = await signUp(data.name, data.email, data.password);
 
     if (result.success) {
-      setRegisteredEmail(data.email);
-      setRegisteredName(data.name);
-      if (result.emailError) {
-        setEmailError(true);
-      }
-      setSuccess(true);
-      setIsLoading(false);
+      // Auto-login was done server-side — redirect to app
+      const destination = redirectTo || routes.trips();
+      router.push(destination);
       return;
     }
 
     if (result.error) {
       setError(result.error);
-      // If email already exists, scroll to error and suggest login
       if (result.error.includes('já está cadastrado')) {
         form.setError('email', {
           type: 'manual',
@@ -122,76 +112,8 @@ function RegisterForm() {
     setIsLoading(false);
   }
 
-  async function handleResend() {
-    setResending(true);
-    setError(null);
-    setResendSuccess(false);
-
-    const result = await resendConfirmationEmail(registeredEmail, registeredName);
-
-    if (result.success) {
-      setResendSuccess(true);
-      setEmailError(false);
-    } else {
-      setError(result.error || 'Erro ao reenviar email.');
-    }
-    setResending(false);
-  }
-
   // Build login link with redirect param if present
   const loginHref = redirectTo ? routes.login(redirectTo) : routes.login();
-
-  if (success) {
-    return (
-      <Card className="relative overflow-hidden border-border/70 bg-card/95 shadow-lg shadow-primary/5 backdrop-blur-sm">
-        <div
-          className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-primary via-primary/80 to-[var(--brand-sunset-coral)]"
-          aria-hidden="true"
-        />
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 animate-in zoom-in duration-300">
-            <CheckCircle className="h-8 w-8 text-primary" />
-          </div>
-          <CardTitle className="text-2xl">Conta criada com sucesso! 🎉</CardTitle>
-          {emailError ? (
-            <CardDescription className="mt-2">
-              Sua conta foi criada, mas houve um erro ao enviar o email de confirmação. Clique
-              abaixo para tentar novamente.
-            </CardDescription>
-          ) : resendSuccess ? (
-            <CardDescription className="mt-2">
-              Email de confirmação reenviado! Verifique sua caixa de entrada (e a pasta de spam) e
-              clique no link para ativar sua conta.
-            </CardDescription>
-          ) : (
-            <CardDescription className="mt-2">
-              Enviamos um email de confirmação para <strong>{registeredEmail}</strong>.
-              <br />
-              Verifique sua caixa de entrada (e a pasta de spam) e clique no link para ativar sua
-              conta e começar a planejar suas viagens!
-            </CardDescription>
-          )}
-          {error && (
-            <div className="mt-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-              {error}
-            </div>
-          )}
-        </CardHeader>
-        <CardFooter className="flex flex-col gap-2 sm:flex-row sm:justify-center">
-          {emailError && (
-            <Button onClick={handleResend} loading={resending}>
-              Reenviar email
-            </Button>
-          )}
-          <Link href={loginHref}>
-            <Button variant={emailError ? 'outline' : 'default'}>
-              {emailError ? 'Voltar para o login' : 'Ir para o login'}
-            </Button>
-          </Link>
-        </CardFooter>
-      </Card>
-    );
-  }
 
   return (
     <Card className="relative overflow-hidden border-border/70 bg-card/95 shadow-lg shadow-primary/5 backdrop-blur-sm">

@@ -5,7 +5,6 @@ import { MobileNav } from '@/components/layout/mobile-nav';
 import { SkipNav } from '@/components/layout/skip-nav';
 import { ScrollToTop } from '@/components/ui/scroll-to-top';
 import { OfflineIndicator } from '@/components/offline';
-import { InstallPrompt } from '@/components/pwa/install-prompt';
 import { NotificationToastListener } from '@/components/notifications';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
@@ -66,8 +65,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <ScrollToTop />
       {/* Mobile bottom navigation - auto-detects trip context */}
       <MobileNav />
-      {/* PWA install prompt */}
-      <InstallPrompt />
       {/* Notification toast listener */}
       <NotificationToastListener />
     </div>

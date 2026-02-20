@@ -4,6 +4,7 @@ import { createClient } from './server';
 import { createAdminClient } from './admin';
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
+import { cache } from 'react';
 import { sendPasswordResetEmail } from '@/lib/email/send-password-reset-email';
 import { sendConfirmationEmail } from '@/lib/email/send-confirmation-email';
 import { routes } from '@/lib/routes';
@@ -272,10 +273,10 @@ export async function resendConfirmation(email: string): Promise<AuthResult> {
   return { success: true };
 }
 
-export async function getUser() {
+export const getUser = cache(async () => {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   return user;
-}
+});

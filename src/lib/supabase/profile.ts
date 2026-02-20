@@ -2,6 +2,7 @@
 
 import { createClient } from './server';
 import { revalidate } from '@/lib/utils/revalidation';
+import { cache } from 'react';
 
 export type ProfileResult = {
   error?: string;
@@ -142,7 +143,7 @@ export async function removeAvatar(): Promise<ProfileResult> {
   return { success: true };
 }
 
-export async function getUserProfile() {
+export const getUserProfile = cache(async () => {
   const supabase = await createClient();
 
   const {
@@ -157,4 +158,4 @@ export async function getUserProfile() {
   const { data: profile } = await supabase.from('users').select('*').eq('id', authUser.id).single();
 
   return profile;
-}
+});

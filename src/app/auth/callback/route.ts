@@ -38,15 +38,21 @@ export async function GET(request: Request) {
   // Token hash flow (from admin.generateLink: signup confirmation, password recovery)
   if (tokenHash && type) {
     const otpType =
-      type === 'signup' ? 'email' : type === 'recovery' ? 'recovery' : (type as 'email');
+      type === 'signup'
+        ? 'email'
+        : type === 'recovery'
+          ? 'recovery'
+          : type === 'magiclink'
+            ? 'magiclink'
+            : (type as 'email');
     const { data, error } = await supabase.auth.verifyOtp({
       token_hash: tokenHash,
       type: otpType,
     });
 
     if (!error) {
-      // Fire-and-forget welcome email after successful signup confirmation
-      if (type === 'signup' && data?.user) {
+      // Fire-and-forget welcome email after successful signup/magiclink confirmation
+      if ((type === 'signup' || type === 'magiclink') && data?.user) {
         const user = data.user;
         sendWelcomeEmail({
           userId: user.id,

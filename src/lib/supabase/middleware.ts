@@ -68,6 +68,7 @@ export async function updateSession(request: NextRequest) {
     routes.home(),
     routes.login(),
     routes.register(),
+    routes.registerConfirm(),
     routes.forgotPassword(),
     routes.resetPassword(),
     routes.offline(),

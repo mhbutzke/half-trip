@@ -47,6 +47,7 @@ playwright/.cache/
 
 # Misc
 *.tsbuildinfo
+next-env.d.ts
 
 # Supabase local CLI artifacts
 supabase/.temp/

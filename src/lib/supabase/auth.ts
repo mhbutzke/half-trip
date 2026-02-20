@@ -4,8 +4,8 @@ import { createClient } from './server';
 import { createAdminClient } from './admin';
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
-import { sendWelcomeEmail } from '@/lib/email/send-welcome-email';
 import { sendPasswordResetEmail } from '@/lib/email/send-password-reset-email';
+import { sendConfirmationEmail } from '@/lib/email/send-confirmation-email';
 import { routes } from '@/lib/routes';
 import { logError } from '@/lib/errors/logger';
 import { rateLimit } from '@/lib/utils/rate-limit';
@@ -14,6 +14,7 @@ export type AuthResult = {
   error?: string;
   success?: boolean;
   userId?: string;
+  requiresConfirmation?: boolean;
 };
 
 function getAppUrl(): string | null {
@@ -40,11 +41,11 @@ export async function signUp(name: string, email: string, password: string): Pro
 
   const adminClient = createAdminClient();
 
-  // Create user already confirmed (skips email confirmation flow)
+  // Create user WITHOUT confirming email (requires confirmation via link)
   const { data, error } = await adminClient.auth.admin.createUser({
     email,
     password,
-    email_confirm: true,
+    email_confirm: false,
     user_metadata: { name },
   });
 
@@ -65,27 +66,41 @@ export async function signUp(name: string, email: string, password: string): Pro
     return { error: 'Erro ao criar conta. Tente novamente.' };
   }
 
-  // Auto-login: set session cookies so user is immediately authenticated
-  const supabase = await createClient();
-  const { error: signInError } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+  // Generate confirmation link and send email
+  const appUrl = getAppUrl();
+  if (appUrl) {
+    const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
+      type: 'signup',
+      email,
+      password,
+    });
 
-  if (signInError) {
-    // Account was created but auto-login failed — user can still login manually
-    logError(signInError, { action: 'auto-login-after-signup', userId: data.user.id });
-    return { success: true, userId: data.user.id };
+    if (!linkError && linkData?.properties?.hashed_token) {
+      const callbackParams = new URLSearchParams({
+        token_hash: linkData.properties.hashed_token,
+        type: 'signup',
+      });
+      const confirmUrl = `${appUrl}/auth/callback?${callbackParams.toString()}`;
+
+      const emailResult = await sendConfirmationEmail({
+        userName: name,
+        userEmail: email,
+        confirmUrl,
+      });
+
+      if (!emailResult.success) {
+        logError(emailResult.error, {
+          action: 'send-confirmation-email',
+          userId: data.user.id,
+        });
+      }
+    } else if (linkError) {
+      logError(linkError, { action: 'generate-confirmation-link', userId: data.user.id });
+    }
   }
 
-  // Fire-and-forget welcome email (may fail on sandbox — that's OK)
-  sendWelcomeEmail({
-    userId: data.user.id,
-    userName: name,
-    userEmail: email,
-  }).catch((err) => logError(err, { action: 'send-welcome-email', userId: data.user.id }));
-
-  return { success: true, userId: data.user.id };
+  // Do NOT auto-login — user must confirm email first
+  return { success: true, userId: data.user.id, requiresConfirmation: true };
 }
 
 export async function signIn(email: string, password: string): Promise<AuthResult> {
@@ -108,7 +123,10 @@ export async function signIn(email: string, password: string): Promise<AuthResul
       return { error: 'Email ou senha incorretos' };
     }
     if (error.message.includes('Email not confirmed')) {
-      return { error: 'Por favor, confirme seu email antes de fazer login' };
+      return {
+        error: 'Por favor, confirme seu email antes de fazer login',
+        requiresConfirmation: true,
+      };
     }
     return { error: 'Erro ao fazer login. Tente novamente.' };
   }
@@ -200,6 +218,58 @@ export async function resetPassword(password: string): Promise<AuthResult> {
 
   if (error) {
     return { error: 'Erro ao redefinir senha. Tente novamente.' };
+  }
+
+  return { success: true };
+}
+
+export async function resendConfirmation(email: string): Promise<AuthResult> {
+  // Rate limit: 3 resend attempts per IP per 15 minutes
+  const ip = await getClientIp();
+  const rl = rateLimit(`resend-confirm:${ip}`, { limit: 3, windowSeconds: 900 });
+  if (!rl.success) {
+    return { error: 'Muitas tentativas. Aguarde alguns minutos e tente novamente.' };
+  }
+
+  const adminClient = createAdminClient();
+  const appUrl = getAppUrl();
+
+  if (!appUrl) {
+    return { success: true };
+  }
+
+  // Generate a new confirmation link via magiclink (doesn't require password)
+  const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
+    type: 'magiclink',
+    email,
+  });
+
+  if (linkError || !linkData?.properties?.hashed_token) {
+    // Don't reveal if email exists or not
+    return { success: true };
+  }
+
+  // Get user name for personalized email
+  const { data: userData } = await adminClient
+    .from('users')
+    .select('name')
+    .eq('email', email)
+    .single();
+
+  const callbackParams = new URLSearchParams({
+    token_hash: linkData.properties.hashed_token,
+    type: 'magiclink',
+  });
+  const confirmUrl = `${appUrl}/auth/callback?${callbackParams.toString()}`;
+
+  const emailResult = await sendConfirmationEmail({
+    userName: userData?.name || '',
+    userEmail: email,
+    confirmUrl,
+  });
+
+  if (!emailResult.success) {
+    logError(emailResult.error, { action: 'resend-confirmation-email', email });
   }
 
   return { success: true };

@@ -94,7 +94,12 @@ function RegisterForm() {
     const result = await signUp(data.name, data.email, data.password);
 
     if (result.success) {
-      // Auto-login was done server-side — redirect to app
+      if (result.requiresConfirmation) {
+        // Redirect to email confirmation page
+        router.push(`${routes.registerConfirm()}?email=${encodeURIComponent(data.email)}`);
+        return;
+      }
+      // Fallback: if confirmation not required
       const destination = redirectTo || routes.trips();
       router.push(destination);
       return;

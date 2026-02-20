@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff } from 'lucide-react';
 
 import { loginSchema, type LoginInput } from '@/lib/validation/auth-schemas';
-import { signIn } from '@/lib/supabase/auth';
+import { signIn, resendConfirmation } from '@/lib/supabase/auth';
 import { routes } from '@/lib/routes';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -63,6 +63,8 @@ function LoginForm() {
     authError === 'auth_error' ? 'Ocorreu um erro na autenticação. Tente novamente.' : null
   );
   const [showPassword, setShowPassword] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [needsConfirmation, setNeedsConfirmation] = useState(false);
 
   // Build register link with redirect param if present
   const registerHref =
@@ -84,6 +86,7 @@ function LoginForm() {
 
     if (result.error) {
       setError(result.error);
+      setNeedsConfirmation(result.requiresConfirmation ?? false);
       setIsLoading(false);
       return;
     }
@@ -112,6 +115,27 @@ function LoginForm() {
             {error && (
               <div className="rounded-md border border-destructive/25 bg-destructive/10 p-3 text-sm text-destructive">
                 {error}
+                {needsConfirmation && (
+                  <>
+                    {' '}
+                    <button
+                      type="button"
+                      className="font-medium underline"
+                      onClick={async () => {
+                        const email = form.getValues('email');
+                        if (!email) return;
+                        setIsResending(true);
+                        await resendConfirmation(email);
+                        setError('Email de confirmação reenviado! Verifique sua caixa de entrada.');
+                        setNeedsConfirmation(false);
+                        setIsResending(false);
+                      }}
+                      disabled={isResending}
+                    >
+                      {isResending ? 'Reenviando...' : 'Reenviar email de confirmação'}
+                    </button>
+                  </>
+                )}
               </div>
             )}
 

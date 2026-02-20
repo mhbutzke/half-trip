@@ -10,6 +10,7 @@ export const routes = {
     redirect
       ? (`/register?redirect=${encodeURIComponent(redirect)}` as const)
       : ('/register' as const),
+  registerConfirm: () => '/register/confirm' as const,
   forgotPassword: () => '/forgot-password' as const,
   resetPassword: () => '/reset-password' as const,
   trips: () => '/trips' as const,

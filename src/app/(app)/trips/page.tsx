@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { TripsList } from './trips-list';
 import { EmptyState } from '@/components/ui/empty-state';
 import { EmptyTripsIllustration } from '@/components/illustrations';
+import { PendingInviteBanner } from '@/components/invites/pending-invite-banner';
 
 // Lazy load the create trip dialog - only needed when user clicks create
 const CreateTripDialog = dynamic(() =>
@@ -98,6 +99,8 @@ export default function TripsPage() {
   return (
     <PageContainer bottomNav>
       <div className="space-y-6">
+        <PendingInviteBanner />
+
         <div className="flex items-center justify-between rounded-xl border border-border/70 bg-gradient-to-r from-primary/5 via-background to-background p-4 shadow-sm shadow-primary/5">
           <div className="space-y-1">
             <h1 className="sr-only text-2xl font-bold tracking-tight md:not-sr-only">

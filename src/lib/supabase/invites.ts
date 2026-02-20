@@ -812,3 +812,27 @@ export async function getAllPendingInvites(tripId: string): Promise<TripInviteWi
 
   return (invites as TripInviteWithInviter[]) || [];
 }
+
+/**
+ * Info about a pending invite for the current user (from RPC)
+ */
+export type PendingInviteInfo = {
+  id: string;
+  code: string;
+  trip_id: string;
+  expires_at: string;
+  created_at: string;
+  trip: { id: string; name: string; destination: string; start_date: string; end_date: string };
+  inviter: { id: string; name: string; avatar_url: string | null };
+};
+
+/**
+ * Gets pending email invites addressed to the currently authenticated user.
+ * Uses SECURITY DEFINER RPC to bypass RLS (user is not yet a trip member).
+ */
+export async function getMyPendingInvites(): Promise<PendingInviteInfo[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc('get_my_pending_invites');
+  if (error || !data) return [];
+  return data as PendingInviteInfo[];
+}

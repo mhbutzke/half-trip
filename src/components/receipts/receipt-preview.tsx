@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import {
   FileText,
   Image as ImageIcon,
@@ -140,8 +141,14 @@ export function ReceiptPreview({
           title="Ver comprovante"
         >
           {isImage && signedUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={signedUrl} alt="Comprovante" className="h-10 w-10 object-cover" />
+            <Image
+              src={signedUrl}
+              alt="Comprovante"
+              width={40}
+              height={40}
+              className="h-10 w-10 object-cover"
+              unoptimized
+            />
           ) : isPdf ? (
             <FileText className="h-5 w-5 text-red-500" />
           ) : (
@@ -159,12 +166,13 @@ export function ReceiptPreview({
               <DialogTitle>Comprovante</DialogTitle>
             </DialogHeader>
             {signedUrl && (
-              <div className="flex items-center justify-center">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+              <div className="relative flex h-[70vh] w-full items-center justify-center">
+                <Image
                   src={signedUrl}
                   alt="Comprovante"
-                  className="max-h-[70vh] max-w-full rounded-lg object-contain"
+                  fill
+                  className="rounded-lg object-contain"
+                  unoptimized
                 />
               </div>
             )}
@@ -185,12 +193,14 @@ export function ReceiptPreview({
           {/* Thumbnail */}
           <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center overflow-hidden rounded bg-muted">
             {isImage && signedUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <Image
                 src={signedUrl}
                 alt="Comprovante"
+                width={64}
+                height={64}
                 className="h-16 w-16 cursor-pointer object-cover"
                 onClick={handlePreview}
+                unoptimized
               />
             ) : isPdf ? (
               <FileText className="h-8 w-8 text-red-500" />
@@ -293,12 +303,13 @@ export function ReceiptPreview({
             <DialogTitle>Comprovante</DialogTitle>
           </DialogHeader>
           {signedUrl && (
-            <div className="flex items-center justify-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+            <div className="relative flex h-[70vh] w-full items-center justify-center">
+              <Image
                 src={signedUrl}
                 alt="Comprovante"
-                className="max-h-[70vh] max-w-full rounded-lg object-contain"
+                fill
+                className="rounded-lg object-contain"
+                unoptimized
               />
             </div>
           )}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Camera, Loader2, Trash2, User } from 'lucide-react';
@@ -35,6 +36,7 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
   const [isRemovingAvatar, setIsRemovingAvatar] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   const form = useForm<ProfileInput>({
     resolver: zodResolver(profileSchema),
@@ -56,6 +58,7 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
 
       toast.success('Perfil atualizado com sucesso!');
       onUpdate?.();
+      router.refresh();
     } catch {
       toast.error('Erro ao atualizar perfil');
     } finally {
@@ -97,6 +100,7 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
 
       toast.success('Avatar atualizado com sucesso!');
       onUpdate?.();
+      router.refresh();
     } catch {
       toast.error('Erro ao enviar avatar');
       setAvatarPreview(null);
@@ -123,6 +127,7 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
       setAvatarPreview(null);
       toast.success('Avatar removido com sucesso!');
       onUpdate?.();
+      router.refresh();
     } catch {
       toast.error('Erro ao remover avatar');
     } finally {

@@ -113,7 +113,7 @@ export async function signIn(email: string, password: string): Promise<AuthResul
 
   const supabase = await createClient();
 
-  const { error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
@@ -132,14 +132,11 @@ export async function signIn(email: string, password: string): Promise<AuthResul
   }
 
   // Check if user is blocked
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (user) {
+  if (data?.user) {
     const { data: profile } = await supabase
       .from('users')
       .select('blocked_at')
-      .eq('id', user.id)
+      .eq('id', data.user.id)
       .single();
 
     if (profile?.blocked_at) {

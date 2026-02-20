@@ -534,6 +534,7 @@ export type Database = {
           id: string;
           trip_id: string;
           code: string;
+          code_hash: string | null;
           email: string | null;
           invited_by: string;
           expires_at: string;
@@ -545,6 +546,7 @@ export type Database = {
           id?: string;
           trip_id: string;
           code: string;
+          code_hash?: string | null;
           email?: string | null;
           invited_by: string;
           expires_at: string;
@@ -556,6 +558,7 @@ export type Database = {
           id?: string;
           trip_id?: string;
           code?: string;
+          code_hash?: string | null;
           email?: string | null;
           invited_by?: string;
           expires_at?: string;

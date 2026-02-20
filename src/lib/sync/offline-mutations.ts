@@ -12,6 +12,56 @@ type TripUpdate = Database['public']['Tables']['trips']['Update'];
 const now = () => new Date().toISOString();
 
 /**
+ * Enqueue a sync operation with deduplication.
+ * If a pending entry already exists for the same table+recordId,
+ * it is replaced instead of creating a duplicate.
+ * This prevents duplicate operations if the user edits the same
+ * record multiple times offline before syncing.
+ */
+async function enqueueSync(entry: {
+  table: string;
+  operation: 'insert' | 'update' | 'delete';
+  recordId: string;
+  data: unknown;
+}): Promise<void> {
+  const existing = await db.sync_queue
+    .where('[table+recordId]')
+    .equals([entry.table, entry.recordId])
+    .first();
+
+  if (existing) {
+    // Replace existing entry: keep the newer operation
+    // insert + update = insert (with updated data)
+    // insert + delete = remove queue entry entirely (cancel both)
+    // update + update = update (with latest data)
+    // update + delete = delete
+    // delete + anything = shouldn't happen (record already deleted locally)
+    if (existing.operation === 'insert' && entry.operation === 'delete') {
+      // Record was created then deleted offline — cancel both, never sync
+      await db.sync_queue.delete(existing.id!);
+      return;
+    }
+
+    const mergedOperation = existing.operation === 'insert' ? 'insert' : entry.operation;
+
+    await db.sync_queue.update(existing.id!, {
+      operation: mergedOperation,
+      data: entry.data,
+      timestamp: now(),
+      retries: 0,
+      error: undefined,
+    });
+  } else {
+    await db.sync_queue.add({
+      ...entry,
+      timestamp: now(),
+      retries: 0,
+      error: undefined,
+    });
+  }
+}
+
+/**
  * Create activity offline
  * Stores in IndexedDB and adds to sync queue
  */
@@ -44,14 +94,11 @@ export async function createActivityOffline(
   await db.activities.add(cachedActivity);
 
   // Add to sync queue
-  await db.sync_queue.add({
+  await enqueueSync({
     table: 'activities',
     operation: 'insert',
     recordId: data.id,
     data: cachedActivity,
-    timestamp: now(),
-    retries: 0,
-    error: undefined,
   });
 
   return cachedActivity;
@@ -82,14 +129,11 @@ export async function updateActivityOffline(
   await db.activities.update(id, updated);
 
   // Add to sync queue
-  await db.sync_queue.add({
+  await enqueueSync({
     table: 'activities',
     operation: 'update',
     recordId: id,
     data: { id, ...updated },
-    timestamp: now(),
-    retries: 0,
-    error: undefined,
   });
 }
 
@@ -104,14 +148,11 @@ export async function deleteActivityOffline(id: string): Promise<void> {
   });
 
   // Add to sync queue
-  await db.sync_queue.add({
+  await enqueueSync({
     table: 'activities',
     operation: 'delete',
     recordId: id,
     data: { id },
-    timestamp: now(),
-    retries: 0,
-    error: undefined,
   });
 }
 
@@ -147,14 +188,11 @@ export async function createExpenseOffline(
   await db.expenses.add(cachedExpense);
 
   // Add to sync queue
-  await db.sync_queue.add({
+  await enqueueSync({
     table: 'expenses',
     operation: 'insert',
     recordId: data.id,
     data: cachedExpense,
-    timestamp: now(),
-    retries: 0,
-    error: undefined,
   });
 
   return cachedExpense;
@@ -178,14 +216,11 @@ export async function updateExpenseOffline(
   await db.expenses.update(id, updated);
 
   // Add to sync queue
-  await db.sync_queue.add({
+  await enqueueSync({
     table: 'expenses',
     operation: 'update',
     recordId: id,
     data: { id, ...updated },
-    timestamp: now(),
-    retries: 0,
-    error: undefined,
   });
 }
 
@@ -200,14 +235,11 @@ export async function deleteExpenseOffline(id: string): Promise<void> {
   });
 
   // Add to sync queue
-  await db.sync_queue.add({
+  await enqueueSync({
     table: 'expenses',
     operation: 'delete',
     recordId: id,
     data: { id },
-    timestamp: now(),
-    retries: 0,
-    error: undefined,
   });
 }
 
@@ -234,14 +266,11 @@ export async function createTripNoteOffline(
   await db.trip_notes.add(cachedNote);
 
   // Add to sync queue
-  await db.sync_queue.add({
+  await enqueueSync({
     table: 'trip_notes',
     operation: 'insert',
     recordId: data.id,
     data: cachedNote,
-    timestamp: now(),
-    retries: 0,
-    error: undefined,
   });
 
   return cachedNote;
@@ -265,14 +294,11 @@ export async function updateTripNoteOffline(
   await db.trip_notes.update(id, updated);
 
   // Add to sync queue
-  await db.sync_queue.add({
+  await enqueueSync({
     table: 'trip_notes',
     operation: 'update',
     recordId: id,
     data: { id, ...updated },
-    timestamp: now(),
-    retries: 0,
-    error: undefined,
   });
 }
 
@@ -287,14 +313,11 @@ export async function deleteTripNoteOffline(id: string): Promise<void> {
   });
 
   // Add to sync queue
-  await db.sync_queue.add({
+  await enqueueSync({
     table: 'trip_notes',
     operation: 'delete',
     recordId: id,
     data: { id },
-    timestamp: now(),
-    retries: 0,
-    error: undefined,
   });
 }
 
@@ -313,14 +336,11 @@ export async function updateTripOffline(id: string, data: Partial<TripUpdate>): 
   await db.trips.update(id, updated);
 
   // Add to sync queue
-  await db.sync_queue.add({
+  await enqueueSync({
     table: 'trips',
     operation: 'update',
     recordId: id,
     data: { id, ...updated },
-    timestamp: now(),
-    retries: 0,
-    error: undefined,
   });
 }
 

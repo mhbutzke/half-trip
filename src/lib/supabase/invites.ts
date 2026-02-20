@@ -15,8 +15,17 @@ import { canRevokeInvite } from '@/lib/permissions/trip-permissions';
 import { logActivity } from '@/lib/supabase/activity-log';
 import { logError } from '@/lib/errors/logger';
 
+import { createHash } from 'crypto';
+
 // Default invite expiration: 7 days
 const DEFAULT_INVITE_EXPIRATION_DAYS = 7;
+
+/**
+ * Computes SHA-256 hash of an invite code for secure storage.
+ */
+function hashInviteCode(code: string): string {
+  return createHash('sha256').update(code).digest('hex');
+}
 
 export type InviteResult = {
   error?: string;
@@ -35,15 +44,30 @@ export type TripInviteWithInviter = TripInvite & {
  */
 function generateInviteCode(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const charsLen = chars.length; // 62
   const codeLength = 8;
   let code = '';
 
-  // Use crypto for secure random generation
-  const randomValues = new Uint8Array(codeLength);
-  crypto.getRandomValues(randomValues);
+  // Use rejection sampling to eliminate modulus bias.
+  // 248 is the largest multiple of 62 that fits in a byte (62 * 4 = 248).
+  // Values >= 248 are discarded and re-sampled.
+  const maxValid = 256 - (256 % charsLen); // 248
+
+  let pool = new Uint8Array(codeLength * 2);
+  crypto.getRandomValues(pool);
+  let poolIdx = 0;
 
   for (let i = 0; i < codeLength; i++) {
-    code += chars[randomValues[i] % chars.length];
+    while (pool[poolIdx] >= maxValid) {
+      poolIdx++;
+      if (poolIdx >= pool.length) {
+        pool = new Uint8Array(codeLength * 2);
+        crypto.getRandomValues(pool);
+        poolIdx = 0;
+      }
+    }
+    code += chars[pool[poolIdx] % charsLen];
+    poolIdx++;
   }
 
   return code;
@@ -105,12 +129,14 @@ export async function createInviteLink(
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + expirationDays);
 
-  // Create the invite
+  // Create the invite with hashed code for defense in depth
+  const codeHash = hashInviteCode(code);
   const { data: invite, error: insertError } = await supabase
     .from('trip_invites')
     .insert({
       trip_id: tripId,
       code,
+      code_hash: codeHash,
       invited_by: authUser.id,
       expires_at: expiresAt.toISOString(),
     })
@@ -615,12 +641,13 @@ export async function sendEmailInvite(tripId: string, email: string): Promise<Em
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + DEFAULT_INVITE_EXPIRATION_DAYS);
 
-    // Create the invite
+    // Create the invite with hashed code
     const { data: newInvite, error: insertError } = await supabase
       .from('trip_invites')
       .insert({
         trip_id: tripId,
         code: inviteCode,
+        code_hash: hashInviteCode(inviteCode),
         email: email.toLowerCase(),
         invited_by: authUser.id,
         expires_at: expiresAt.toISOString(),

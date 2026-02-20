@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { exchangeGoogleCodeForTokens, getGoogleUserEmail } from '@/lib/google-calendar/google-api';
 import { createClient } from '@/lib/supabase/server';
 import { routes } from '@/lib/routes';
+import { safeEncryptToken } from '@/lib/crypto/token-encryption';
 
 const STATE_COOKIE_NAME = 'gcal_oauth_state';
 const REDIRECT_COOKIE_NAME = 'gcal_oauth_redirect';
@@ -59,21 +60,29 @@ export async function GET(request: NextRequest) {
       .eq('user_id', user.id)
       .maybeSingle();
 
-    const refreshToken = tokens.refresh_token || existingConnection?.refresh_token;
+    // Use new refresh_token from Google, or keep the existing encrypted one from DB
+    const plainRefreshToken = tokens.refresh_token || null;
+    const existingRefreshToken = existingConnection?.refresh_token || null;
 
-    if (!refreshToken) {
+    if (!plainRefreshToken && !existingRefreshToken) {
       return redirectWithStatus(request, redirectPath, 'error');
     }
 
     const googleEmail = await getGoogleUserEmail(tokens.access_token);
     const accessTokenExpiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
 
+    // Encrypt tokens before storing (defense in depth against DB compromise)
+    // If we have a new refresh token from Google, encrypt it. Otherwise keep existing (already encrypted).
+    const encryptedRefreshToken = plainRefreshToken
+      ? safeEncryptToken(plainRefreshToken)
+      : existingRefreshToken!;
+
     const { error: upsertError } = await supabase.from('google_calendar_connections').upsert(
       {
         user_id: user.id,
         google_email: googleEmail,
-        refresh_token: refreshToken,
-        access_token: tokens.access_token,
+        refresh_token: encryptedRefreshToken,
+        access_token: safeEncryptToken(tokens.access_token),
         access_token_expires_at: accessTokenExpiresAt,
         scope: tokens.scope || null,
       },

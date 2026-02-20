@@ -3,6 +3,7 @@ import { googleCalendarRequest, refreshGoogleAccessToken } from '@/lib/google-ca
 import { buildGoogleCalendarEvent } from '@/lib/google-calendar/event-payload';
 import { normalizeSelectedActivityIds } from '@/lib/google-calendar/sync-selection';
 import { createClient } from '@/lib/supabase/server';
+import { safeDecryptToken, safeEncryptToken } from '@/lib/crypto/token-encryption';
 import type { Activity, Tables } from '@/types/database';
 
 type GoogleEventResponse = {
@@ -30,20 +31,29 @@ function isAccessTokenValid(connection: ConnectionRow): boolean {
 }
 
 async function getValidAccessToken(connection: ConnectionRow, userId: string): Promise<string> {
-  if (isAccessTokenValid(connection) && connection.access_token) {
-    return connection.access_token;
+  // Decrypt stored tokens (handles both encrypted and plaintext tokens during transition)
+  const decryptedAccessToken = connection.access_token
+    ? safeDecryptToken(connection.access_token)
+    : null;
+  const decryptedRefreshToken = safeDecryptToken(connection.refresh_token);
+
+  if (isAccessTokenValid(connection) && decryptedAccessToken) {
+    return decryptedAccessToken;
   }
 
-  const refreshed = await refreshGoogleAccessToken(connection.refresh_token);
+  const refreshed = await refreshGoogleAccessToken(decryptedRefreshToken);
   const supabase = await createClient();
 
+  // Re-encrypt tokens before storing
   const { error } = await supabase
     .from('google_calendar_connections')
     .update({
-      access_token: refreshed.access_token,
+      access_token: safeEncryptToken(refreshed.access_token),
       access_token_expires_at: getExpiryDateFromSeconds(refreshed.expires_in),
       scope: refreshed.scope || connection.scope,
-      refresh_token: refreshed.refresh_token || connection.refresh_token,
+      refresh_token: refreshed.refresh_token
+        ? safeEncryptToken(refreshed.refresh_token)
+        : connection.refresh_token,
     })
     .eq('user_id', userId);
 

@@ -173,32 +173,20 @@ export class HalfTripDB extends Dexie {
     super('HalfTripDB');
 
     this.version(5).stores({
-      // Users table
       users: 'id, email, name',
-
-      // Trips table - index by created_by for filtering user's trips
       trips: 'id, created_by, start_date, end_date, archived_at',
-
-      // Trip members - index by trip_id and user_id for queries
       trip_members: 'id, trip_id, user_id, [trip_id+user_id]',
-
-      // Activities - index by trip_id and date for day-by-day view
       activities: 'id, trip_id, date, [trip_id+date], created_by, sort_order',
-
-      // Expenses - index by trip_id and date for filtering
       expenses: 'id, trip_id, date, category, paid_by, paid_by_participant_id, created_by',
-
-      // Expense splits - index by expense_id, user_id, and participant_id
       expense_splits: 'id, expense_id, user_id, participant_id, [expense_id+user_id]',
-
-      // Trip notes - index by trip_id
       trip_notes: 'id, trip_id, created_by, created_at',
-
-      // Trip budgets - index by trip_id and category
       trip_budgets: 'id, trip_id, category, [trip_id+category]',
-
-      // Sync queue - auto-increment id, index by timestamp
       sync_queue: '++id, timestamp, table, operation, recordId',
+    });
+
+    // v6: Add compound index [table+recordId] to sync_queue for dedup lookups
+    this.version(6).stores({
+      sync_queue: '++id, timestamp, table, operation, recordId, [table+recordId]',
     });
   }
 }

@@ -310,18 +310,23 @@ export class SyncEngine {
       throw new Error(`Fetch failed: ${fetchError.message}`);
     }
 
-    // Conflict detection: compare timestamps if available
+    // Optimistic concurrency: reject if remote was updated after our local modification
     if (remoteData && 'updated_at' in remoteData && _locallyModifiedAt) {
       const remoteUpdatedAt = new Date(remoteData.updated_at as string);
-      const localUpdatedAt = new Date(_locallyModifiedAt);
+      const localModifiedAt = new Date(_locallyModifiedAt);
 
-      // If remote is newer than our local modification, we have a conflict
-      if (remoteUpdatedAt > localUpdatedAt) {
+      if (remoteUpdatedAt > localModifiedAt) {
+        // Remote is newer — keep remote version, update local cache from remote
         logWarning(
-          `SyncEngine: Conflict detected for ${table}:${id} - remote version is newer. Applying last-write-wins.`,
-          { action: 'sync-conflict' }
+          `SyncEngine: Conflict for ${table}:${id} — remote is newer (${remoteUpdatedAt.toISOString()} > ${localModifiedAt.toISOString()}). Keeping remote version.`,
+          { action: 'sync-conflict-reject' }
         );
-        // Last-write-wins: proceed with update anyway, overwriting remote changes
+
+        // Update local cache with the remote version so user sees current data
+        await this.updateCacheFromRemote(table, id, remoteData);
+
+        // Treat as resolved (not an error), skip the update
+        return;
       }
     }
 
@@ -366,6 +371,52 @@ export class SyncEngine {
       // Not an error - record is already deleted, which is the desired end state
     } else {
       logDebug(`SyncEngine: Successfully deleted ${table}:${id}`);
+    }
+  }
+
+  /**
+   * Update local cache from remote data when a conflict is resolved
+   * in favor of the remote version (optimistic concurrency).
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private async updateCacheFromRemote(table: string, id: string, remoteData: any): Promise<void> {
+    const syncFields = {
+      _syncStatus: 'synced' as const,
+      _lastSyncedAt: new Date().toISOString(),
+      _syncError: undefined,
+      _locallyModifiedAt: undefined,
+    };
+
+    try {
+      switch (table) {
+        case 'trips':
+          await db.trips.update(id, { ...remoteData, ...syncFields });
+          break;
+        case 'activities': {
+          // Serialize JSON fields for IndexedDB compatibility
+          const actData = { ...remoteData };
+          if (actData.links && typeof actData.links !== 'string') {
+            actData.links = JSON.stringify(actData.links);
+          }
+          if (actData.metadata && typeof actData.metadata !== 'string') {
+            actData.metadata = JSON.stringify(actData.metadata);
+          }
+          await db.activities.update(id, { ...actData, ...syncFields });
+          break;
+        }
+        case 'expenses':
+          await db.expenses.update(id, { ...remoteData, ...syncFields });
+          break;
+        case 'trip_notes':
+          await db.trip_notes.update(id, { ...remoteData, ...syncFields });
+          break;
+        default:
+          logWarning(`SyncEngine: Cannot update cache from remote for table: ${table}`, {
+            action: 'sync-cache-remote-update',
+          });
+      }
+    } catch (err) {
+      logError(err, { action: 'sync-cache-remote-update', table, recordId: id });
     }
   }
 

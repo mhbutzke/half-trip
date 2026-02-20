@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -43,7 +42,6 @@ export function InviteContent({
   isLoggedIn,
   currentUserName,
 }: InviteContentProps) {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [accepted, setAccepted] = useState(false);
@@ -78,7 +76,7 @@ export function InviteContent({
     if (result.error) {
       // Special case: already a member
       if (result.tripId) {
-        router.push(routes.trip.overview(result.tripId));
+        window.location.href = routes.trip.overview(result.tripId);
         return;
       }
       setError(result.error);
@@ -89,9 +87,9 @@ export function InviteContent({
     setAccepted(true);
     setIsLoading(false);
 
-    // Redirect to trip after short delay
+    // Hard redirect to avoid server component re-validation showing "invite used" flash
     setTimeout(() => {
-      router.push(routes.trip.overview(result.tripId!));
+      window.location.href = routes.trip.overview(result.tripId!);
     }, 1500);
   }
 

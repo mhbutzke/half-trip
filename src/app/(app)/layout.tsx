@@ -48,7 +48,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="flex min-h-svh flex-col overflow-x-clip">
+    <div className="flex min-h-svh flex-col">
       <SkipNav />
       {/* Desktop header */}
       <div className="hidden md:block">

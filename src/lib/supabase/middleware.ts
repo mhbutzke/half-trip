@@ -59,9 +59,23 @@ export async function updateSession(request: NextRequest) {
 
   // IMPORTANT: DO NOT REMOVE auth.getUser()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // IMPORTANT: DO NOT REMOVE auth.getUser()
+
+  let user = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch (error) {
+    // If the error is related to an invalid refresh token, we clear the session gracefully
+    // to prevent infinite loops of 400 'refresh_token_not_found'
+    if (error instanceof Error && error.message.includes('Refresh Token Not Found')) {
+      supabaseResponse.cookies.delete('sb-access-token');
+      supabaseResponse.cookies.delete('sb-refresh-token');
+      logError('Invalid Refresh Token caught in middleware, clearing session', {
+        action: 'middleware-auth-refresh',
+      });
+    }
+  }
 
   // Define public routes that don't require authentication
   const publicRoutes: string[] = [

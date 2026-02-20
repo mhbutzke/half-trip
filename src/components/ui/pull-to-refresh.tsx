@@ -23,7 +23,7 @@ export function PullToRefresh({ onRefresh, children, disabled, className }: Pull
   const pastThreshold = pullDistance >= 80;
 
   return (
-    <div ref={containerRef} className={cn('relative', className)}>
+    <div ref={containerRef} className={cn('relative touch-pan-y overscroll-y-contain', className)}>
       {/* Pull indicator */}
       {showIndicator && (
         <div

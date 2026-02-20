@@ -656,6 +656,7 @@ export async function sendEmailInvite(tripId: string, email: string): Promise<Em
       .single();
 
     if (insertError) {
+      logError(insertError, { action: 'create-email-invite', tripId });
       return { error: 'Erro ao criar convite por email' };
     }
 

@@ -43,7 +43,7 @@ describe('edge email dispatch integration', () => {
 
     const payload = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
     expect(payload).toMatchObject({
-      from: 'Half Trip <lembretes@halftrip.com>',
+      from: 'Half Trip <lembretes@halftrip.app>',
       to: 'traveler@example.com',
       subject: 'Trip starts soon',
     });

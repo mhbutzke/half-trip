@@ -49,7 +49,7 @@ describe('email service', () => {
         data: null,
         error: {
           message:
-            'The halftrip.com domain is not verified. Please, add and verify your domain on https://resend.com/domains',
+            'The halftrip.app domain is not verified. Please, add and verify your domain on https://resend.com/domains',
         },
       })
       .mockResolvedValueOnce({
@@ -75,7 +75,7 @@ describe('email service', () => {
     expect(result).toEqual({ success: true, emailId: 'email_123' });
     expect(sendMock).toHaveBeenCalledTimes(2);
     expect(sendMock.mock.calls[0]?.[0]).toMatchObject({
-      from: 'Half Trip <confirme@halftrip.com>',
+      from: 'Half Trip <confirme@halftrip.app>',
     });
     expect(sendMock.mock.calls[1]?.[0]).toMatchObject({
       from: 'Half Trip <onboarding@resend.dev>',

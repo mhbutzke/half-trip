@@ -155,7 +155,7 @@ export function TripRecapCard({ recap }: TripRecapCardProps) {
         </div>
 
         {/* Footer */}
-        <div style={{ textAlign: 'center', opacity: 0.5, fontSize: '11px' }}>halftrip.com</div>
+        <div style={{ textAlign: 'center', opacity: 0.5, fontSize: '11px' }}>halftrip.app</div>
       </div>
 
       {/* Export actions */}

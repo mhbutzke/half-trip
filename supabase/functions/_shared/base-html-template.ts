@@ -23,7 +23,7 @@ export function generateBaseEmailHtml({
   <hr style="border-color:#e5e7eb;margin:32px 40px;border-width:1px 0 0 0;border-style:solid;" />
   <div style="padding:0 40px;">
     <p style="color:#9ca3af;font-size:12px;line-height:1.5;margin:0;text-align:center;">
-      <a href="https://halftrip.com" style="color:#0d9488;text-decoration:underline;">Half Trip</a> - Planeje junto. Viaje melhor. Divida justo.
+      <a href="https://halftrip.app" style="color:#0d9488;text-decoration:underline;">Half Trip</a> - Planeje junto. Viaje melhor. Divida justo.
     </p>
     ${unsubscribeUrl ? `<p style="color:#9ca3af;font-size:11px;line-height:1.5;margin:8px 0 0;text-align:center;"><a href="${unsubscribeUrl}" style="color:#6b7280;text-decoration:underline;">Cancelar inscrição</a></p>` : ''}
   </div>

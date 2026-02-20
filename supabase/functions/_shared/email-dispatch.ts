@@ -127,7 +127,7 @@ export async function dispatchTripReminderEmail(
   return dispatchEmail({
     supabase: input.supabase,
     resendApiKey: input.resendApiKey,
-    fromAddress: 'Half Trip <lembretes@halftrip.com>',
+    fromAddress: 'Half Trip <lembretes@halftrip.app>',
     emailType: 'trip_reminder',
     recipientEmail: input.recipientEmail,
     recipientUserId: input.recipientUserId,
@@ -155,7 +155,7 @@ export async function dispatchDailySummaryEmail(
   return dispatchEmail({
     supabase: input.supabase,
     resendApiKey: input.resendApiKey,
-    fromAddress: 'Half Trip <resumo@halftrip.com>',
+    fromAddress: 'Half Trip <resumo@halftrip.app>',
     emailType: 'daily_summary',
     recipientEmail: input.recipientEmail,
     recipientUserId: input.recipientUserId,

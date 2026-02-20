@@ -46,7 +46,7 @@ serve(async (req) => {
 
     const supabaseServiceKey = serviceRoleKey;
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
-    const appUrl = Deno.env.get('APP_URL') || 'https://halftrip.com';
+    const appUrl = Deno.env.get('APP_URL') || 'https://halftrip.app';
 
     if (!resendApiKey) {
       return new Response(JSON.stringify({ error: 'RESEND_API_KEY not configured' }), {

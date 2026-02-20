@@ -7,12 +7,12 @@ import type { Json } from '@/types/database';
 import { logError, logWarning } from '@/lib/errors/logger';
 
 const FROM_ADDRESSES: Record<EmailType, string> = {
-  invite: 'Half Trip <convites@halftrip.com>',
-  trip_reminder: 'Half Trip <lembretes@halftrip.com>',
-  daily_summary: 'Half Trip <resumo@halftrip.com>',
-  welcome: 'Half Trip <boas-vindas@halftrip.com>',
-  confirmation: 'Half Trip <confirme@halftrip.com>',
-  password_reset: 'Half Trip <seguranca@halftrip.com>',
+  invite: 'Half Trip <convites@halftrip.app>',
+  trip_reminder: 'Half Trip <lembretes@halftrip.app>',
+  daily_summary: 'Half Trip <resumo@halftrip.app>',
+  welcome: 'Half Trip <boas-vindas@halftrip.app>',
+  confirmation: 'Half Trip <confirme@halftrip.app>',
+  password_reset: 'Half Trip <seguranca@halftrip.app>',
 };
 
 const SANDBOX_FROM_ADDRESS = 'Half Trip <onboarding@resend.dev>';

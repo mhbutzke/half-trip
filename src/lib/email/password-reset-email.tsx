@@ -54,7 +54,7 @@ export function PasswordResetEmail({ resetUrl }: PasswordResetEmailProps) {
 
           <Section style={footer}>
             <Text style={footerText}>
-              <Link href="https://halftrip.com" style={link}>
+              <Link href="https://halftrip.app" style={link}>
                 Half Trip
               </Link>{' '}
               - Planeje junto. Viaje melhor. Divida justo.

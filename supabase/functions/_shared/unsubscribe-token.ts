@@ -36,6 +36,6 @@ export async function generateUnsubscribeUrl(
   baseUrl?: string
 ): Promise<string> {
   const token = await generateUnsubscribeToken(payload);
-  const url = baseUrl || Deno.env.get('APP_URL') || 'https://halftrip.com';
+  const url = baseUrl || Deno.env.get('APP_URL') || 'https://halftrip.app';
   return `${url}/unsubscribe?token=${token}`;
 }

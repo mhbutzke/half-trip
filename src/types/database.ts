@@ -1318,6 +1318,12 @@ export type Database = {
         };
         Returns: number;
       };
+      get_invite_by_code: {
+        Args: {
+          p_code: string;
+        };
+        Returns: Json | null;
+      };
     };
     Enums: {
       [_ in never]: never;

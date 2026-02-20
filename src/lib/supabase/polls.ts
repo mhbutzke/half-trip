@@ -29,7 +29,7 @@ export async function createPoll(input: CreatePollInput): Promise<PollResult> {
     .select('id')
     .single();
 
-  if (error) return { error: error.message };
+  if (error) return { error: 'Erro ao criar enquete' };
 
   revalidate.trip(input.trip_id);
 
@@ -148,7 +148,7 @@ export async function votePoll(pollId: string, optionIndex: number): Promise<Pol
       user_id: user.id,
       option_index: optionIndex,
     });
-    if (error) return { error: error.message };
+    if (error) return { error: 'Erro ao registrar voto' };
   }
 
   revalidate.trip(poll.trip_id);
@@ -161,6 +161,6 @@ export async function deletePoll(pollId: string): Promise<PollResult> {
 
   const { error } = await auth.supabase.from('trip_polls').delete().eq('id', pollId);
 
-  if (error) return { error: error.message };
+  if (error) return { error: 'Erro ao excluir enquete' };
   return { success: true };
 }

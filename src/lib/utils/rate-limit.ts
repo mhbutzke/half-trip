@@ -1,9 +1,12 @@
 /**
- * Simple in-memory rate limiter for API routes.
+ * In-memory rate limiter for API routes and server actions.
  * Uses a sliding window approach with automatic cleanup.
  *
- * Note: This works per-instance (not distributed). For multi-instance
- * deployments, consider using Vercel KV or Upstash Redis.
+ * LIMITATION: This works per-instance (not distributed). On Vercel serverless,
+ * each function invocation may get a different instance, reducing effectiveness.
+ * For production-grade rate limiting, migrate to Upstash Redis (@upstash/ratelimit)
+ * or Vercel KV. The in-memory approach still provides protection during
+ * warm starts (same instance handles multiple requests).
  */
 
 type RateLimitEntry = {

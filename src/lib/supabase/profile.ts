@@ -24,7 +24,7 @@ export async function updateProfile(name: string): Promise<ProfileResult> {
   const { error } = await supabase.from('users').update({ name }).eq('id', authUser.id);
 
   if (error) {
-    return { error: error.message };
+    return { error: 'Erro ao atualizar perfil' };
   }
 
   // Also update auth user metadata
@@ -89,7 +89,7 @@ export async function uploadAvatar(formData: FormData): Promise<ProfileResult> {
     .eq('id', authUser.id);
 
   if (updateError) {
-    return { error: updateError.message };
+    return { error: 'Erro ao atualizar avatar' };
   }
 
   // Also update auth user metadata
@@ -129,7 +129,7 @@ export async function removeAvatar(): Promise<ProfileResult> {
     .eq('id', authUser.id);
 
   if (updateError) {
-    return { error: updateError.message };
+    return { error: 'Erro ao remover avatar' };
   }
 
   // Also update auth user metadata

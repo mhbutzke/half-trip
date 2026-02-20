@@ -151,7 +151,7 @@ export async function addGuest(
     .single();
 
   if (insertError) {
-    return { error: insertError.message };
+    return { error: 'Erro ao adicionar convidado' };
   }
 
   revalidate.tripParticipants(tripId);
@@ -214,7 +214,7 @@ export async function removeGuest(
     .eq('trip_id', tripId);
 
   if (deleteError) {
-    return { error: deleteError.message };
+    return { error: 'Erro ao remover convidado' };
   }
 
   revalidate.tripParticipants(tripId);
@@ -277,7 +277,7 @@ export async function updateGuest(
     .single();
 
   if (updateError) {
-    return { error: updateError.message };
+    return { error: 'Erro ao atualizar convidado' };
   }
 
   revalidate.tripParticipants(tripId);

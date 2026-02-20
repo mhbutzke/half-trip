@@ -220,7 +220,7 @@ export async function updateExpense(
     .eq('id', expenseId);
 
   if (updateError) {
-    return { error: updateError.message };
+    return { error: 'Erro ao atualizar despesa' };
   }
 
   // Replace splits if provided — legacy user_id auto-populated by DB trigger
@@ -294,7 +294,7 @@ export async function deleteExpense(expenseId: string): Promise<ExpenseResult> {
   const { error } = await supabase.from('expenses').delete().eq('id', expenseId);
 
   if (error) {
-    return { error: error.message };
+    return { error: 'Erro ao excluir despesa' };
   }
 
   revalidate.tripExpenses(expense.trip_id);

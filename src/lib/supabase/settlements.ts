@@ -71,7 +71,7 @@ export async function createSettlement(input: CreateSettlementInput): Promise<Se
     .single();
 
   if (settlementError) {
-    return { error: settlementError.message };
+    return { error: 'Erro ao criar acerto' };
   }
 
   revalidate.tripBalance(input.trip_id);
@@ -118,7 +118,7 @@ export async function createEntitySettlement(input: {
     .select('id');
 
   if (insertError) {
-    return { error: insertError.message };
+    return { error: 'Erro ao criar acertos' };
   }
 
   revalidate.tripBalance(input.trip_id);
@@ -190,7 +190,7 @@ export async function markSettlementAsPaid(settlementId: string): Promise<Settle
     .eq('id', settlementId);
 
   if (updateError) {
-    return { error: updateError.message };
+    return { error: 'Erro ao marcar acerto como pago' };
   }
 
   revalidate.tripBalance(settlement.trip_id);
@@ -259,7 +259,7 @@ export async function markSettlementAsUnpaid(settlementId: string): Promise<Sett
     .eq('id', settlementId);
 
   if (updateError) {
-    return { error: updateError.message };
+    return { error: 'Erro ao desmarcar acerto' };
   }
 
   revalidate.tripBalance(settlement.trip_id);
@@ -311,7 +311,7 @@ export async function deleteSettlement(settlementId: string): Promise<Settlement
   const { error } = await supabase.from('settlements').delete().eq('id', settlementId);
 
   if (error) {
-    return { error: error.message };
+    return { error: 'Erro ao excluir acerto' };
   }
 
   revalidate.tripBalance(settlement.trip_id);

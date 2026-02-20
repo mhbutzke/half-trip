@@ -80,7 +80,7 @@ export async function createActivity(input: CreateActivityInput): Promise<Activi
     .single();
 
   if (error) {
-    return { error: error.message };
+    return { error: 'Erro ao criar atividade' };
   }
 
   revalidate.tripItinerary(input.trip_id);
@@ -150,7 +150,7 @@ export async function updateActivity(
     .eq('id', activityId);
 
   if (error) {
-    return { error: error.message };
+    return { error: 'Erro ao atualizar atividade' };
   }
 
   revalidate.tripItinerary(activity.trip_id);
@@ -204,7 +204,7 @@ export async function deleteActivity(activityId: string): Promise<ActivityResult
   const { error } = await supabase.from('activities').delete().eq('id', activityId);
 
   if (error) {
-    return { error: error.message };
+    return { error: 'Erro ao excluir atividade' };
   }
 
   revalidate.tripItinerary(activity.trip_id);
@@ -449,7 +449,7 @@ export async function reorderActivities(
       .eq('trip_id', tripId);
 
     if (error) {
-      return { error: error.message };
+      return { error: 'Erro ao reordenar atividades' };
     }
   }
 

@@ -338,7 +338,7 @@ export async function deleteGroup(
   const { error: deleteError } = await supabase.from('trip_groups').delete().eq('id', groupId);
 
   if (deleteError) {
-    return { error: deleteError.message };
+    return { error: 'Erro ao excluir grupo' };
   }
 
   revalidate.tripParticipants(tripId);

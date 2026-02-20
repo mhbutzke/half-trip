@@ -50,7 +50,7 @@ export async function createNote(input: CreateNoteInput): Promise<NoteResult> {
     .single();
 
   if (error) {
-    return { error: error.message };
+    return { error: 'Erro ao criar nota' };
   }
 
   revalidate.tripNotes(input.trip_id);
@@ -112,7 +112,7 @@ export async function updateNote(noteId: string, input: UpdateNoteInput): Promis
     .eq('id', noteId);
 
   if (error) {
-    return { error: error.message };
+    return { error: 'Erro ao atualizar nota' };
   }
 
   revalidate.tripNotes(note.trip_id);
@@ -169,7 +169,7 @@ export async function deleteNote(noteId: string): Promise<NoteResult> {
   const { error } = await supabase.from('trip_notes').delete().eq('id', noteId);
 
   if (error) {
-    return { error: error.message };
+    return { error: 'Erro ao excluir nota' };
   }
 
   revalidate.tripNotes(note.trip_id);

@@ -87,7 +87,7 @@ export async function createChecklist(input: {
     .single();
 
   if (error) {
-    return { error: error.message };
+    return { error: 'Erro ao criar checklist' };
   }
 
   revalidate.tripChecklists(input.trip_id);
@@ -107,11 +107,11 @@ export async function deleteChecklist(checklistId: string): Promise<ChecklistRes
   const auth = await requireAuth();
   if (!auth.ok) return { error: auth.error };
 
-  const { supabase } = auth;
+  const { supabase, user } = auth;
 
   const { data: checklist } = await supabase
     .from('trip_checklists')
-    .select('trip_id')
+    .select('trip_id, created_by')
     .eq('id', checklistId)
     .single();
 
@@ -119,10 +119,27 @@ export async function deleteChecklist(checklistId: string): Promise<ChecklistRes
     return { error: 'Checklist não encontrada' };
   }
 
+  // Verificar que o usuário é membro da trip
+  const { data: member } = await supabase
+    .from('trip_members')
+    .select('role')
+    .eq('trip_id', checklist.trip_id)
+    .eq('user_id', user.id)
+    .single();
+
+  if (!member) {
+    return { error: 'Você não é membro desta viagem' };
+  }
+
+  // Apenas organizadores ou o criador podem excluir
+  if (member.role !== 'organizer' && checklist.created_by !== user.id) {
+    return { error: 'Sem permissão para excluir esta checklist' };
+  }
+
   const { error } = await supabase.from('trip_checklists').delete().eq('id', checklistId);
 
   if (error) {
-    return { error: error.message };
+    return { error: 'Erro ao excluir checklist' };
   }
 
   revalidate.tripChecklists(checklist.trip_id);
@@ -140,7 +157,7 @@ export async function addChecklistItem(input: {
 
   const { supabase, user } = auth;
 
-  // Get checklist to find trip_id for revalidation
+  // Get checklist to find trip_id
   const { data: checklist } = await supabase
     .from('trip_checklists')
     .select('trip_id')
@@ -149,6 +166,18 @@ export async function addChecklistItem(input: {
 
   if (!checklist) {
     return { error: 'Checklist não encontrada' };
+  }
+
+  // Verificar que o usuário é membro da trip
+  const { data: member } = await supabase
+    .from('trip_members')
+    .select('id')
+    .eq('trip_id', checklist.trip_id)
+    .eq('user_id', user.id)
+    .single();
+
+  if (!member) {
+    return { error: 'Você não é membro desta viagem' };
   }
 
   // Get max sort_order
@@ -175,7 +204,7 @@ export async function addChecklistItem(input: {
     .single();
 
   if (error) {
-    return { error: error.message };
+    return { error: 'Erro ao adicionar item' };
   }
 
   revalidate.tripChecklists(checklist.trip_id);
@@ -188,7 +217,7 @@ export async function toggleChecklistItem(itemId: string): Promise<ChecklistItem
 
   const { supabase, user } = auth;
 
-  // Get current item state
+  // Get current item state with checklist info
   const { data: item } = await supabase
     .from('checklist_items')
     .select('is_completed, checklist_id, title')
@@ -197,6 +226,29 @@ export async function toggleChecklistItem(itemId: string): Promise<ChecklistItem
 
   if (!item) {
     return { error: 'Item não encontrado' };
+  }
+
+  // Get trip_id via checklist
+  const { data: checklist } = await supabase
+    .from('trip_checklists')
+    .select('trip_id')
+    .eq('id', item.checklist_id)
+    .single();
+
+  if (!checklist) {
+    return { error: 'Checklist não encontrada' };
+  }
+
+  // Verificar que o usuário é membro da trip
+  const { data: member } = await supabase
+    .from('trip_members')
+    .select('id')
+    .eq('trip_id', checklist.trip_id)
+    .eq('user_id', user.id)
+    .single();
+
+  if (!member) {
+    return { error: 'Você não é membro desta viagem' };
   }
 
   const nowCompleted = !item.is_completed;
@@ -211,28 +263,19 @@ export async function toggleChecklistItem(itemId: string): Promise<ChecklistItem
     .eq('id', itemId);
 
   if (error) {
-    return { error: error.message };
+    return { error: 'Erro ao atualizar item' };
   }
 
-  // Get trip_id for revalidation
-  const { data: checklist } = await supabase
-    .from('trip_checklists')
-    .select('trip_id')
-    .eq('id', item.checklist_id)
-    .single();
+  revalidate.tripChecklists(checklist.trip_id);
 
-  if (checklist) {
-    revalidate.tripChecklists(checklist.trip_id);
-
-    if (nowCompleted) {
-      logActivity({
-        tripId: checklist.trip_id,
-        action: 'completed',
-        entityType: 'checklist_item',
-        entityId: itemId,
-        metadata: { title: item.title },
-      });
-    }
+  if (nowCompleted) {
+    logActivity({
+      tripId: checklist.trip_id,
+      action: 'completed',
+      entityType: 'checklist_item',
+      entityId: itemId,
+      metadata: { title: item.title },
+    });
   }
 
   return { success: true, itemId };
@@ -242,7 +285,7 @@ export async function deleteChecklistItem(itemId: string): Promise<ChecklistItem
   const auth = await requireAuth();
   if (!auth.ok) return { error: auth.error };
 
-  const { supabase } = auth;
+  const { supabase, user } = auth;
 
   // Get item with checklist for trip_id
   const { data: item } = await supabase
@@ -261,15 +304,29 @@ export async function deleteChecklistItem(itemId: string): Promise<ChecklistItem
     .eq('id', item.checklist_id)
     .single();
 
+  if (!checklist) {
+    return { error: 'Checklist não encontrada' };
+  }
+
+  // Verificar que o usuário é membro da trip
+  const { data: member } = await supabase
+    .from('trip_members')
+    .select('id')
+    .eq('trip_id', checklist.trip_id)
+    .eq('user_id', user.id)
+    .single();
+
+  if (!member) {
+    return { error: 'Você não é membro desta viagem' };
+  }
+
   const { error } = await supabase.from('checklist_items').delete().eq('id', itemId);
 
   if (error) {
-    return { error: error.message };
+    return { error: 'Erro ao excluir item' };
   }
 
-  if (checklist) {
-    revalidate.tripChecklists(checklist.trip_id);
-  }
+  revalidate.tripChecklists(checklist.trip_id);
 
   return { success: true };
 }

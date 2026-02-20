@@ -118,7 +118,7 @@ export async function createInviteLink(
     .single();
 
   if (insertError) {
-    return { error: insertError.message };
+    return { error: 'Erro ao criar convite' };
   }
 
   revalidate.trip(tripId);
@@ -227,7 +227,7 @@ export async function revokeInvite(inviteId: string): Promise<InviteResult> {
   const { error: deleteError } = await supabase.from('trip_invites').delete().eq('id', inviteId);
 
   if (deleteError) {
-    return { error: deleteError.message };
+    return { error: 'Erro ao revogar convite' };
   }
 
   revalidate.trip(invite.trip_id);
@@ -243,27 +243,25 @@ export async function revokeInvite(inviteId: string): Promise<InviteResult> {
 }
 
 /**
- * Validates an invite code and returns the invite details
+ * Validates an invite code and returns the invite details.
+ * Uses SECURITY DEFINER RPC to bypass RLS (non-members need to read invites).
  */
 export async function validateInviteCode(
   code: string
 ): Promise<{ valid: boolean; invite?: TripInvite; error?: string; tripName?: string }> {
   const supabase = await createClient();
 
-  const { data: invite, error } = await supabase
-    .from('trip_invites')
-    .select(
-      `
-      *,
-      trips!trip_invites_trip_id_fkey (name, destination)
-    `
-    )
-    .eq('code', code)
-    .single();
+  const { data: result, error } = await supabase.rpc('get_invite_by_code', {
+    p_code: code,
+  });
 
-  if (error || !invite) {
+  if (error || !result) {
     return { valid: false, error: 'Convite não encontrado' };
   }
+
+  const invite = result as unknown as TripInvite & {
+    trip: { name: string; destination: string };
+  };
 
   // Check if already accepted
   if (invite.accepted_at) {
@@ -278,12 +276,10 @@ export async function validateInviteCode(
     return { valid: false, error: 'Este convite expirou' };
   }
 
-  const tripData = invite.trips as unknown as { name: string; destination: string };
-
   return {
     valid: true,
     invite,
-    tripName: tripData?.name,
+    tripName: invite.trip?.name,
   };
 }
 
@@ -322,49 +318,66 @@ export type InviteDetailsResult = {
 };
 
 /**
- * Gets full invite details for the invite page
+ * Gets full invite details for the invite page.
+ * Uses SECURITY DEFINER RPC to bypass RLS (non-members need to see invite info).
  */
 export async function getInviteDetails(code: string): Promise<InviteDetailsResult> {
   const supabase = await createClient();
 
-  const { data: invite, error } = await supabase
-    .from('trip_invites')
-    .select(
-      `
-      *,
-      trips!trip_invites_trip_id_fkey (id, name, destination, start_date, end_date, cover_url),
-      users!trip_invites_invited_by_fkey (id, name, avatar_url)
-    `
-    )
-    .eq('code', code)
-    .single();
+  const { data: result, error } = await supabase.rpc('get_invite_by_code', {
+    p_code: code,
+  });
 
-  if (error || !invite) {
+  if (error || !result) {
     return { valid: false, error: 'Convite não encontrado' };
   }
 
+  const data = result as unknown as {
+    id: string;
+    trip_id: string;
+    code: string;
+    email: string | null;
+    invited_by: string;
+    expires_at: string;
+    accepted_at: string | null;
+    accepted_by: string | null;
+    created_at: string;
+    trip: {
+      id: string;
+      name: string;
+      destination: string;
+      start_date: string;
+      end_date: string;
+      cover_url: string | null;
+    };
+    inviter: Pick<User, 'id' | 'name' | 'avatar_url'>;
+  };
+
   // Check if already accepted
-  if (invite.accepted_at) {
+  if (data.accepted_at) {
     return { valid: false, error: 'Este convite já foi utilizado' };
   }
 
   // Check if expired
   const now = new Date();
-  const expiresAt = new Date(invite.expires_at);
+  const expiresAt = new Date(data.expires_at);
 
   if (now > expiresAt) {
     return { valid: false, error: 'Este convite expirou' };
   }
 
-  const tripData = invite.trips as unknown as {
-    id: string;
-    name: string;
-    destination: string;
-    start_date: string;
-    end_date: string;
-    cover_url: string | null;
-  };
-  const inviterData = invite.users as unknown as Pick<User, 'id' | 'name' | 'avatar_url'>;
+  // Reconstruct invite object for backward compatibility
+  const invite = {
+    id: data.id,
+    trip_id: data.trip_id,
+    code: data.code,
+    email: data.email,
+    invited_by: data.invited_by,
+    expires_at: data.expires_at,
+    accepted_at: data.accepted_at,
+    accepted_by: data.accepted_by,
+    created_at: data.created_at,
+  } as TripInvite;
 
   // Check if current user is already a member
   let isAlreadyMember = false;
@@ -376,7 +389,7 @@ export async function getInviteDetails(code: string): Promise<InviteDetailsResul
     const { data: membership } = await supabase
       .from('trip_members')
       .select('id')
-      .eq('trip_id', invite.trip_id)
+      .eq('trip_id', data.trip_id)
       .eq('user_id', authUser.id)
       .single();
 
@@ -386,8 +399,8 @@ export async function getInviteDetails(code: string): Promise<InviteDetailsResul
   return {
     valid: true,
     invite,
-    trip: tripData,
-    invitedBy: inviterData,
+    trip: data.trip,
+    invitedBy: data.inviter,
     isAlreadyMember,
   };
 }
@@ -413,16 +426,16 @@ export async function acceptInvite(code: string): Promise<AcceptInviteResult> {
     return { error: 'Você precisa estar logado para aceitar o convite' };
   }
 
-  // Validate the invite
-  const { data: invite, error: inviteError } = await supabase
-    .from('trip_invites')
-    .select('*')
-    .eq('code', code)
-    .single();
+  // Validate the invite via SECURITY DEFINER RPC (user is not yet a trip member)
+  const { data: inviteResult, error: inviteError } = await supabase.rpc('get_invite_by_code', {
+    p_code: code,
+  });
 
-  if (inviteError || !invite) {
+  if (inviteError || !inviteResult) {
     return { error: 'Convite não encontrado' };
   }
+
+  const invite = inviteResult as unknown as TripInvite;
 
   if (invite.accepted_at) {
     return { error: 'Este convite já foi utilizado' };
@@ -466,7 +479,7 @@ export async function acceptInvite(code: string): Promise<AcceptInviteResult> {
   });
 
   if (memberError) {
-    return { error: memberError.message };
+    return { error: 'Erro ao entrar na viagem' };
   }
 
   // Mark invite as accepted
@@ -616,7 +629,7 @@ export async function sendEmailInvite(tripId: string, email: string): Promise<Em
       .single();
 
     if (insertError) {
-      return { error: insertError.message };
+      return { error: 'Erro ao criar convite por email' };
     }
 
     invite = newInvite;

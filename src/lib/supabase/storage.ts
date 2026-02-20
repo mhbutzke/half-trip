@@ -1,6 +1,6 @@
 'use server';
 
-import { createClient } from './server';
+import { requireTripOrganizer } from './auth-helpers';
 
 interface UploadResult {
   url?: string;
@@ -10,18 +10,14 @@ interface UploadResult {
 /**
  * Upload a trip cover image to Supabase Storage.
  * Stores in `trip-covers` bucket, returns public URL.
+ * Only trip organizers can upload covers.
  */
 export async function uploadTripCover(tripId: string, formData: FormData): Promise<UploadResult> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    return { error: 'Não autorizado' };
+  const auth = await requireTripOrganizer(tripId);
+  if (!auth.ok) {
+    return { error: auth.error };
   }
+  const { supabase } = auth;
 
   const file = formData.get('file') as File | null;
   if (!file) {

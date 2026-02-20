@@ -38,7 +38,7 @@ export async function changePassword(
   });
 
   if (updateError) {
-    return { error: updateError.message };
+    return { error: 'Erro ao alterar senha' };
   }
 
   return { success: true };

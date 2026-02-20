@@ -57,7 +57,7 @@ export async function createTrip(input: CreateTripInput): Promise<TripResult> {
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: 'Erro ao criar viagem' };
   }
 
   // Update base_currency if provided (RPC creates with default 'BRL')
@@ -68,7 +68,7 @@ export async function createTrip(input: CreateTripInput): Promise<TripResult> {
       .eq('id', tripId);
 
     if (updateError) {
-      return { error: updateError.message };
+      return { error: 'Erro ao atualizar viagem' };
     }
   }
 
@@ -150,7 +150,7 @@ export async function updateTrip(tripId: string, input: UpdateTripInput): Promis
     .eq('id', tripId);
 
   if (error) {
-    return { error: error.message };
+    return { error: 'Erro ao atualizar viagem' };
   }
 
   revalidate.trip(tripId);
@@ -196,7 +196,7 @@ export async function archiveTrip(tripId: string): Promise<TripResult> {
     .eq('id', tripId);
 
   if (error) {
-    return { error: error.message };
+    return { error: 'Erro ao arquivar viagem' };
   }
 
   revalidate.trip(tripId);
@@ -238,7 +238,7 @@ export async function unarchiveTrip(tripId: string): Promise<TripResult> {
   const { error } = await supabase.from('trips').update({ archived_at: null }).eq('id', tripId);
 
   if (error) {
-    return { error: error.message };
+    return { error: 'Erro ao restaurar viagem' };
   }
 
   revalidate.trip(tripId);
@@ -289,7 +289,7 @@ export async function deleteTrip(tripId: string): Promise<TripResult> {
   const { error } = await supabase.from('trips').delete().eq('id', tripId);
 
   if (error) {
-    return { error: error.message };
+    return { error: 'Erro ao excluir viagem' };
   }
 
   revalidate.trips();
@@ -576,7 +576,7 @@ export async function removeParticipant(tripId: string, userId: string): Promise
     .eq('user_id', userId);
 
   if (error) {
-    return { error: error.message };
+    return { error: 'Erro ao remover participante' };
   }
 
   revalidate.tripParticipants(tripId);
@@ -641,7 +641,7 @@ export async function leaveTrip(tripId: string): Promise<TripResult> {
     .eq('user_id', authUser.id);
 
   if (error) {
-    return { error: error.message };
+    return { error: 'Erro ao promover participante' };
   }
 
   revalidate.tripParticipants(tripId);
@@ -699,7 +699,7 @@ export async function promoteToOrganizer(tripId: string, userId: string): Promis
     .eq('user_id', userId);
 
   if (error) {
-    return { error: error.message };
+    return { error: 'Erro ao rebaixar participante' };
   }
 
   revalidate.tripParticipants(tripId);

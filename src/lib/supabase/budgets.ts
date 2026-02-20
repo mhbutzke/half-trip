@@ -112,7 +112,7 @@ export async function createBudget(input: {
     .single();
 
   if (error) {
-    return { error: error.message };
+    return { error: 'Erro ao criar orçamento' };
   }
 
   revalidate.tripBudget(input.trip_id);
@@ -149,7 +149,7 @@ export async function updateBudget(budgetId: string, amount: number): Promise<Bu
   const { error } = await supabase.from('trip_budgets').update({ amount }).eq('id', budgetId);
 
   if (error) {
-    return { error: error.message };
+    return { error: 'Erro ao atualizar orçamento' };
   }
 
   revalidate.tripBudget(budget.trip_id);
@@ -186,7 +186,7 @@ export async function deleteBudget(budgetId: string): Promise<BudgetResult> {
   const { error } = await supabase.from('trip_budgets').delete().eq('id', budgetId);
 
   if (error) {
-    return { error: error.message };
+    return { error: 'Erro ao excluir orçamento' };
   }
 
   revalidate.tripBudget(budget.trip_id);

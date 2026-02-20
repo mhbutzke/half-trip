@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { Header } from './header';
 import { signOut } from '@/lib/supabase/auth';
+import { cleanupOnLogout } from '@/lib/auth/logout';
 
 interface AppHeaderProps {
   user: {
@@ -16,6 +17,7 @@ export function AppHeader({ user }: AppHeaderProps) {
   const router = useRouter();
 
   const handleSignOut = async () => {
+    await cleanupOnLogout();
     await signOut();
     router.refresh();
   };

@@ -3,10 +3,12 @@
 import { createClient } from './server';
 import { createAdminClient } from './admin';
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 import { sendWelcomeEmail } from '@/lib/email/send-welcome-email';
 import { sendPasswordResetEmail } from '@/lib/email/send-password-reset-email';
 import { routes } from '@/lib/routes';
 import { logError } from '@/lib/errors/logger';
+import { rateLimit } from '@/lib/utils/rate-limit';
 
 export type AuthResult = {
   error?: string;
@@ -20,7 +22,22 @@ function getAppUrl(): string | null {
   return raw.endsWith('/') ? raw.slice(0, -1) : raw;
 }
 
+/**
+ * Gets client IP for rate limiting. Falls back to 'unknown' if not available.
+ */
+async function getClientIp(): Promise<string> {
+  const h = await headers();
+  return h.get('x-forwarded-for')?.split(',')[0]?.trim() || h.get('x-real-ip') || 'unknown';
+}
+
 export async function signUp(name: string, email: string, password: string): Promise<AuthResult> {
+  // Rate limit: 5 signups per IP per 15 minutes
+  const ip = await getClientIp();
+  const rl = rateLimit(`signup:${ip}`, { limit: 5, windowSeconds: 900 });
+  if (!rl.success) {
+    return { error: 'Muitas tentativas. Aguarde alguns minutos e tente novamente.' };
+  }
+
   const adminClient = createAdminClient();
 
   // Create user already confirmed (skips email confirmation flow)
@@ -41,7 +58,7 @@ export async function signUp(name: string, email: string, password: string): Pro
     if (error.message.toLowerCase().includes('rate limit')) {
       return { error: 'Muitas tentativas. Aguarde alguns minutos e tente novamente.' };
     }
-    return { error: error.message };
+    return { error: 'Erro ao criar conta. Tente novamente.' };
   }
 
   if (!data?.user) {
@@ -72,6 +89,13 @@ export async function signUp(name: string, email: string, password: string): Pro
 }
 
 export async function signIn(email: string, password: string): Promise<AuthResult> {
+  // Rate limit: 10 login attempts per IP per 15 minutes
+  const ip = await getClientIp();
+  const rl = rateLimit(`signin:${ip}`, { limit: 10, windowSeconds: 900 });
+  if (!rl.success) {
+    return { error: 'Muitas tentativas de login. Aguarde alguns minutos e tente novamente.' };
+  }
+
   const supabase = await createClient();
 
   const { error } = await supabase.auth.signInWithPassword({
@@ -86,7 +110,7 @@ export async function signIn(email: string, password: string): Promise<AuthResul
     if (error.message.includes('Email not confirmed')) {
       return { error: 'Por favor, confirme seu email antes de fazer login' };
     }
-    return { error: error.message };
+    return { error: 'Erro ao fazer login. Tente novamente.' };
   }
 
   return { success: true };
@@ -99,6 +123,14 @@ export async function signOut(): Promise<void> {
 }
 
 export async function forgotPassword(email: string): Promise<AuthResult> {
+  // Rate limit: 3 password reset attempts per IP per 15 minutes
+  const ip = await getClientIp();
+  const rl = rateLimit(`forgot:${ip}`, { limit: 3, windowSeconds: 900 });
+  if (!rl.success) {
+    // Return success to not reveal rate limiting (same as "email not found" pattern)
+    return { success: true };
+  }
+
   const adminClient = createAdminClient();
   const appUrl = getAppUrl();
   if (!appUrl) {
@@ -150,7 +182,7 @@ export async function resetPassword(password: string): Promise<AuthResult> {
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: 'Erro ao redefinir senha. Tente novamente.' };
   }
 
   return { success: true };

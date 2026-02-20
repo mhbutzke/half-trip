@@ -1413,6 +1413,10 @@ export type Database = {
         };
         Returns: Json | null;
       };
+      get_my_pending_invites: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
     };
     Enums: {
       [_ in never]: never;

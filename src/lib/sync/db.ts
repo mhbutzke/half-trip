@@ -23,6 +23,8 @@ export interface CachedUser extends SyncMetadata {
   email: string;
   name: string;
   avatar_url: string | null;
+  blocked_at: string | null;
+  blocked_by: string | null;
   created_at: string;
   updated_at: string;
 }

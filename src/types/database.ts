@@ -9,6 +9,8 @@ export type Database = {
           email: string;
           name: string;
           avatar_url: string | null;
+          blocked_at: string | null;
+          blocked_by: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -17,6 +19,8 @@ export type Database = {
           email: string;
           name: string;
           avatar_url?: string | null;
+          blocked_at?: string | null;
+          blocked_by?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -25,6 +29,8 @@ export type Database = {
           email?: string;
           name?: string;
           avatar_url?: string | null;
+          blocked_at?: string | null;
+          blocked_by?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -1206,6 +1212,86 @@ export type Database = {
           },
         ];
       };
+      system_admins: {
+        Row: {
+          id: string;
+          user_id: string;
+          email: string;
+          role: 'admin' | 'super_admin';
+          granted_by: string | null;
+          granted_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          email: string;
+          role?: 'admin' | 'super_admin';
+          granted_by?: string | null;
+          granted_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          email?: string;
+          role?: 'admin' | 'super_admin';
+          granted_by?: string | null;
+          granted_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'system_admins_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: true;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'system_admins_granted_by_fkey';
+            columns: ['granted_by'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      admin_activity_log: {
+        Row: {
+          id: string;
+          admin_user_id: string;
+          action: string;
+          entity_type: string;
+          entity_id: string | null;
+          metadata: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          admin_user_id: string;
+          action: string;
+          entity_type: string;
+          entity_id?: string | null;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          admin_user_id?: string;
+          action?: string;
+          entity_type?: string;
+          entity_id?: string | null;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'admin_activity_log_admin_user_id_fkey';
+            columns: ['admin_user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       place_details_cache: {
         Row: {
           place_id: string;
@@ -1480,3 +1566,13 @@ export type UpdateUserEmailPreferences = UpdateTables<'user_email_preferences'>;
 export type EmailLogRow = Tables<'email_logs'>;
 export type InsertEmailLog = InsertTables<'email_logs'>;
 export type UpdateEmailLog = UpdateTables<'email_logs'>;
+
+export type SystemAdmin = Tables<'system_admins'>;
+export type InsertSystemAdmin = InsertTables<'system_admins'>;
+export type UpdateSystemAdmin = UpdateTables<'system_admins'>;
+
+export type AdminActivityLogRow = Tables<'admin_activity_log'>;
+export type InsertAdminActivityLog = InsertTables<'admin_activity_log'>;
+export type UpdateAdminActivityLog = UpdateTables<'admin_activity_log'>;
+
+export type SystemAdminRole = 'admin' | 'super_admin';

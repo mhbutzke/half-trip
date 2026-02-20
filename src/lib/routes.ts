@@ -27,6 +27,16 @@ export const routes = {
     checklists: (id: string) => `/trip/${id}/checklists` as const,
     notes: (id: string) => `/trip/${id}/notes` as const,
   },
+  admin: {
+    dashboard: () => '/admin' as const,
+    users: () => '/admin/users' as const,
+    userDetail: (id: string) => `/admin/users/${id}` as const,
+    trips: () => '/admin/trips' as const,
+    tripDetail: (id: string) => `/admin/trips/${id}` as const,
+    expenses: () => '/admin/expenses' as const,
+    admins: () => '/admin/admins' as const,
+    activityLog: () => '/admin/activity-log' as const,
+  },
   api: {
     health: () => '/api/health' as const,
     googleCalendar: {

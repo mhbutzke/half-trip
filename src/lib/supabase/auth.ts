@@ -113,6 +113,23 @@ export async function signIn(email: string, password: string): Promise<AuthResul
     return { error: 'Erro ao fazer login. Tente novamente.' };
   }
 
+  // Check if user is blocked
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) {
+    const { data: profile } = await supabase
+      .from('users')
+      .select('blocked_at')
+      .eq('id', user.id)
+      .single();
+
+    if (profile?.blocked_at) {
+      await supabase.auth.signOut();
+      return { error: 'Sua conta foi suspensa. Entre em contato com o suporte.' };
+    }
+  }
+
   return { success: true };
 }
 

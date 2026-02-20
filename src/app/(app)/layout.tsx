@@ -8,6 +8,8 @@ import { OfflineIndicator } from '@/components/offline';
 import { InstallPrompt } from '@/components/pwa/install-prompt';
 import { NotificationToastListener } from '@/components/notifications';
 import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
+import { routes } from '@/lib/routes';
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -20,9 +22,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (authUser) {
     const { data: profile } = await supabase
       .from('users')
-      .select('name, email, avatar_url')
+      .select('name, email, avatar_url, blocked_at')
       .eq('id', authUser.id)
       .single();
+
+    // Block active sessions of suspended users
+    if (profile?.blocked_at) {
+      await supabase.auth.signOut();
+      redirect(routes.login());
+    }
 
     if (profile) {
       user = {

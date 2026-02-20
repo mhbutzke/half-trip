@@ -122,6 +122,8 @@ export function TripsList({ emptyState }: TripsListProps) {
                       email: '',
                       name: '',
                       avatar_url: null,
+                      blocked_at: null,
+                      blocked_by: null,
                       created_at: '',
                       updated_at: '',
                     },

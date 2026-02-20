@@ -182,11 +182,15 @@ export async function cacheUser(user: {
   name: string;
   email: string;
   avatar_url: string | null;
+  blocked_at?: string | null;
+  blocked_by?: string | null;
   created_at?: string;
   updated_at?: string;
 }): Promise<void> {
   const cached = {
     ...user,
+    blocked_at: user.blocked_at ?? null,
+    blocked_by: user.blocked_by ?? null,
     created_at: user.created_at || new Date().toISOString(),
     updated_at: user.updated_at || new Date().toISOString(),
     _syncStatus: 'synced' as const,
@@ -201,6 +205,8 @@ export async function cacheUsers(
     name: string;
     email: string;
     avatar_url: string | null;
+    blocked_at?: string | null;
+    blocked_by?: string | null;
     created_at?: string;
     updated_at?: string;
   }>
@@ -208,6 +214,8 @@ export async function cacheUsers(
   const now = new Date().toISOString();
   const cached = users.map((user) => ({
     ...user,
+    blocked_at: user.blocked_at ?? null,
+    blocked_by: user.blocked_by ?? null,
     created_at: user.created_at || now,
     updated_at: user.updated_at || now,
     _syncStatus: 'synced' as const,

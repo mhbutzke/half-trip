@@ -104,6 +104,8 @@ export function TripContent({
               email: user.email,
               name: user.name,
               avatar_url: user.avatar_url,
+              blocked_at: null,
+              blocked_by: null,
               created_at: '', // Not stored in cache
               updated_at: '', // Not stored in cache
             }
@@ -112,6 +114,8 @@ export function TripContent({
               email: '',
               name: 'User',
               avatar_url: null,
+              blocked_at: null,
+              blocked_by: null,
               created_at: '',
               updated_at: '',
             },

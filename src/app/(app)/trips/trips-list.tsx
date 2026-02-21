@@ -12,6 +12,7 @@ import { WelcomeSection } from '@/components/trips/welcome-section';
 import { NextTripSpotlight } from '@/components/trips/next-trip-spotlight';
 import { ActionCardsRow } from '@/components/trips/action-cards-row';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
+import { ErrorState } from '@/components/ui/error-state';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { parseDateOnly } from '@/lib/utils/date-only';
@@ -48,6 +49,7 @@ export function TripsList({ emptyState }: TripsListProps) {
   const [currentUserName, setCurrentUserName] = useState<string>('');
   const [currentUserAvatar, setCurrentUserAvatar] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [editingTrip, setEditingTrip] = useState<TripWithMembers | null>(null);
   const [deletingTripId, setDeletingTripId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -61,6 +63,7 @@ export function TripsList({ emptyState }: TripsListProps) {
 
   const loadTrips = useCallback(async () => {
     setIsLoading(true);
+    setLoadError(null);
     try {
       if (isOnline) {
         // Fetch from client-safe readers when online
@@ -73,28 +76,41 @@ export function TripsList({ emptyState }: TripsListProps) {
         if (userId && activeTrips.length > 0) {
           const currentMember = activeTrips[0].trip_members?.find((m) => m.user_id === userId);
           if (currentMember) {
-            setCurrentUserName(currentMember.users.name);
-            setCurrentUserAvatar(currentMember.users.avatar_url);
+            setCurrentUserName(currentMember.users?.name ?? '');
+            setCurrentUserAvatar(currentMember.users?.avatar_url ?? null);
           }
         }
 
         // Cache trips for offline use
         const allTrips = [...activeTrips, ...archived];
         if (userId && allTrips.length > 0) {
-          await cacheTrips(allTrips);
+          await cacheTrips(allTrips).catch(() => {
+            // Don't fail loading if caching fails
+          });
         }
 
         // Fetch progress data and action card stats for all trips
         if (allTrips.length > 0) {
-          const tripIds = allTrips.map((t) => t.id);
-          const progress = await getTripProgressBatch(tripIds);
-          setProgressData(progress);
-          // Find upcoming trip for pending settlements calculation
-          const upcoming = activeTrips.sort(
-            (a, b) => parseDateOnly(a.start_date).getTime() - parseDateOnly(b.start_date).getTime()
-          )[0];
-          const stats = await getActionCardStats(tripIds, progress, upcoming?.id);
-          setActionStats(stats);
+          try {
+            const tripIds = allTrips.map((t) => t.id);
+            const progress = await getTripProgressBatch(tripIds);
+            setProgressData(progress);
+            // Find upcoming trip for pending settlements calculation
+            const upcoming = [...activeTrips].sort(
+              (a, b) =>
+                parseDateOnly(a.start_date).getTime() - parseDateOnly(b.start_date).getTime()
+            )[0];
+            const stats = await getActionCardStats(tripIds, progress, upcoming?.id);
+            setActionStats(stats);
+          } catch {
+            // Progress/stats are non-critical, don't block trip list rendering
+            setProgressData(new Map());
+            setActionStats({
+              pendingSettlements: 0,
+              recentExpensesCount: 0,
+              pendingChecklistsCount: 0,
+            });
+          }
         }
       } else {
         // Load from cache when offline
@@ -152,7 +168,9 @@ export function TripsList({ emptyState }: TripsListProps) {
           });
         }
       }
-    } catch {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao carregar viagens';
+      setLoadError(message);
       toast.error('Erro ao carregar viagens');
     } finally {
       setIsLoading(false);
@@ -223,8 +241,13 @@ export function TripsList({ emptyState }: TripsListProps) {
   const totalTrips = allTrips.length;
 
   // Split trips by completion status (based on end date)
-  const upcomingTripsData = allTrips.filter((trip) => !isPast(parseDateOnly(trip.end_date)));
-  const completedTripsData = allTrips.filter((trip) => isPast(parseDateOnly(trip.end_date)));
+  const safeParseDateOnly = (date: string | null | undefined): Date => {
+    if (!date) return new Date();
+    const parsed = parseDateOnly(date);
+    return isNaN(parsed.getTime()) ? new Date() : parsed;
+  };
+  const upcomingTripsData = allTrips.filter((trip) => !isPast(safeParseDateOnly(trip.end_date)));
+  const completedTripsData = allTrips.filter((trip) => isPast(safeParseDateOnly(trip.end_date)));
 
   const upcomingTrips = upcomingTripsData.length;
   const completedTrips = completedTripsData.length;
@@ -251,6 +274,16 @@ export function TripsList({ emptyState }: TripsListProps) {
 
   if (isLoading) {
     return null; // Suspense will show loading state
+  }
+
+  if (loadError) {
+    return (
+      <ErrorState
+        title="Erro ao carregar viagens"
+        description="Não foi possível carregar suas viagens. Verifique sua conexão e tente novamente."
+        onRetry={loadTrips}
+      />
+    );
   }
 
   const hasUpcomingTrips = upcomingTripsData.length > 0;
@@ -288,8 +321,9 @@ export function TripsList({ emptyState }: TripsListProps) {
   // Get next upcoming trip (closest start date)
   const nextTrip =
     upcomingTripsData.length > 0
-      ? upcomingTripsData.sort(
-          (a, b) => parseDateOnly(a.start_date).getTime() - parseDateOnly(b.start_date).getTime()
+      ? [...upcomingTripsData].sort(
+          (a, b) =>
+            safeParseDateOnly(a.start_date).getTime() - safeParseDateOnly(b.start_date).getTime()
         )[0]
       : null;
 

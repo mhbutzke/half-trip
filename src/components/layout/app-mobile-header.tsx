@@ -2,8 +2,9 @@
 
 import { useRouter } from 'next/navigation';
 import { MobileHeader } from './mobile-header';
-import { signOut } from '@/lib/supabase/auth';
+import { signOutWithoutRedirect } from '@/lib/supabase/auth';
 import { cleanupOnLogout } from '@/lib/auth/logout';
+import { createClient } from '@/lib/supabase/client';
 
 interface AppMobileHeaderProps {
   user: {
@@ -17,8 +18,22 @@ export function AppMobileHeader({ user }: AppMobileHeaderProps) {
   const router = useRouter();
 
   const handleSignOut = async () => {
+    // 1. Clean up local caches (IndexedDB, localStorage, SW)
     await cleanupOnLogout();
-    await signOut();
+
+    // 2. Sign out on the server (clear server-side session cookies)
+    await signOutWithoutRedirect();
+
+    // 3. Sign out on the browser client (clear client-side auth state)
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+    } catch {
+      // Don't block redirect if browser signout fails
+    }
+
+    // 4. Redirect to login page from the client
+    router.push('/login');
     router.refresh();
   };
 

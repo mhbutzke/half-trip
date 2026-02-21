@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTripOffline } from '@/hooks/use-trip-offline';
 import { TripHeader } from './trip-header';
 import { TripOverview } from './trip-overview';
 import { PageContainer } from '@/components/layout/page-container';
+import { ErrorState } from '@/components/ui/error-state';
 import type { TripWithMembers } from '@/lib/supabase/trips';
 import type { Trip, TripMemberRole } from '@/types/database';
 import type { DashboardData } from '@/lib/supabase/dashboard';
@@ -38,7 +40,30 @@ export function TripContent({
   initialRecapData,
   initialParticipants,
 }: TripContentProps) {
+  const router = useRouter();
   const { data: cachedData, isOffline, cacheData } = useTripOffline(tripId);
+  const [retryCount, setRetryCount] = useState(0);
+  const maxAutoRetries = 3;
+
+  // Derive isRetrying from state (no need for separate setState)
+  const isRetrying = !initialTrip && !isOffline && retryCount < maxAutoRetries;
+
+  // Auto-retry when trip is not found (handles race condition after creation)
+  useEffect(() => {
+    if (!initialTrip && !isOffline && retryCount < maxAutoRetries) {
+      const delay = Math.min(1000 * Math.pow(2, retryCount), 4000);
+      const timer = setTimeout(() => {
+        setRetryCount((prev) => prev + 1);
+        router.refresh();
+      }, delay);
+      return () => clearTimeout(timer);
+    }
+  }, [initialTrip, isOffline, retryCount, router]);
+
+  const handleManualRetry = useCallback(() => {
+    setRetryCount(0);
+    router.refresh();
+  }, [router]);
 
   // Cache fresh data when online
   useEffect(() => {
@@ -133,14 +158,33 @@ export function TripContent({
   const currentUser = initialCurrentUser;
 
   if (!trip) {
+    // Show loading while auto-retrying
+    if (isRetrying) {
+      return (
+        <PageContainer bottomNav>
+          <div className="flex min-h-[400px] items-center justify-center">
+            <div className="text-center space-y-2">
+              <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+              <p className="text-sm text-muted-foreground">Carregando viagem...</p>
+            </div>
+          </div>
+        </PageContainer>
+      );
+    }
+
+    // Show error with retry after auto-retries exhausted
     return (
       <PageContainer bottomNav>
         <div className="flex min-h-[400px] items-center justify-center">
-          <div className="text-center">
-            <p className="text-muted-foreground">
-              {isOffline ? 'Esta viagem não está disponível offline' : 'Viagem não encontrada'}
-            </p>
-          </div>
+          <ErrorState
+            title={isOffline ? 'Viagem indisponível offline' : 'Erro ao carregar viagem'}
+            description={
+              isOffline
+                ? 'Esta viagem não está disponível no modo offline. Conecte-se à internet para acessá-la.'
+                : 'Não foi possível carregar os dados da viagem. Tente novamente.'
+            }
+            onRetry={!isOffline ? handleManualRetry : undefined}
+          />
         </div>
       </PageContainer>
     );

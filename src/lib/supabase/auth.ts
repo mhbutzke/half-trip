@@ -155,6 +155,20 @@ export async function signOut(): Promise<void> {
   redirect(routes.login());
 }
 
+/**
+ * Signs out the user on the server side without redirecting.
+ * Use this when the client needs to handle the redirect itself
+ * (e.g., after cleaning up local caches).
+ */
+export async function signOutWithoutRedirect(): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signOut();
+  if (error) {
+    return { error: error.message };
+  }
+  return {};
+}
+
 export async function forgotPassword(email: string): Promise<AuthResult> {
   // Rate limit: 3 password reset attempts per IP per 15 minutes
   const ip = await getClientIp();

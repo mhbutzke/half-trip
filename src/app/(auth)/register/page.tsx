@@ -10,6 +10,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { registerSchema, type RegisterInput } from '@/lib/validation/auth-schemas';
 import { signUp } from '@/lib/supabase/auth';
 import { routes } from '@/lib/routes';
+import { PasswordStrengthIndicator } from '@/components/auth/password-strength-indicator';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -224,6 +225,7 @@ function RegisterForm() {
                       </Button>
                     </div>
                   </FormControl>
+                  <PasswordStrengthIndicator password={field.value} />
                   <FormMessage />
                 </FormItem>
               )}

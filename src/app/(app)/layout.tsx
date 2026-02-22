@@ -12,9 +12,15 @@ import { routes } from '@/lib/routes';
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
-  const {
-    data: { user: authUser },
-  } = await supabase.auth.getUser();
+
+  let authUser = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    authUser = data.user;
+  } catch {
+    // Session corrupted or expired — redirect to login
+    redirect(routes.login());
+  }
 
   // Get user profile from database
   let user = null;

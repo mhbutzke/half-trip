@@ -58,39 +58,47 @@ async function getTripsByArchiveState(
 }
 
 export async function getCurrentAuthUserId(): Promise<string | null> {
-  const supabase = createClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
+  try {
+    const supabase = createClient();
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
 
-  if (error || !user) {
+    if (error || !user) {
+      return null;
+    }
+
+    return user.id;
+  } catch {
     return null;
   }
-
-  return user.id;
 }
 
 export async function getTripsForCurrentUser(): Promise<TripsForUser> {
-  const userId = await getCurrentAuthUserId();
+  try {
+    const userId = await getCurrentAuthUserId();
 
-  if (!userId) {
+    if (!userId) {
+      return { userId: null, activeTrips: [], archivedTrips: [] };
+    }
+
+    const tripIds = await getMemberTripIds(userId);
+    if (tripIds.length === 0) {
+      return { userId, activeTrips: [], archivedTrips: [] };
+    }
+
+    const [activeTrips, archivedTrips] = await Promise.all([
+      getTripsByArchiveState(tripIds, false),
+      getTripsByArchiveState(tripIds, true),
+    ]);
+
+    return {
+      userId,
+      activeTrips,
+      archivedTrips,
+    };
+  } catch {
     return { userId: null, activeTrips: [], archivedTrips: [] };
   }
-
-  const tripIds = await getMemberTripIds(userId);
-  if (tripIds.length === 0) {
-    return { userId, activeTrips: [], archivedTrips: [] };
-  }
-
-  const [activeTrips, archivedTrips] = await Promise.all([
-    getTripsByArchiveState(tripIds, false),
-    getTripsByArchiveState(tripIds, true),
-  ]);
-
-  return {
-    userId,
-    activeTrips,
-    archivedTrips,
-  };
 }

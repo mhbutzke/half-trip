@@ -29,12 +29,14 @@ type TripMemberResult = ({ ok: true } & TripMemberInfo) | { ok: false; error: st
 export async function requireAuth(): Promise<AuthResult> {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error || !user) {
+  let user = null;
+  try {
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data.user) {
+      return { ok: false, error: 'Não autorizado' };
+    }
+    user = data.user;
+  } catch {
     return { ok: false, error: 'Não autorizado' };
   }
 

@@ -29,7 +29,7 @@ export async function getTripProgressBatch(
     return new Map();
   }
 
-  const supabase = await createClient();
+  const supabase = createClient();
 
   // Fetch all data in parallel
   const [checklistsResult, itemsResult, budgetsResult, expensesResult] = await Promise.all([

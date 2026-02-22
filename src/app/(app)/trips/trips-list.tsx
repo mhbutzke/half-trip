@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
@@ -24,6 +24,7 @@ const EditTripDialog = dynamic(() =>
 const DeleteTripDialog = dynamic(() =>
   import('@/components/trips/delete-trip-dialog').then((mod) => ({ default: mod.DeleteTripDialog }))
 );
+import { createClient } from '@/lib/supabase/client';
 import { useRealtimeSubscription } from '@/hooks/use-realtime-subscription';
 import { useOnlineStatus } from '@/hooks/use-online-status';
 import { cacheTrips, getCachedUserTrips, getCachedTripMembers, getCachedUser } from '@/lib/sync';
@@ -60,6 +61,8 @@ export function TripsList({ emptyState }: TripsListProps) {
     recentExpensesCount: 0,
     pendingChecklistsCount: 0,
   });
+  const retryCountRef = useRef(0);
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const loadTrips = useCallback(async () => {
     setIsLoading(true);
@@ -71,6 +74,8 @@ export function TripsList({ emptyState }: TripsListProps) {
         setCurrentUserId(userId);
         setTrips(activeTrips);
         setArchivedTrips(archived);
+        // Reset retry counter on success
+        retryCountRef.current = 0;
 
         // Get current user info from first trip member
         if (userId && activeTrips.length > 0) {
@@ -170,15 +175,50 @@ export function TripsList({ emptyState }: TripsListProps) {
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao carregar viagens';
+      // Auto-retry up to 3 times with exponential backoff
+      if (retryCountRef.current < 3) {
+        const delay = Math.min(1000 * Math.pow(2, retryCountRef.current), 4000);
+        retryCountRef.current += 1;
+        retryTimerRef.current = setTimeout(() => {
+          loadTrips();
+        }, delay);
+        return; // Keep loading state while retrying
+      }
       setLoadError(message);
       toast.error('Erro ao carregar viagens');
     } finally {
-      setIsLoading(false);
+      // Only clear loading if we're not auto-retrying
+      if (retryCountRef.current === 0 || retryCountRef.current >= 3) {
+        setIsLoading(false);
+      }
     }
   }, [isOnline]);
 
   useEffect(() => {
     loadTrips();
+    return () => {
+      if (retryTimerRef.current) {
+        clearTimeout(retryTimerRef.current);
+      }
+    };
+  }, [loadTrips]);
+
+  // Listen for auth state changes to reload trips (handles post-login race condition)
+  useEffect(() => {
+    const supabase = createClient();
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        // Auth state changed, reload trips
+        retryCountRef.current = 0;
+        loadTrips();
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [loadTrips]);
 
   // Subscribe to trip changes
@@ -229,6 +269,11 @@ export function TripsList({ emptyState }: TripsListProps) {
     router.refresh();
   };
 
+  const handleManualRetry = useCallback(() => {
+    retryCountRef.current = 0;
+    loadTrips();
+  }, [loadTrips]);
+
   // Get user role for each trip
   const getUserRole = (trip: TripWithMembers): 'organizer' | 'participant' | null => {
     if (!currentUserId) return null;
@@ -243,8 +288,12 @@ export function TripsList({ emptyState }: TripsListProps) {
   // Split trips by completion status (based on end date)
   const safeParseDateOnly = (date: string | null | undefined): Date => {
     if (!date) return new Date();
-    const parsed = parseDateOnly(date);
-    return isNaN(parsed.getTime()) ? new Date() : parsed;
+    try {
+      const parsed = parseDateOnly(date);
+      return isNaN(parsed.getTime()) ? new Date() : parsed;
+    } catch {
+      return new Date();
+    }
   };
   const upcomingTripsData = allTrips.filter((trip) => !isPast(safeParseDateOnly(trip.end_date)));
   const completedTripsData = allTrips.filter((trip) => isPast(safeParseDateOnly(trip.end_date)));
@@ -257,7 +306,7 @@ export function TripsList({ emptyState }: TripsListProps) {
   const filteredUpcomingTrips = useMemo(() => {
     if (!normalizedSearch) return upcomingTripsData;
     return upcomingTripsData.filter((trip) =>
-      [trip.name, trip.destination || ''].some((field) =>
+      [trip.name ?? '', trip.destination ?? ''].some((field) =>
         field.toLowerCase().includes(normalizedSearch)
       )
     );
@@ -266,7 +315,7 @@ export function TripsList({ emptyState }: TripsListProps) {
   const filteredCompletedTrips = useMemo(() => {
     if (!normalizedSearch) return completedTripsData;
     return completedTripsData.filter((trip) =>
-      [trip.name, trip.destination || ''].some((field) =>
+      [trip.name ?? '', trip.destination ?? ''].some((field) =>
         field.toLowerCase().includes(normalizedSearch)
       )
     );
@@ -281,7 +330,8 @@ export function TripsList({ emptyState }: TripsListProps) {
       <ErrorState
         title="Erro ao carregar viagens"
         description="Não foi possível carregar suas viagens. Verifique sua conexão e tente novamente."
-        onRetry={loadTrips}
+        error={loadError}
+        onRetry={handleManualRetry}
       />
     );
   }

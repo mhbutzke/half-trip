@@ -85,6 +85,9 @@ export async function createTrip(input: CreateTripInput): Promise<TripResult> {
   }
 
   revalidate.trips();
+  if (tripId) {
+    revalidate.trip(tripId);
+  }
 
   if (tripId) {
     logActivity({
